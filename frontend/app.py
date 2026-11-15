@@ -1,6 +1,7 @@
 """Dashboard Executivo SIGA-F4 (Streamlit + Folium + Digital Twin)."""
 
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -18,7 +19,8 @@ if str(ROOT_DIR) not in sys.path:
 from backend.core.digital_twin import simular_reestruturacao
 from backend.core.motor_jev import MotorIVE
 from backend.models.database import Base, SessionLocal, engine
-from backend.models.schemas import OM
+from backend.models.schemas import ClassificacaoCOEB, OM
+from backend.services.cgu_sync import TransparenciaSyncService
 from frontend.components.charts import (
     renderizar_dispersao_ive_spu,
     renderizar_dispersao_tecnologia_spu,
@@ -37,7 +39,7 @@ st.set_page_config(
 def carregar_ranking_oms() -> tuple[List[Dict[str, Any]], str]:
     """Busca ranking via API FastAPI; faz fallback para MotorIVE local se API estiver offline."""
     try:
-        with httpx.Client(timeout=3.0) as client:
+        with httpx.Client(timeout=10.0) as client:
             resp = client.get(f"{API_URL}/api/oms")
             resp.raise_for_status()
             return resp.json(), "FastAPI"
@@ -52,6 +54,7 @@ def carregar_ranking_oms() -> tuple[List[Dict[str, Any]], str]:
                     "id_om": d.id_om,
                     "sigla": d.sigla,
                     "codigo_uasg": d.codigo_uasg,
+                    "cnpj_ug": d.cnpj_ug,
                     "classificacao_coeb": d.classificacao_coeb,
                     "indice_tecnologia_c4isr": d.indice_tecnologia_c4isr,
                     "papel_a2ad": d.papel_a2ad,
@@ -107,6 +110,35 @@ def executar_simulacao(id_zumbi: int, id_destino: int) -> Dict[str, Any]:
             db.close()
 
 
+def capturar_om_uasg(codigo: str, coeb_opcao: str) -> Dict[str, Any]:
+    """Capta ou atualiza uma OM pelo código UASG/UG via API ou serviço local."""
+    coeb_val = None if coeb_opcao == "Automático (COEB)" else coeb_opcao
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            resp = client.post(
+                f"{API_URL}/api/oms/capturar-uasg",
+                json={"codigo_uasg_ou_ug": codigo, "classificacao_coeb": coeb_val},
+            )
+            if resp.status_code >= 400:
+                detalhe = resp.json().get("detail", resp.text)
+                raise ValueError(detalhe)
+            return resp.json()
+    except httpx.HTTPError:
+        db = SessionLocal()
+        try:
+            coeb_enum = ClassificacaoCOEB(coeb_val) if coeb_val else None
+            res = TransparenciaSyncService().capturar_om_por_uasg(
+                db=db,
+                codigo_uasg_ou_ug=codigo,
+                coeb_override=coeb_enum,
+            )
+            om = db.query(OM).filter(OM.id_om == res["id_om"]).first()
+            diag = MotorIVE().diagnosticar_om(db, om, persistir_alertas=True).to_dict()
+            return {"acao": res["acao"], "origem_dados": res["origem_dados"], "diagnostico": diag}
+        finally:
+            db.close()
+
+
 # ------------------------------------------------------------------
 # Cabeçalho e Carregamento
 # ------------------------------------------------------------------
@@ -132,13 +164,47 @@ coeb_selecionado = st.sidebar.multiselect(
     "Classificação COEB",
     options=["FEI", "FEP", "FEC"],
     default=["FEI", "FEP", "FEC"],
+    help=(
+        "FEI: Emprego Imediato (Fronteira, Selva, OpEsp, Pqdt, Amv, Ciber, Intlg, AvEx, AAAe) | "
+        "FEP: Prontidão / FORPRON (Bld, Mec, Art, Eng, Com, Log) | "
+        "FEC: Emprego Condicionado (Guarda, PE, Territorial, Depósitos, Arsenais, RM)"
+    ),
+)
+status_jev_selecionado = st.sidebar.multiselect(
+    "Diagnóstico JEV (IVE)",
+    options=["Ponta de Lança", "Zona de Fusão", "OM Zumbi"],
+    default=["Ponta de Lança", "Zona de Fusão", "OM Zumbi"],
+)
+busca_sigla = st.sidebar.text_input(
+    "🔍 Buscar por UASG, UG/CNPJ ou Sigla",
+    placeholder="Ex: 160069, 160501, BInt, BIS...",
 )
 apenas_a2ad = st.sidebar.checkbox("Apenas Eixo A2/AD (Negação de Área)", value=False)
 apenas_alertas = st.sidebar.checkbox("Apenas OMs com Alertas CGU/Prontidão", value=False)
 st.sidebar.divider()
-st.sidebar.info(f"Fonte ativa: **{fonte_dados}**")
+st.sidebar.caption(
+    "**Enquadramento COEB:**\n"
+    f"- **FEI:** {int((df_all['classificacao_coeb'] == 'FEI').sum())} OMs\n"
+    f"- **FEP:** {int((df_all['classificacao_coeb'] == 'FEP').sum())} OMs\n"
+    f"- **FEC:** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs"
+)
+st.sidebar.info(f"Fonte ativa: **{fonte_dados}** ({len(df_all)} OMs na base)")
 
-df_filtrado = df_all[df_all["classificacao_coeb"].isin(coeb_selecionado)].copy()
+df_filtrado = df_all[
+    df_all["classificacao_coeb"].isin(coeb_selecionado)
+    & df_all["classificacao_ive"].isin(status_jev_selecionado)
+].copy()
+if busca_sigla.strip():
+    termo = busca_sigla.strip().lower()
+    digitos_busca = re.sub(r"\D", "", termo)
+    mask_sigla = df_filtrado["sigla"].str.lower().str.contains(termo, na=False)
+    mask_uasg = df_filtrado["codigo_uasg"].astype(str).str.contains(termo, na=False)
+    mask_ug = (
+        df_filtrado["cnpj_ug"].astype(str).str.replace(r"\D", "", regex=True).str.contains(digitos_busca, na=False)
+        if digitos_busca
+        else pd.Series(False, index=df_filtrado.index)
+    )
+    df_filtrado = df_filtrado[mask_sigla | mask_uasg | mask_ug]
 if apenas_a2ad:
     df_filtrado = df_filtrado[df_filtrado["papel_a2ad"] == True]  # noqa: E712
 if apenas_alertas:
@@ -163,6 +229,45 @@ col4.metric(
 st.divider()
 
 # ------------------------------------------------------------------
+# Captação em Tempo Real por UASG ou UG (Compras.gov.br / CGU)
+# ------------------------------------------------------------------
+with st.expander("📡 Capturar / Sincronizar OM pelo Código UASG ou UG (Compras.gov.br / CGU)", expanded=False):
+    col_u1, col_u2, col_u3 = st.columns([2, 1.5, 1])
+    with col_u1:
+        input_uasg = st.text_input(
+            "Código UASG ou UG/CNPJ",
+            placeholder="Ex: 160069 (COEx), 160054, 160224...",
+            key="input_captura_uasg",
+        )
+    with col_u2:
+        coeb_captura = st.selectbox(
+            "Enquadramento COEB",
+            options=["Automático (COEB)", "FEI", "FEP", "FEC"],
+            key="select_coeb_captura",
+        )
+    with col_u3:
+        st.write("")
+        st.write("")
+        btn_capturar = st.button("📥 Capturar UASG/UG", use_container_width=True)
+
+    if btn_capturar:
+        if not input_uasg.strip():
+            st.warning("Informe um código UASG ou UG para capturar.")
+        else:
+            try:
+                res_cap = capturar_om_uasg(input_uasg.strip(), coeb_captura)
+                d_cap = res_cap["diagnostico"]
+                st.success(
+                    f"OM **{d_cap['sigla']}** (UASG `{d_cap['codigo_uasg']}` | UG `{d_cap['cnpj_ug']}`) "
+                    f"{res_cap['acao']} via `{res_cap['origem_dados']}` — "
+                    f"COEB **{d_cap['classificacao_coeb']}**, IVE **{d_cap['nota_ive']:.1f}** ({d_cap['classificacao_ive']}). "
+                    "Recarregue ou aplique filtros para vê-la destacada."
+                )
+                st.rerun()
+            except ValueError as exc:
+                st.error(str(exc))
+
+# ------------------------------------------------------------------
 # 2. Mapa Interativo A2/AD (Folium) + Ranking Doutrinário
 # ------------------------------------------------------------------
 col_mapa, col_rank = st.columns([1.25, 1])
@@ -177,6 +282,7 @@ with col_rank:
     df_tabela = df_filtrado[
         [
             "ranking",
+            "codigo_uasg",
             "sigla",
             "classificacao_coeb",
             "nota_ive",
@@ -189,6 +295,7 @@ with col_rank:
     df_tabela["valor_imovel_brl"] = (df_tabela["valor_imovel_brl"] / 1_000_000.0).round(1)
     df_tabela.columns = [
         "#",
+        "UASG",
         "OM",
         "COEB",
         "IVE",

@@ -3,7 +3,7 @@
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
 
@@ -36,6 +36,7 @@ class DiagnosticoOM:
     id_om: int
     sigla: str
     codigo_uasg: str
+    cnpj_ug: str
     classificacao_coeb: str
     indice_tecnologia_c4isr: float
     papel_a2ad: bool
@@ -313,6 +314,7 @@ class MotorIVE:
             id_om=om.id_om,
             sigla=om.sigla,
             codigo_uasg=om.codigo_uasg,
+            cnpj_ug=om.cnpj_ug,
             classificacao_coeb=coeb.value,
             indice_tecnologia_c4isr=c4isr,
             papel_a2ad=papel_a2ad,
@@ -342,8 +344,32 @@ class MotorIVE:
         )
 
     def diagnosticar_todas(self, db: Session, persistir_alertas: bool = True) -> List[DiagnosticoOM]:
-        """Executa o Motor JEV em todas as OMs e retorna ordenado pelo IVE decrescente."""
-        oms = db.query(OM).all()
-        diagnosticos = [self.diagnosticar_om(db, om, persistir_alertas=persistir_alertas) for om in oms]
+        """Executa o Motor JEV em todas as OMs (com eager loading) ordenado pelo IVE decrescente."""
+        oms = (
+            db.query(OM)
+            .options(
+                joinedload(OM.doutrina_tecnologia),
+                joinedload(OM.patrimonio_uniao),
+                joinedload(OM.sigpes),
+                joinedload(OM.transparencia_dados),
+                joinedload(OM.sislog),
+                joinedload(OM.estrategia),
+            )
+            .all()
+        )
+        diagnosticos: List[DiagnosticoOM] = []
+        houve_alteracao = False
+
+        for om in oms:
+            diag = self.diagnosticar_om(db, om, persistir_alertas=False)
+            if persistir_alertas and om.alertas_auditoria != diag.alertas_auditoria:
+                om.alertas_auditoria = diag.alertas_auditoria
+                db.add(om)
+                houve_alteracao = True
+            diagnosticos.append(diag)
+
+        if houve_alteracao:
+            db.commit()
+
         diagnosticos.sort(key=lambda d: d.nota_ive, reverse=True)
         return diagnosticos

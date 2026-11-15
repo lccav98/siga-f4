@@ -33,7 +33,7 @@ def criar_mapa_a2ad(oms: List[Dict[str, Any]]) -> folium.Map:
         popup_html = f"""
         <div style="font-family: Arial, sans-serif; min-width: 230px;">
             <h4 style="margin:0 0 6px 0;">{om.get('sigla', 'OM')}</h4>
-            <b>COEB:</b> {om.get('classificacao_coeb')} | <b>A2/AD:</b> {'SIM' if papel_a2ad else 'NÃO'}<br>
+            <b>UASG:</b> {om.get('codigo_uasg', '-')} | <b>COEB:</b> {om.get('classificacao_coeb')} | <b>A2/AD:</b> {'SIM' if papel_a2ad else 'NÃO'}<br>
             <b>IVE:</b> {om.get('nota_ive', 0):.1f} ({classif_ive})<br>
             <b>C4ISR:</b> {om.get('indice_tecnologia_c4isr', 0):.1f}/100<br>
             <b>Valor SPU:</b> R$ {valor_spu_m:,.1f} Mi<br>

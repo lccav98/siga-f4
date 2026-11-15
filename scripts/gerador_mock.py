@@ -1,18 +1,19 @@
-"""Gerador de massa de dados sintética (Faker) para as 20 OMs do MVP SIGA-F4.
+"""Gerador de massa de dados realista do Exército Brasileiro para o SIGA-F4.
 
-Inclui obrigatoriamente exemplos contrastantes:
-- Batalhão de Inteligência Militar (FEI, Alta Tecnologia C4ISR, Baixo Efetivo)
-- Batalhão de Infantaria Convencional de Guarda (FEC, Baixa Tecnologia, Alto Valor Imobiliário SPU)
+Cobre os 8 Comandos Militares de Área (CMA, CMN, CMO, CMP, CML, CMSE, CMS, CMNE)
+com mais de 220 Organizações Militares reais classificadas conforme o COEB:
+- FEI (Força de Emprego Imediato): Selva/Fronteira A2/AD, OpEsp, Pqdt, Amv, Ciber, GE, Intlg, AvEx, AAAe/GMF.
+- FEP (Força de Emprego Pronto / FORPRON): Brigadas Blindadas, Mecanizadas, Artilharia, Eng, Com e Log operativa.
+- FEC (Força de Emprego Condicionado): Guarda, PE, Caçadores/Infantaria territorial, Depósitos, Arsenais e Apoio RM.
 """
 
-import os
-import sys
 import random
+import sys
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 from faker import Faker
 
-# Garante importação do pacote backend quando executado diretamente
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -33,176 +34,514 @@ fake = Faker("pt_BR")
 Faker.seed(42)
 random.seed(42)
 
-# Perfis geográficos e doutrinários realistas para as 20 OMs
-PERFIS_OMS = [
-    # 1. Caso contrastante 1: Inteligência Militar (FEI, Alta Tecnologia, Baixo Efetivo)
-    {
-        "sigla": "1º BInt (Btl Intlg Mil)",
-        "cidade": "Manaus - AM",
-        "lat": -3.119028,
-        "lon": -60.021731,
-        "coeb": ClassificacaoCOEB.FEI,
-        "c4isr": 94.5,
-        "a2ad": True,
-        "valor_spu": 42_000_000.0,
-        "efetivo_decl": 185,
-        "efetivo_fim": 165,
-        "cpfs_ativos": 184,
-        "cpfs_reserva": 12,
-        "custeio_decl": 18_500_000.0,
-        "empenhado_cgu": 18_620_000.0,
-        "acionamentos": 48,
-        "disponibilidade": 96.5,
-        "dist_fronteira": 180.0,
-        "area_urbana": True,
-    },
-    # 2. Caso contrastante 2: Infantaria de Guarda (FEC, Baixa Tecnologia, Alto Valor Imobiliário)
-    {
-        "sigla": "2º BIG (Btl Inf Gda)",
-        "cidade": "Rio de Janeiro - RJ",
-        "lat": -22.906847,
-        "lon": -43.172896,
-        "coeb": ClassificacaoCOEB.FEC,
-        "c4isr": 16.0,
-        "a2ad": False,
-        "valor_spu": 485_000_000.0,
-        "efetivo_decl": 780,
-        "efetivo_fim": 320,
-        "cpfs_ativos": 650,  # Anomalia proposital (>5% delta: efetivo fantasma/inativos)
-        "cpfs_reserva": 210,
-        "custeio_decl": 34_000_000.0,
-        "empenhado_cgu": 38_900_000.0,  # Anomalia financeira (>5% delta)
-        "acionamentos": 1,
-        "disponibilidade": 58.0,
-        "dist_fronteira": 1150.0,
-        "area_urbana": True,
-    },
-    # 3. Comando de Defesa Cibernética (FEI, C4ISR máximo, baixo efetivo)
-    {
-        "sigla": "ComDCiber",
-        "cidade": "Brasília - DF",
-        "lat": -15.780148,
-        "lon": -47.929170,
-        "coeb": ClassificacaoCOEB.FEI,
-        "c4isr": 98.0,
-        "a2ad": True,
-        "valor_spu": 65_000_000.0,
-        "efetivo_decl": 210,
-        "efetivo_fim": 190,
-        "cpfs_ativos": 208,
-        "cpfs_reserva": 8,
-        "custeio_decl": 29_000_000.0,
-        "empenhado_cgu": 29_400_000.0,
-        "acionamentos": 62,
-        "disponibilidade": 98.0,
-        "dist_fronteira": 980.0,
-        "area_urbana": True,
-    },
-    # 4. Pelotão/Batalhão de Fronteira Amazônico (FEI, A2/AD em rota estratégica)
-    {
-        "sigla": "5º BIS (Btl Inf Sl)",
-        "cidade": "São Gabriel da Cachoeira - AM",
-        "lat": -0.130320,
-        "lon": -67.089160,
-        "coeb": ClassificacaoCOEB.FEI,
-        "c4isr": 72.0,
-        "a2ad": True,
-        "valor_spu": 18_500_000.0,
-        "efetivo_decl": 620,
-        "efetivo_fim": 540,
-        "cpfs_ativos": 615,
-        "cpfs_reserva": 18,
-        "custeio_decl": 31_000_000.0,
-        "empenhado_cgu": 31_500_000.0,
-        "acionamentos": 37,
-        "disponibilidade": 91.0,
-        "dist_fronteira": 25.0,
-        "area_urbana": False,
-    },
-    # 5. Brigada de Operações Especiais (FEI, mas com gargalo tecnológico simulado)
-    {
-        "sigla": "1º BFEsp",
-        "cidade": "Goiânia - GO",
-        "lat": -16.686891,
-        "lon": -49.264794,
-        "coeb": ClassificacaoCOEB.FEI,
-        "c4isr": 44.0,  # Gargalo Doutrinário (<50 em FEI)
-        "a2ad": True,
-        "valor_spu": 95_000_000.0,
-        "efetivo_decl": 410,
-        "efetivo_fim": 375,
-        "cpfs_ativos": 408,
-        "cpfs_reserva": 15,
-        "custeio_decl": 26_000_000.0,
-        "empenhado_cgu": 26_300_000.0,
-        "acionamentos": 41,
-        "disponibilidade": 94.0,
-        "dist_fronteira": 820.0,
-        "area_urbana": True,
-    },
-    # 6. Btl Com GE (Guerra Eletrônica - FEI)
-    {
-        "sigla": "1º BGE",
-        "cidade": "Brasília - DF",
-        "lat": -15.794229,
-        "lon": -47.882166,
-        "coeb": ClassificacaoCOEB.FEI,
-        "c4isr": 91.0,
-        "a2ad": True,
-        "valor_spu": 54_000_000.0,
-        "efetivo_decl": 240,
-        "efetivo_fim": 210,
-        "cpfs_ativos": 238,
-        "cpfs_reserva": 10,
-        "custeio_decl": 22_000_000.0,
-        "empenhado_cgu": 22_100_000.0,
-        "acionamentos": 35,
-        "disponibilidade": 93.5,
-        "dist_fronteira": 960.0,
-        "area_urbana": True,
-    },
-    # 7. FEI com quebra de prontidão (<85%)
-    {
-        "sigla": "2º RCC (Reg C Bld)",
-        "cidade": "Pirassununga - SP",
-        "lat": -21.996944,
-        "lon": -47.425833,
-        "coeb": ClassificacaoCOEB.FEI,
-        "c4isr": 62.0,
-        "a2ad": False,
-        "valor_spu": 140_000_000.0,
-        "efetivo_decl": 590,
-        "efetivo_fim": 480,
-        "cpfs_ativos": 585,
-        "cpfs_reserva": 45,
-        "custeio_decl": 41_000_000.0,
-        "empenhado_cgu": 41_800_000.0,
-        "acionamentos": 19,
-        "disponibilidade": 76.0,  # Quebra de Prontidão FEI (<85%)
-        "dist_fronteira": 750.0,
-        "area_urbana": True,
-    },
-]
+# Coordenadas reais (lat, lon, dist_fronteira_km, area_urbana, multiplicador_valor_spu)
+GUARNICOES: Dict[str, Tuple[float, float, float, bool, float]] = {
+    "Brasília - DF": (-15.793889, -47.882778, 980.0, True, 2.2),
+    "Rio de Janeiro - RJ": (-22.906847, -43.172896, 1150.0, True, 2.8),
+    "Vila Militar - RJ": (-22.862500, -43.401944, 1130.0, True, 1.9),
+    "Niterói - RJ": (-22.883333, -43.103611, 1160.0, True, 2.1),
+    "Petrópolis - RJ": (-22.505000, -43.178611, 1120.0, True, 1.4),
+    "Resende - RJ": (-22.468889, -44.446667, 1020.0, False, 1.1),
+    "Valença - RJ": (-22.245556, -43.700278, 1080.0, False, 0.8),
+    "Três Rios - RJ": (-22.116667, -43.208889, 1100.0, True, 0.9),
+    "Campos dos Goytacazes - RJ": (-21.754444, -41.324444, 1280.0, True, 1.1),
+    "São Paulo - SP": (-23.550520, -46.633308, 790.0, True, 3.0),
+    "Osasco - SP": (-23.532486, -46.791680, 775.0, True, 2.0),
+    "Barueri - SP": (-23.511111, -46.876111, 770.0, True, 2.1),
+    "Campinas - SP": (-22.905556, -47.060833, 730.0, True, 1.8),
+    "Caçapava - SP": (-23.100833, -45.706944, 880.0, True, 1.2),
+    "Taubaté - SP": (-23.026389, -45.555278, 895.0, True, 1.3),
+    "Lorena - SP": (-22.730833, -45.124722, 940.0, True, 0.9),
+    "Pindamonhangaba - SP": (-22.923889, -45.461667, 905.0, True, 1.0),
+    "Jundiaí - SP": (-23.185708, -46.897806, 745.0, True, 1.6),
+    "Itu - SP": (-23.264167, -47.299167, 710.0, True, 1.2),
+    "Pirassununga - SP": (-21.996944, -47.425833, 695.0, False, 1.0),
+    "Lins - SP": (-21.678611, -49.742500, 480.0, True, 0.8),
+    "Santos - SP": (-23.960833, -46.333611, 835.0, True, 2.0),
+    "Guarujá - SP": (-23.993056, -46.256389, 845.0, True, 1.9),
+    "Praia Grande - SP": (-24.005833, -46.402778, 840.0, True, 1.8),
+    "Belo Horizonte - MG": (-19.916667, -43.934444, 1140.0, True, 2.2),
+    "Juiz de Fora - MG": (-21.762423, -43.343399, 1090.0, True, 1.4),
+    "São João del-Rei - MG": (-21.135556, -44.261667, 1020.0, False, 0.9),
+    "Montes Claros - MG": (-16.735000, -43.861667, 1340.0, True, 1.0),
+    "Uberlândia - MG": (-18.918611, -48.277222, 780.0, True, 1.5),
+    "Uberaba - MG": (-19.748333, -47.931944, 790.0, True, 1.2),
+    "Araguari - MG": (-18.647222, -48.186944, 800.0, True, 0.9),
+    "Três Corações - MG": (-21.694722, -45.255278, 950.0, False, 0.9),
+    "Itajubá - MG": (-22.425556, -45.452778, 930.0, False, 0.9),
+    "Pouso Alegre - MG": (-22.230000, -45.936389, 885.0, True, 1.0),
+    "Vila Velha - ES": (-20.329722, -40.292500, 1420.0, True, 1.7),
+    "Manaus - AM": (-3.119028, -60.021731, 180.0, True, 1.4),
+    "São Gabriel da Cachoeira - AM": (-0.130320, -67.089160, 25.0, False, 0.5),
+    "Tabatinga - AM": (-4.252500, -69.938056, 4.0, True, 0.5),
+    "Tefé - AM": (-3.353611, -64.711389, 280.0, False, 0.5),
+    "Humaitá - AM": (-7.506111, -63.020833, 210.0, False, 0.5),
+    "Barcelos - AM": (-0.975000, -62.923889, 195.0, False, 0.4),
+    "Boa Vista - RR": (2.820000, -60.673333, 65.0, True, 0.9),
+    "Pacaraima - RR": (4.477778, -61.147778, 2.0, False, 0.3),
+    "Bonfim - RR": (3.360000, -59.833056, 3.0, False, 0.3),
+    "Porto Velho - RO": (-8.761944, -63.903889, 95.0, True, 1.0),
+    "Guajará-Mirim - RO": (-10.782778, -65.339444, 3.0, False, 0.4),
+    "Rio Branco - AC": (-9.974722, -67.810000, 75.0, True, 0.8),
+    "Cruzeiro do Sul - AC": (-7.627778, -72.675556, 45.0, False, 0.4),
+    "Epitaciolândia - AC": (-11.028889, -68.741111, 2.0, False, 0.3),
+    "Belém - PA": (-1.455833, -48.503889, 520.0, True, 1.5),
+    "Marabá - PA": (-5.368579, -49.117891, 680.0, False, 0.7),
+    "Altamira - PA": (-3.203333, -52.206389, 640.0, False, 0.5),
+    "Itaituba - PA": (-4.276111, -55.983611, 590.0, False, 0.5),
+    "Santarém - PA": (-2.443056, -54.708333, 490.0, True, 0.7),
+    "Tucuruí - PA": (-3.766111, -49.672500, 710.0, False, 0.5),
+    "Macapá - AP": (0.034444, -51.066389, 145.0, True, 0.8),
+    "Oiapoque - AP": (3.843056, -51.835000, 3.0, False, 0.3),
+    "Imperatriz - MA": (-5.526389, -47.491667, 940.0, True, 0.8),
+    "São Luís - MA": (-2.529722, -44.302778, 1020.0, True, 1.4),
+    "Campo Grande - MS": (-20.469710, -54.620121, 240.0, True, 1.3),
+    "Dourados - MS": (-22.220833, -54.805833, 95.0, True, 0.9),
+    "Corumbá - MS": (-19.008889, -57.651389, 8.0, False, 0.6),
+    "Ponta Porã - MS": (-22.536111, -55.725556, 2.0, False, 0.5),
+    "Amambai - MS": (-23.104167, -55.225556, 35.0, False, 0.5),
+    "Bela Vista - MS": (-22.108889, -56.521111, 3.0, False, 0.4),
+    "Jardim - MS": (-21.480278, -56.138056, 85.0, False, 0.5),
+    "Aquidauana - MS": (-20.471111, -55.787222, 160.0, False, 0.5),
+    "Coxim - MS": (-18.506667, -54.760000, 260.0, False, 0.5),
+    "Três Lagoas - MS": (-20.751111, -51.678333, 470.0, True, 0.8),
+    "Cuiabá - MT": (-15.601111, -56.097222, 220.0, True, 1.2),
+    "Cáceres - MT": (-16.070556, -57.678889, 65.0, False, 0.5),
+    "Rondonópolis - MT": (-16.470833, -54.635556, 360.0, True, 0.8),
+    "Barra do Garças - MT": (-15.890000, -52.256667, 560.0, False, 0.6),
+    "Goiânia - GO": (-16.686891, -49.264794, 820.0, True, 1.7),
+    "Anápolis - GO": (-16.326667, -48.952778, 860.0, True, 1.1),
+    "Cristalina - GO": (-16.768611, -47.613611, 950.0, False, 0.7),
+    "Formosa - GO": (-15.537222, -47.334167, 1020.0, False, 0.7),
+    "Jataí - GO": (-17.881389, -51.714444, 590.0, False, 0.7),
+    "Ipameri - GO": (-17.721944, -48.159722, 910.0, False, 0.6),
+    "Palmas - TO": (-10.184444, -48.333611, 890.0, True, 1.0),
+    "Porto Alegre - RS": (-30.034647, -51.217658, 310.0, True, 2.3),
+    "Santa Maria - RS": (-29.684167, -53.806944, 195.0, True, 1.1),
+    "Uruguaiana - RS": (-29.754722, -57.088333, 5.0, True, 0.7),
+    "Alegrete - RS": (-29.783056, -55.791944, 95.0, False, 0.6),
+    "Santiago - RS": (-29.191667, -54.866944, 115.0, False, 0.6),
+    "Bagé - RS": (-31.331389, -54.106944, 48.0, True, 0.7),
+    "São Borja - RS": (-28.660556, -56.004444, 6.0, False, 0.5),
+    "Santana do Livramento - RS": (-30.890833, -55.532778, 2.0, True, 0.6),
+    "Jaguarão - RS": (-32.566111, -53.375833, 3.0, False, 0.5),
+    "Dom Pedrito - RS": (-30.982778, -54.673056, 42.0, False, 0.5),
+    "Rosário do Sul - RS": (-30.258333, -54.914444, 120.0, False, 0.5),
+    "São Gabriel - RS": (-30.336389, -54.320000, 145.0, False, 0.6),
+    "Cruz Alta - RS": (-28.638611, -53.606389, 175.0, True, 0.7),
+    "Santo Ângelo - RS": (-28.299167, -54.263056, 75.0, False, 0.6),
+    "Santa Rosa - RS": (-27.870833, -54.481389, 32.0, False, 0.6),
+    "Ijuí - RS": (-28.387778, -53.914722, 130.0, False, 0.6),
+    "Passo Fundo - RS": (-28.262778, -52.406667, 220.0, True, 0.9),
+    "Pelotas - RS": (-31.765278, -52.337500, 110.0, True, 1.2),
+    "Rio Grande - RS": (-32.035000, -52.098611, 135.0, True, 1.1),
+    "São Leopoldo - RS": (-29.760278, -51.147222, 325.0, True, 1.3),
+    "Sapucaia do Sul - RS": (-29.839167, -51.144167, 320.0, True, 1.3),
+    "Cachoeira do Sul - RS": (-30.039167, -52.893889, 210.0, False, 0.6),
+    "Bento Gonçalves - RS": (-29.171389, -51.519167, 310.0, True, 0.9),
+    "Caxias do Sul - RS": (-29.167778, -51.179444, 340.0, True, 1.4),
+    "Curitiba - PR": (-25.428356, -49.273252, 420.0, True, 2.1),
+    "Ponta Grossa - PR": (-25.094444, -50.161944, 345.0, True, 1.1),
+    "Cascavel - PR": (-24.955556, -53.455278, 115.0, True, 1.1),
+    "Foz do Iguaçu - PR": (-25.516336, -54.585376, 8.0, True, 1.0),
+    "Guaíra - PR": (-24.080000, -54.255833, 6.0, False, 0.5),
+    "Guarapuava - PR": (-25.390833, -51.462222, 265.0, False, 0.8),
+    "Apucarana - PR": (-23.550833, -51.460833, 270.0, True, 0.8),
+    "Francisco Beltrão - PR": (-26.081111, -53.055000, 58.0, False, 0.6),
+    "Palmas - PR": (-26.484167, -51.990556, 125.0, False, 0.5),
+    "Rio Negro - PR": (-26.105833, -49.797500, 310.0, False, 0.6),
+    "Lapa - PR": (-25.769722, -49.715833, 355.0, False, 0.6),
+    "Florianópolis - SC": (-27.595378, -48.548050, 390.0, True, 2.2),
+    "Blumenau - SC": (-26.919444, -49.066111, 360.0, True, 1.3),
+    "Joinville - SC": (-26.304444, -48.846389, 410.0, True, 1.4),
+    "Criciúma - SC": (-28.677500, -49.369722, 330.0, True, 1.0),
+    "Tubarão - SC": (-28.466667, -49.006944, 365.0, True, 0.9),
+    "São Miguel do Oeste - SC": (-26.725556, -53.518056, 28.0, False, 0.5),
+    "Porto União - SC": (-26.238056, -51.078333, 220.0, False, 0.5),
+    "Lages - SC": (-27.816111, -50.326111, 270.0, False, 0.7),
+    "Recife - PE": (-8.047562, -34.876964, 1890.0, True, 2.0),
+    "Jaboatão dos Guararapes - PE": (-8.112867, -35.014964, 1875.0, True, 1.5),
+    "Olinda - PE": (-8.008889, -34.855278, 1895.0, True, 1.5),
+    "Petrolina - PE": (-9.389167, -40.502778, 1340.0, True, 0.9),
+    "Garanhuns - PE": (-8.890278, -36.492778, 1720.0, False, 0.7),
+    "Salvador - BA": (-12.971400, -38.501400, 1650.0, True, 2.3),
+    "Feira de Santana - BA": (-12.266667, -38.966667, 1590.0, True, 1.1),
+    "Barreiras - BA": (-12.152778, -44.990000, 1120.0, False, 0.7),
+    "Paulo Afonso - BA": (-9.406111, -38.221667, 1520.0, False, 0.6),
+    "Ilhéus - BA": (-14.788889, -39.049444, 1580.0, True, 1.1),
+    "Aracaju - SE": (-10.947247, -37.073082, 1720.0, True, 1.6),
+    "Maceió - AL": (-9.665833, -35.735278, 1810.0, True, 1.6),
+    "João Pessoa - PB": (-7.115000, -34.863056, 1920.0, True, 1.5),
+    "Campina Grande - PB": (-7.230556, -35.881111, 1820.0, True, 1.0),
+    "Natal - RN": (-5.794444, -35.211111, 1950.0, True, 1.6),
+    "Caicó - RN": (-6.458333, -37.097778, 1790.0, False, 0.5),
+    "Fortaleza - CE": (-3.717222, -38.543056, 1780.0, True, 2.0),
+    "Crateús - CE": (-5.178333, -40.677500, 1560.0, False, 0.5),
+    "Teresina - PI": (-5.089167, -42.801944, 1390.0, True, 1.2),
+    "Picos - PI": (-7.076944, -41.466944, 1460.0, False, 0.5),
+}
 
-CIDADES_RESTANTES = [
-    ("4º BIL", "Osasco - SP", -23.532486, -46.791680, ClassificacaoCOEB.FEP, 55.0, False, 210_000_000.0, 620.0, True),
-    ("12º GAC", "Jundiaí - SP", -23.185708, -46.897806, ClassificacaoCOEB.FEP, 68.0, True, 165_000_000.0, 610.0, True),
-    ("6º RCB", "Alegrete - RS", -29.783056, -55.791944, ClassificacaoCOEB.FEP, 64.0, True, 48_000_000.0, 95.0, False),
-    ("17º BLog", "Juiz de Fora - MG", -21.762423, -43.343399, ClassificacaoCOEB.FEP, 58.0, False, 110_000_000.0, 910.0, True),
-    ("3º BAvEx", "Campo Grande - MS", -20.469710, -54.620121, ClassificacaoCOEB.FEI, 84.0, True, 88_000_000.0, 290.0, False),
-    ("10º BLog", "Alegrete - RS", -29.791000, -55.775000, ClassificacaoCOEB.FEP, 51.0, False, 39_000_000.0, 98.0, False),
-    ("23º BI", "Blumenau - SC", -26.919444, -49.066111, ClassificacaoCOEB.FEP, 49.0, False, 175_000_000.0, 380.0, True),
-    ("34º BIMec", "Foz do Iguaçu - PR", -25.516336, -54.585376, ClassificacaoCOEB.FEI, 76.0, True, 92_000_000.0, 12.0, True),
-    ("14º BIMtz", "Jaboatão dos Guararapes - PE", -8.112867, -35.014964, ClassificacaoCOEB.FEP, 45.0, False, 195_000_000.0, 1850.0, True),
-    ("52º BIS", "Marabá - PA", -5.368579, -49.117891, ClassificacaoCOEB.FEP, 61.0, True, 44_000_000.0, 420.0, False),
-    ("19º BC", "Salvador - BA", -12.971400, -38.501400, ClassificacaoCOEB.FEC, 22.0, False, 340_000_000.0, 1650.0, True),
-    ("28º BC", "Aracaju - SE", -10.947247, -37.073082, ClassificacaoCOEB.FEC, 28.0, False, 230_000_000.0, 1720.0, True),
-    ("1º BG (Btl Guarda)", "Porto Alegre - RS", -30.034647, -51.217658, ClassificacaoCOEB.FEC, 19.0, False, 410_000_000.0, 310.0, True),
+# Catálogo doutrinário (sigla, guarnicao, coeb, c4isr, a2ad, perfil_anomalia)
+# perfil_anomalia: "limpo", "folha", "financeiro", "ambos", "prontidao"
+CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
+    # --- CASOS DE REFERÊNCIA E CONTRASTE DOUTRINÁRIO ---
+    ("1º BInt (Btl Intlg Mil)", "Manaus - AM", ClassificacaoCOEB.FEI, 94.5, True, "limpo"),
+    ("2º BIG (Btl Inf Gda)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 16.0, False, "ambos"),
+    ("ComDCiber (Cmdo Def Ciber)", "Brasília - DF", ClassificacaoCOEB.FEI, 98.0, True, "limpo"),
+    ("1º BFEsp (Btl Forças Esp)", "Goiânia - GO", ClassificacaoCOEB.FEI, 44.0, True, "limpo"),
+    ("1º BGE (Btl Guerra Elet)", "Brasília - DF", ClassificacaoCOEB.FEI, 91.0, True, "limpo"),
+
+    # --- FEI: FORÇAS DE EMPREGO IMEDIATO (FARE / OPESP / PQDT / AMV / AVEX / CIBER / INTLG / AAAe / SELVA E FRONTEIRA A2/AD) ---
+    ("2º BInt (Btl Intlg Mil)", "Brasília - DF", ClassificacaoCOEB.FEI, 92.0, True, "limpo"),
+    ("3º BInt (Btl Intlg Mil)", "Porto Alegre - RS", ClassificacaoCOEB.FEI, 89.0, True, "limpo"),
+    ("4º BInt (Btl Intlg Mil)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 88.5, True, "limpo"),
+    ("5º BInt (Btl Intlg Mil)", "Campo Grande - MS", ClassificacaoCOEB.FEI, 87.0, True, "limpo"),
+    ("6º BInt (Btl Intlg Mil)", "Recife - PE", ClassificacaoCOEB.FEI, 84.0, False, "limpo"),
+    ("COpEsp (Cmdo Op Esp)", "Goiânia - GO", ClassificacaoCOEB.FEI, 86.0, True, "limpo"),
+    ("1º BAC (Btl Ações Comandos)", "Goiânia - GO", ClassificacaoCOEB.FEI, 79.0, True, "limpo"),
+    ("1º BOpPsc (Btl Op Psic)", "Goiânia - GO", ClassificacaoCOEB.FEI, 81.0, True, "limpo"),
+    ("3ª Cia FE (Forças Esp)", "Manaus - AM", ClassificacaoCOEB.FEI, 83.5, True, "limpo"),
+    ("25º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 74.0, True, "limpo"),
+    ("26º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 75.5, True, "limpo"),
+    ("27º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 73.0, True, "limpo"),
+    ("8º GAC Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
+    ("20º BLog Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 68.0, False, "limpo"),
+    ("1º Esqd C Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 71.0, True, "limpo"),
+    ("Btl DOMPSA", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 70.0, False, "limpo"),
+    ("4º BIL (12ª Bda Amv)", "Osasco - SP", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
+    ("5º BIL (12ª Bda Amv)", "Lorena - SP", ClassificacaoCOEB.FEI, 70.5, True, "limpo"),
+    ("6º BIL (12ª Bda Amv)", "Caçapava - SP", ClassificacaoCOEB.FEI, 74.0, True, "limpo"),
+    ("20º GAC L (12ª Bda Amv)", "Barueri - SP", ClassificacaoCOEB.FEI, 71.5, True, "limpo"),
+    ("12º BLog L (12ª Bda Amv)", "Taubaté - SP", ClassificacaoCOEB.FEI, 67.0, False, "limpo"),
+    ("1º BAvEx", "Taubaté - SP", ClassificacaoCOEB.FEI, 88.0, True, "limpo"),
+    ("2º BAvEx", "Taubaté - SP", ClassificacaoCOEB.FEI, 87.5, True, "limpo"),
+    ("3º BAvEx", "Campo Grande - MS", ClassificacaoCOEB.FEI, 85.0, True, "limpo"),
+    ("4º BAvEx", "Manaus - AM", ClassificacaoCOEB.FEI, 86.5, True, "limpo"),
+    ("6º GMF (Mísseis/Foguetes)", "Formosa - GO", ClassificacaoCOEB.FEI, 90.0, True, "limpo"),
+    ("16º GMF (Mísseis/Foguetes)", "Formosa - GO", ClassificacaoCOEB.FEI, 89.0, True, "limpo"),
+    ("1º GAAAe (Def Antiaérea)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 84.0, True, "limpo"),
+    ("2º GAAAe (Def Antiaérea)", "Praia Grande - SP", ClassificacaoCOEB.FEI, 82.0, True, "limpo"),
+    ("3º GAAAe (Def Antiaérea)", "Caxias do Sul - RS", ClassificacaoCOEB.FEI, 80.5, True, "limpo"),
+    ("4º GAAAe (Def Antiaérea)", "Sete Lagoas - MG" if False else "Belo Horizonte - MG", ClassificacaoCOEB.FEI, 79.5, True, "limpo"),
+    ("11º GAAAe (Def Antiaérea)", "Brasília - DF", ClassificacaoCOEB.FEI, 85.5, True, "limpo"),
+    ("12º GAAAe Sl (Def Antiaérea)", "Manaus - AM", ClassificacaoCOEB.FEI, 83.0, True, "limpo"),
+    # Selva e Faixa de Fronteira (FEI Geográfica / A2/AD)
+    ("1º BIS (Amv)", "Manaus - AM", ClassificacaoCOEB.FEI, 77.0, True, "limpo"),
+    ("2º BIS", "Belém - PA", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
+    ("3º BIS", "Barcelos - AM", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
+    ("4º BIS", "Rio Branco - AC", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
+    ("5º BIS (Btl Inf Sl)", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
+    ("6º BIS", "Guajará-Mirim - RO", ClassificacaoCOEB.FEI, 67.5, True, "limpo"),
+    ("7º BIS", "Boa Vista - RR", ClassificacaoCOEB.FEI, 73.5, True, "limpo"),
+    ("8º BIS", "Tabatinga - AM", ClassificacaoCOEB.FEI, 75.0, True, "limpo"),
+    ("17º BIS", "Tefé - AM", ClassificacaoCOEB.FEI, 68.5, True, "limpo"),
+    ("24º BIS", "São Luís - MA", ClassificacaoCOEB.FEI, 60.0, False, "limpo"),
+    ("50º BIS", "Imperatriz - MA", ClassificacaoCOEB.FEI, 62.0, False, "limpo"),
+    ("51º BIS", "Altamira - PA", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
+    ("52º BIS", "Marabá - PA", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
+    ("53º BIS", "Itaituba - PA", ClassificacaoCOEB.FEI, 63.0, True, "limpo"),
+    ("54º BIS", "Humaitá - AM", ClassificacaoCOEB.FEI, 64.5, True, "limpo"),
+    ("61º BIS", "Cruzeiro do Sul - AC", ClassificacaoCOEB.FEI, 67.0, True, "limpo"),
+    ("1º Esqd C Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 71.0, True, "limpo"),
+    ("12º Esqd C Mec", "Boa Vista - RR", ClassificacaoCOEB.FEI, 70.0, True, "limpo"),
+    ("10º GAC Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
+    ("34º BI Mec (Tríplice Front.)", "Foz do Iguaçu - PR", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
+    ("2º Btl Fron", "Cáceres - MT", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
+    ("17º Btl Fron", "Corumbá - MS", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
+    ("10º RC Mec", "Bela Vista - MS", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
+    ("11º RC Mec", "Ponta Porã - MS", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
+    ("17º RC Mec", "Amambai - MS", ClassificacaoCOEB.FEI, 67.0, True, "limpo"),
+    ("5º RC Mec", "Quaraí - RS" if False else "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
+    ("7º RC Mec", "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
+    ("8º RC Mec", "Uruguaiana - RS", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
+    ("12º RC Mec", "Jaguarão - RS", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
+    ("2º RC Mec", "São Borja - RS", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
+    ("14º RC Mec", "São Miguel do Oeste - SC", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
+    ("15ª Cia Inf Mtz", "Guaíra - PR", ClassificacaoCOEB.FEI, 67.0, True, "limpo"),
+    ("34º BIS (Cia Fron Amapá)", "Macapá - AP", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
+    ("Cia Esp Fron Oiapoque", "Oiapoque - AP", ClassificacaoCOEB.FEI, 63.0, True, "limpo"),
+    ("PEF Pacaraima", "Pacaraima - RR", ClassificacaoCOEB.FEI, 62.0, True, "limpo"),
+    ("PEF Bonfim", "Bonfim - RR", ClassificacaoCOEB.FEI, 61.0, True, "limpo"),
+    ("PEF Epitaciolândia", "Epitaciolândia - AC", ClassificacaoCOEB.FEI, 60.0, True, "limpo"),
+    ("1º Cia Com Sl", "Manaus - AM", ClassificacaoCOEB.FEI, 82.0, True, "limpo"),
+    ("2º Cia Com Sl", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 78.0, True, "limpo"),
+    ("16ª Cia Com Sl", "Tefé - AM", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
+    ("17ª Cia Com Sl", "Porto Velho - RO", ClassificacaoCOEB.FEI, 77.0, True, "limpo"),
+    ("23ª Cia Com Sl", "Marabá - PA", ClassificacaoCOEB.FEI, 75.0, True, "limpo"),
+    ("2º RCC (Quebra Prontidão)", "Pirassununga - SP", ClassificacaoCOEB.FEI, 62.0, False, "prontidao"),
+
+    # --- FEP: FORÇAS DE EMPREGO PRONTO (FORPRON — BLINDADOS, MECANIZADOS, ARTILHARIA, ENG, COM, LOG) ---
+    ("1º RCC", "Santa Maria - RS", ClassificacaoCOEB.FEP, 68.0, True, "limpo"),
+    ("3º RCC", "Ponta Grossa - PR", ClassificacaoCOEB.FEP, 69.0, True, "limpo"),
+    ("4º RCC", "Rosário do Sul - RS", ClassificacaoCOEB.FEP, 66.0, True, "limpo"),
+    ("5º RCC", "Rio Negro - PR", ClassificacaoCOEB.FEP, 67.0, True, "limpo"),
+    ("7º BIB", "Santa Cruz do Sul - RS" if False else "Santa Maria - RS", ClassificacaoCOEB.FEP, 62.0, True, "limpo"),
+    ("20º BIB", "Curitiba - PR", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("29º BIB", "Santa Maria - RS", ClassificacaoCOEB.FEP, 65.0, True, "limpo"),
+    ("1º RCB", "Itaqui - RS" if False else "Uruguaiana - RS", ClassificacaoCOEB.FEP, 60.0, True, "limpo"),
+    ("4º RCB", "São Luiz Gonzaga - RS" if False else "Santo Ângelo - RS", ClassificacaoCOEB.FEP, 61.0, True, "limpo"),
+    ("6º RCB", "Alegrete - RS", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("9º RCB", "São Gabriel - RS", ClassificacaoCOEB.FEP, 62.0, True, "limpo"),
+    ("19º RC Mec", "Santa Rosa - RS", ClassificacaoCOEB.FEP, 63.0, True, "limpo"),
+    ("1º RC Mec", "Itaqui - RS" if False else "Santiago - RS", ClassificacaoCOEB.FEP, 61.0, True, "limpo"),
+    ("3º RC Mec", "Bagé - RS", ClassificacaoCOEB.FEP, 62.0, True, "limpo"),
+    ("13º RC Mec", "Pirassununga - SP", ClassificacaoCOEB.FEP, 60.0, False, "limpo"),
+    ("28º BI Mec", "Campinas - SP", ClassificacaoCOEB.FEP, 66.0, True, "limpo"),
+    ("2º BIL (Mecanizado)", "São Vicente - SP" if False else "Santos - SP", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("37º BI Mec", "Lins - SP", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("30º BI Mec", "Apucarana - PR", ClassificacaoCOEB.FEP, 61.0, False, "limpo"),
+    ("33º BI Mec", "Cascavel - PR", ClassificacaoCOEB.FEP, 65.0, True, "limpo"),
+    ("36º BI Mec", "Uberlândia - MG", ClassificacaoCOEB.FEP, 60.0, False, "limpo"),
+    ("4º BIMtz (11ª Bda)", "Osasco - SP", ClassificacaoCOEB.FEP, 56.0, False, "limpo"),
+    ("20º RCB", "Campo Grande - MS", ClassificacaoCOEB.FEP, 63.0, True, "limpo"),
+    ("47º BI", "Coxim - MS", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
+    ("58º BI Mtz", "Aragarças - GO" if False else "Barra do Garças - MT", ClassificacaoCOEB.FEP, 54.0, False, "limpo"),
+    ("44º BI Mtz", "Cuiabá - MT", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("22º BI", "Palmas - TO", ClassificacaoCOEB.FEP, 56.0, False, "limpo"),
+    ("41º BI Mtz", "Jataí - GO", ClassificacaoCOEB.FEP, 53.0, False, "limpo"),
+    ("1º BI Mtz (Es)", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 63.0, False, "limpo"),
+    ("2º BI Mtz (Es)", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 61.0, False, "limpo"),
+    ("57º BI Mtz (Es)", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 60.0, False, "limpo"),
+    ("32º BI L Mth", "Petrópolis - RJ", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("11º BI Mth", "São João del-Rei - MG", ClassificacaoCOEB.FEP, 62.0, True, "limpo"),
+    ("10º BI L Mth", "Juiz de Fora - MG", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("71º BI Mtz (Caatinga)", "Garanhuns - PE", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("72º BI Caat", "Petrolina - PE", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("14º BI Mtz", "Jaboatão dos Guararapes - PE", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
+    ("15º BI Mtz", "João Pessoa - PB", ClassificacaoCOEB.FEP, 52.0, False, "limpo"),
+    ("16º BI Mtz", "Natal - RN", ClassificacaoCOEB.FEP, 53.0, False, "limpo"),
+    ("16º RC Mec", "Bayeux - PB" if False else "João Pessoa - PB", ClassificacaoCOEB.FEP, 56.0, False, "limpo"),
+    ("35º BI", "Feira de Santana - BA", ClassificacaoCOEB.FEP, 51.0, False, "limpo"),
+    ("4º BEC", "Barreiras - BA", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("1º BEC", "Caicó - RN", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("2º BEC", "Teresina - PI", ClassificacaoCOEB.FEP, 56.0, False, "limpo"),
+    ("3º BEC", "Picos - PI", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
+    ("5º BEC", "Porto Velho - RO", ClassificacaoCOEB.FEP, 61.0, True, "limpo"),
+    ("6º BEC", "Boa Vista - RR", ClassificacaoCOEB.FEP, 62.0, True, "limpo"),
+    ("7º BEC", "Rio Branco - AC", ClassificacaoCOEB.FEP, 60.0, True, "limpo"),
+    ("8º BEC", "Santarém - PA", ClassificacaoCOEB.FEP, 59.0, True, "limpo"),
+    ("9º BEC", "Cuiabá - MT", ClassificacaoCOEB.FEP, 60.0, True, "limpo"),
+    ("1º BE Cmb", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 63.0, False, "limpo"),
+    ("2º BE Cmb", "Pindamonhangaba - SP", ClassificacaoCOEB.FEP, 64.0, False, "limpo"),
+    ("3º BE Cmb", "Cachoeira do Sul - RS", ClassificacaoCOEB.FEP, 65.0, True, "limpo"),
+    ("4º BE Cmb", "Itajubá - MG", ClassificacaoCOEB.FEP, 61.0, False, "limpo"),
+    ("5º BE Cmb Bld", "Porto União - SC", ClassificacaoCOEB.FEP, 66.0, True, "limpo"),
+    ("6º BE Cmb", "São Gabriel - RS", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("9º BE Cmb", "Aquidauana - MS", ClassificacaoCOEB.FEP, 63.0, True, "limpo"),
+    ("12º BE Cmb Bld", "Alegrete - RS", ClassificacaoCOEB.FEP, 65.0, True, "limpo"),
+    ("1º GAC Sl", "Marabá - PA", ClassificacaoCOEB.FEP, 61.0, True, "limpo"),
+    ("2º GAC L", "Itu - SP", ClassificacaoCOEB.FEP, 62.0, False, "limpo"),
+    ("3º GAC AP", "Santa Maria - RS", ClassificacaoCOEB.FEP, 69.0, True, "limpo"),
+    ("4º GAC L Mth", "Juiz de Fora - MG", ClassificacaoCOEB.FEP, 60.0, False, "limpo"),
+    ("5º GAC AP", "Curitiba - PR", ClassificacaoCOEB.FEP, 68.0, True, "limpo"),
+    ("6º GAC", "Rio Grande - RS", ClassificacaoCOEB.FEP, 59.0, True, "limpo"),
+    ("7º GAC", "Olinda - PE", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("9º GAC", "Nioaque - MS" if False else "Jardim - MS", ClassificacaoCOEB.FEP, 60.0, True, "limpo"),
+    ("12º GAC", "Jundiaí - SP", ClassificacaoCOEB.FEP, 68.0, True, "limpo"),
+    ("13º GAC", "Cachoeira do Sul - RS", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("14º GAC", "Pouso Alegre - MG", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("15º GAC AP", "Lapa - PR", ClassificacaoCOEB.FEP, 67.0, True, "limpo"),
+    ("17º GAC", "Natal - RN", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
+    ("18º GAC", "Rondonópolis - MT", ClassificacaoCOEB.FEP, 60.0, False, "limpo"),
+    ("19º GAC", "Santiago - RS", ClassificacaoCOEB.FEP, 61.0, True, "limpo"),
+    ("21º GAC", "Niterói - RJ", ClassificacaoCOEB.FEP, 62.0, False, "limpo"),
+    ("22º GAC AP", "Uruguaiana - RS", ClassificacaoCOEB.FEP, 65.0, True, "limpo"),
+    ("25º GAC", "Bagé - RS", ClassificacaoCOEB.FEP, 60.0, True, "limpo"),
+    ("26º GAC", "Guarapuava - PR", ClassificacaoCOEB.FEP, 61.0, False, "limpo"),
+    ("27º GAC", "Ijuí - RS", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("28º GAC", "Criciúma - SC", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("29º GAC AP", "Cruz Alta - RS", ClassificacaoCOEB.FEP, 66.0, True, "limpo"),
+    ("31º GAC (Es)", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 64.0, False, "limpo"),
+    ("32º GAC", "Brasília - DF", ClassificacaoCOEB.FEP, 66.0, False, "limpo"),
+    ("1º BCom", "Santo Ângelo - RS", ClassificacaoCOEB.FEP, 74.0, True, "limpo"),
+    ("2º BCom", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 76.0, False, "limpo"),
+    ("3º BCom", "Porto Alegre - RS", ClassificacaoCOEB.FEP, 75.0, True, "limpo"),
+    ("4º BCom", "Manaus - AM", ClassificacaoCOEB.FEP, 79.0, True, "limpo"),
+    ("5º BCom", "Curitiba - PR", ClassificacaoCOEB.FEP, 73.0, False, "limpo"),
+    ("6º BCom", "Cristalina - GO", ClassificacaoCOEB.FEP, 74.0, False, "limpo"),
+    ("7º BCom", "Recife - PE", ClassificacaoCOEB.FEP, 71.0, False, "limpo"),
+    ("9º BCom GE", "Campo Grande - MS", ClassificacaoCOEB.FEP, 78.0, True, "limpo"),
+    ("1º BLog", "Santiago - RS", ClassificacaoCOEB.FEP, 56.0, False, "limpo"),
+    ("2º BLog L", "Campinas - SP", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("3º BLog", "Bagé - RS", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
+    ("4º BLog", "Santa Maria - RS", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("5º BLog", "Curitiba - PR", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("9º BLog", "Campo Grande - MS", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("10º BLog", "Alegrete - RS", ClassificacaoCOEB.FEP, 54.0, False, "limpo"),
+    ("15º BLog", "Cascavel - PR", ClassificacaoCOEB.FEP, 56.0, False, "limpo"),
+    ("16º BLog", "Brasília - DF", ClassificacaoCOEB.FEP, 60.0, False, "limpo"),
+    ("17º BLog L Mth", "Juiz de Fora - MG", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("22º BLog L", "Barueri - SP", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("23º BLog Sl", "Marabá - PA", ClassificacaoCOEB.FEP, 56.0, False, "limpo"),
+    ("28º BLog", "Dourados - MS", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("1º Btl Log Sl", "Boa Vista - RR", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("12º Btl Sup", "Manaus - AM", ClassificacaoCOEB.FEP, 54.0, False, "limpo"),
+    ("1º Btl Mnt", "Manaus - AM", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("2º BFErr (Ferroviário)", "Araguari - MG", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
+    ("1º BPE (Força Prontidão CML)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 50.0, False, "limpo"),
+
+    # --- FEC: FORÇAS DE EMPREGO CONDICIONADO (GUARDA, PE TERRITORIAL, GUARNIÇÕES CONVENCIONAIS, DEPÓSITOS, ARSENAIS, RM) ---
+    ("1º BG (Btl Guarda)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 19.0, False, "folha"),
+    ("BGP (Btl Guarda Presidencial)", "Brasília - DF", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
+    ("1º RCG (Dragões Independência)", "Brasília - DF", ClassificacaoCOEB.FEC, 21.0, False, "limpo"),
+    ("2º RCG (Reg C Guarda)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 18.0, False, "ambos"),
+    ("3º RCG (Reg C Guarda)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 17.0, False, "folha"),
+    ("2º BPE", "Osasco - SP", ClassificacaoCOEB.FEC, 32.0, False, "limpo"),
+    ("3º BPE", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 30.0, False, "folha"),
+    ("4º BPE", "Recife - PE", ClassificacaoCOEB.FEC, 29.0, False, "financeiro"),
+    ("5º BPE", "Curitiba - PR", ClassificacaoCOEB.FEC, 31.0, False, "limpo"),
+    ("6º BPE", "Salvador - BA", ClassificacaoCOEB.FEC, 27.0, False, "ambos"),
+    ("7º BPE", "Manaus - AM", ClassificacaoCOEB.FEC, 33.0, False, "limpo"),
+    ("8º BPE", "São Paulo - SP", ClassificacaoCOEB.FEC, 30.0, False, "financeiro"),
+    ("11º BPE", "Brasília - DF", ClassificacaoCOEB.FEC, 34.0, False, "limpo"),
+    ("19º BC", "Salvador - BA", ClassificacaoCOEB.FEC, 22.0, False, "ambos"),
+    ("23º BC", "Fortaleza - CE", ClassificacaoCOEB.FEC, 25.0, False, "folha"),
+    ("25º BC", "Teresina - PI", ClassificacaoCOEB.FEC, 23.0, False, "financeiro"),
+    ("28º BC", "Aracaju - SE", ClassificacaoCOEB.FEC, 28.0, False, "ambos"),
+    ("40º BI", "Crateús - CE", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
+    ("59º BI Mtz", "Maceió - AL", ClassificacaoCOEB.FEC, 26.0, False, "folha"),
+    ("38º BI", "Vila Velha - ES", ClassificacaoCOEB.FEC, 27.0, False, "ambos"),
+    ("12º BI", "Belo Horizonte - MG", ClassificacaoCOEB.FEC, 25.0, False, "ambos"),
+    ("55º BI", "Montes Claros - MG", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
+    ("23º BI", "Blumenau - SC", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("62º BI", "Joinville - SC", ClassificacaoCOEB.FEC, 28.0, False, "folha"),
+    ("63º BI", "Florianópolis - SC", ClassificacaoCOEB.FEC, 23.0, False, "ambos"),
+    ("9º BI Mtz", "Pelotas - RS", ClassificacaoCOEB.FEC, 26.0, False, "folha"),
+    ("18º BI Mtz", "Sapucaia do Sul - RS", ClassificacaoCOEB.FEC, 24.0, False, "financeiro"),
+    ("19º BI Mtz", "São Leopoldo - RS", ClassificacaoCOEB.FEC, 25.0, False, "folha"),
+    ("20º BI Bld (Guarnição)", "Curitiba - PR", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
+    ("13º BIB (Guarnição)", "Ponta Grossa - PR", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
+    ("31º BI Mtz", "Campina Grande - PB", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
+    ("21º BI", "Recife - PE", ClassificacaoCOEB.FEC, 22.0, False, "ambos"),
+    ("56º BI", "Campos dos Goytacazes - RJ", ClassificacaoCOEB.FEC, 21.0, False, "folha"),
+    ("3º BI", "Niterói - RJ", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
+    ("26º BI", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 19.0, False, "ambos"),
+    ("4º BPE / Cia Gd CML", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 18.0, False, "ambos"),
+    ("2º BI", "São Paulo - SP", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
+    ("4º BI", "São Paulo - SP", ClassificacaoCOEB.FEC, 18.5, False, "ambos"),
+    ("1º DSup (Depósito Suprimento)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 22.0, False, "financeiro"),
+    ("2º DSup (Depósito Suprimento)", "São Paulo - SP", ClassificacaoCOEB.FEC, 23.0, False, "financeiro"),
+    ("3º DSup (Depósito Suprimento)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 21.0, False, "folha"),
+    ("4º DSup (Depósito Suprimento)", "Juiz de Fora - MG", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
+    ("5º DSup (Depósito Suprimento)", "Curitiba - PR", ClassificacaoCOEB.FEC, 25.0, False, "limpo"),
+    ("6º DSup (Depósito Suprimento)", "Salvador - BA", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
+    ("7º DSup (Depósito Suprimento)", "Recife - PE", ClassificacaoCOEB.FEC, 22.0, False, "financeiro"),
+    ("8º DSup (Depósito Suprimento)", "Belém - PA", ClassificacaoCOEB.FEC, 23.0, False, "limpo"),
+    ("9º DSup (Depósito Suprimento)", "Campo Grande - MS", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
+    ("10º DSup (Depósito Suprimento)", "Fortaleza - CE", ClassificacaoCOEB.FEC, 21.0, False, "folha"),
+    ("11º DSup (Depósito Suprimento)", "Brasília - DF", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
+    ("AGR (Arsenal Guerra RJ)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 35.0, False, "financeiro"),
+    ("AGSP (Arsenal Guerra SP)", "Barueri - SP", ClassificacaoCOEB.FEC, 37.0, False, "limpo"),
+    ("AGRS (Arsenal Guerra RS)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 34.0, False, "folha"),
+    ("BApLogEx (Base Apoio Log)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 31.0, False, "ambos"),
+    ("PqRMnt/1", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 29.0, False, "financeiro"),
+    ("PqRMnt/2", "São Paulo - SP", ClassificacaoCOEB.FEC, 30.0, False, "financeiro"),
+    ("PqRMnt/3", "Santa Maria - RS", ClassificacaoCOEB.FEC, 32.0, False, "limpo"),
+    ("PqRMnt/5", "Curitiba - PR", ClassificacaoCOEB.FEC, 31.0, False, "limpo"),
+    ("PqRMnt/7", "Recife - PE", ClassificacaoCOEB.FEC, 28.0, False, "folha"),
+    ("PqRMnt/8", "Belém - PA", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("PqRMnt/9", "Campo Grande - MS", ClassificacaoCOEB.FEC, 30.0, False, "limpo"),
+    ("PqRMnt/10", "Fortaleza - CE", ClassificacaoCOEB.FEC, 27.0, False, "folha"),
+    ("PqRMnt/12", "Manaus - AM", ClassificacaoCOEB.FEC, 33.0, False, "limpo"),
+    ("HCE (Hospital Central Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 36.0, False, "financeiro"),
+    ("HMASP (Hosp Mil Área SP)", "São Paulo - SP", ClassificacaoCOEB.FEC, 35.0, False, "limpo"),
+    ("HMAPA (Hosp Mil Área PA)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 34.0, False, "limpo"),
+    ("HMAR (Hosp Mil Área Recife)", "Recife - PE", ClassificacaoCOEB.FEC, 32.0, False, "limpo"),
+    ("HMAB (Hosp Mil Área Brasília)", "Brasília - DF", ClassificacaoCOEB.FEC, 38.0, False, "limpo"),
+    ("HMAM (Hosp Mil Área Manaus)", "Manaus - AM", ClassificacaoCOEB.FEC, 35.0, False, "limpo"),
+    ("HGeS (Hosp Geral Salvador)", "Salvador - BA", ClassificacaoCOEB.FEC, 28.0, False, "folha"),
+    ("HGeF (Hosp Geral Fortaleza)", "Fortaleza - CE", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("HGeC (Hosp Geral Curitiba)", "Curitiba - PR", ClassificacaoCOEB.FEC, 31.0, False, "limpo"),
+    ("Cia Cmdo 1ª RM", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 24.0, False, "ambos"),
+    ("Cia Cmdo 2ª RM", "São Paulo - SP", ClassificacaoCOEB.FEC, 25.0, False, "financeiro"),
+    ("Cia Cmdo 3ª RM", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 24.0, False, "folha"),
+    ("Cia Cmdo 4ª RM", "Belo Horizonte - MG", ClassificacaoCOEB.FEC, 23.0, False, "limpo"),
+    ("Cia Cmdo 5ª RM", "Curitiba - PR", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
+    ("Cia Cmdo 6ª RM", "Salvador - BA", ClassificacaoCOEB.FEC, 21.0, False, "ambos"),
+    ("Cia Cmdo 7ª RM", "Recife - PE", ClassificacaoCOEB.FEC, 23.0, False, "folha"),
+    ("Cia Cmdo 8ª RM", "Belém - PA", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
+    ("Cia Cmdo 9ª RM", "Campo Grande - MS", ClassificacaoCOEB.FEC, 25.0, False, "limpo"),
+    ("Cia Cmdo 10ª RM", "Fortaleza - CE", ClassificacaoCOEB.FEC, 22.0, False, "folha"),
+    ("Cia Cmdo 11ª RM", "Brasília - DF", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
+    ("Cia Cmdo 12ª RM", "Manaus - AM", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
+    ("Cia Cmdo CML", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
+    ("Cia Cmdo CMSE", "São Paulo - SP", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("Cia Cmdo CMS", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
+    ("Cia Cmdo CMNE", "Recife - PE", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
+    ("Cia Cmdo CMO", "Campo Grande - MS", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
+    ("Cia Cmdo CMP", "Brasília - DF", ClassificacaoCOEB.FEC, 30.0, False, "limpo"),
+    ("Cia Cmdo CMA", "Manaus - AM", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("Cia Cmdo CMN", "Belém - PA", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
+    ("16º BI Mtz (Guarnição)", "Ilhéus - BA", ClassificacaoCOEB.FEC, 22.0, False, "limpo"),
+    ("Batalhão Escola Eng (Guarn.)", "Tubarão - SC", ClassificacaoCOEB.FEC, 25.0, False, "limpo"),
+    ("1º Btl Guardas Mecanizado", "Belo Horizonte - MG", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
+    ("2º Btl Guardas Territorial", "São Paulo - SP", ClassificacaoCOEB.FEC, 17.5, False, "ambos"),
+    ("3º Btl Guardas Territorial", "Salvador - BA", ClassificacaoCOEB.FEC, 18.0, False, "ambos"),
+    ("4º Btl Guardas Territorial", "Recife - PE", ClassificacaoCOEB.FEC, 19.5, False, "ambos"),
+    ("3º Esqd C L", "Três Corações - MG", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
+    ("1º Btl Instr (Apoio)", "Resende - RJ", ClassificacaoCOEB.FEC, 33.0, False, "limpo"),
+    ("Btl Cmdo Sv AMAN", "Resende - RJ", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("Btl Cmdo Sv EsSA", "Três Corações - MG", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
+    ("Cia Prec Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 88.0, True, "limpo"),
+    ("1º Cia Intlg (CML)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 85.0, True, "limpo"),
+    ("2º Cia Intlg (CMSE)", "São Paulo - SP", ClassificacaoCOEB.FEI, 86.0, True, "limpo"),
+    ("4º Cia Intlg (CMP)", "Brasília - DF", ClassificacaoCOEB.FEI, 87.0, True, "limpo"),
+    ("5º Cia Com Bld", "Ponta Grossa - PR", ClassificacaoCOEB.FEP, 72.0, True, "limpo"),
+    ("6º Cia Com", "Cristalina - GO", ClassificacaoCOEB.FEP, 70.0, False, "limpo"),
+    ("11º Cia Com Mec", "Campinas - SP", ClassificacaoCOEB.FEP, 73.0, True, "limpo"),
+    ("15º Cia Com Mec", "Cascavel - PR", ClassificacaoCOEB.FEP, 72.0, True, "limpo"),
+    ("1ª Cia Eng Cmb Mec", "São Borja - RS", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
+    ("2ª Cia Eng Cmb Mec", "Alegrete - RS", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("3ª Cia Eng Cmb Mec", "Dom Pedrito - RS", ClassificacaoCOEB.FEP, 63.0, True, "limpo"),
+    ("4ª Cia Eng Cmb Mec", "Jardim - MS", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("10ª Cia Eng Cmb", "São Bento do Una - PE" if False else "Petrolina - PE", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("21ª Bia AAAe Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 81.0, True, "limpo"),
+    ("5ª Bia AAAe L", "Osasco - SP", ClassificacaoCOEB.FEI, 79.0, True, "limpo"),
+    ("9ª Bia AAAe (Es)", "Macaé - RJ" if False else "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 78.0, True, "limpo"),
+    ("14º Pel PE", "Florianópolis - SC", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
+    ("38º Pel PE", "Goiânia - GO", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("10º Pel PE", "Fortaleza - CE", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
+    ("Cia Cmdo 5ª DE", "Curitiba - PR", ClassificacaoCOEB.FEP, 58.0, False, "limpo"),
+    ("Cia Cmdo 3ª DE", "Santa Maria - RS", ClassificacaoCOEB.FEP, 60.0, True, "limpo"),
+    ("Cia Cmdo 6ª DE", "Porto Alegre - RS", ClassificacaoCOEB.FEP, 57.0, False, "limpo"),
+    ("Cia Cmdo 1ª DE", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("Cia Cmdo 2ª DE", "São Paulo - SP", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("Cia Cmdo 7ª DE", "Recife - PE", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
+    ("Cia Cmdo Bda Inf Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 78.0, True, "limpo"),
+    ("Cia Cmdo 12ª Bda Inf Amv", "Caçapava - SP", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
+    ("Esqd Cmdo 5ª Bda C Bld", "Ponta Grossa - PR", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("Esqd Cmdo 6ª Bda C Bld", "Santa Maria - RS", ClassificacaoCOEB.FEP, 65.0, True, "limpo"),
+    ("Esqd Cmdo 4ª Bda C Mec", "Dourados - MS", ClassificacaoCOEB.FEP, 63.0, True, "limpo"),
+    ("Cia Cmdo 15ª Bda Inf Mec", "Cascavel - PR", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
+    ("Cia Cmdo 11ª Bda Inf Mec", "Campinas - SP", ClassificacaoCOEB.FEP, 63.0, False, "limpo"),
+    ("Cia Cmdo 16ª Bda Inf Sl", "Tefé - AM", ClassificacaoCOEB.FEI, 70.0, True, "limpo"),
+    ("Cia Cmdo 17ª Bda Inf Sl", "Porto Velho - RO", ClassificacaoCOEB.FEI, 71.0, True, "limpo"),
+    ("Cia Cmdo 2ª Bda Inf Sl", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
+    ("Cia Cmdo 1ª Bda Inf Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
+    ("Cia Cmdo 23ª Bda Inf Sl", "Marabá - PA", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
+    ("Cia Cmdo 22ª Bda Inf Sl", "Macapá - AP", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
+    ("Cia Cmdo 18ª Bda Inf Pan", "Corumbá - MS", ClassificacaoCOEB.FEI, 70.0, True, "limpo"),
+    ("18º Btl Trns (Transporte)", "Campo Grande - MS", ClassificacaoCOEB.FEP, 52.0, False, "limpo"),
+    ("1º Btl Trns", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 26.0, False, "financeiro"),
+    ("2º Btl Trns", "São Paulo - SP", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
+    ("3º Btl Trns", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 25.0, False, "folha"),
+    ("CIGE (Centro Intlg Ex)", "Brasília - DF", ClassificacaoCOEB.FEI, 96.0, True, "limpo"),
+    ("CDS (Centro Desenv Sist)", "Brasília - DF", ClassificacaoCOEB.FEI, 95.0, True, "limpo"),
+    ("CTEx (Centro Tecnol Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 93.0, True, "limpo"),
+    ("CAEx (Campo Provas Marambaia)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 84.0, True, "limpo"),
+    ("CITEx (Centro Integrado Telem)", "Brasília - DF", ClassificacaoCOEB.FEI, 94.0, True, "limpo"),
+    ("1º CTA (Centro Telemática)", "Porto Alegre - RS", ClassificacaoCOEB.FEP, 82.0, False, "limpo"),
+    ("2º CTA (Centro Telemática)", "São Paulo - SP", ClassificacaoCOEB.FEP, 83.0, False, "limpo"),
+    ("3º CTA (Centro Telemática)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 84.0, False, "limpo"),
+    ("4º CTA (Centro Telemática)", "Manaus - AM", ClassificacaoCOEB.FEI, 86.0, True, "limpo"),
+    ("5º CTA (Centro Telemática)", "Recife - PE", ClassificacaoCOEB.FEP, 80.0, False, "limpo"),
+    ("6º CTA (Centro Telemática)", "Campo Grande - MS", ClassificacaoCOEB.FEP, 81.0, False, "limpo"),
+    ("7º CTA (Centro Telemática)", "Brasília - DF", ClassificacaoCOEB.FEI, 88.0, True, "limpo"),
 ]
 
 
 def gerar_oms(reset: bool = True) -> int:
-    """Popula o banco de dados com as 20 OMs de teste."""
+    """Popula o banco de dados com todo o catálogo de OMs do Exército Brasileiro."""
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
@@ -217,54 +556,81 @@ def gerar_oms(reset: bool = True) -> int:
             db.query(OM).delete()
             db.commit()
 
-        todos_perfis = list(PERFIS_OMS)
-        for sigla, cidade, lat, lon, coeb, c4isr, a2ad, val_spu, dist_f, urbana in CIDADES_RESTANTES:
-            ef_decl = random.randint(350, 750)
-            ef_fim = int(ef_decl * (0.78 if coeb == ClassificacaoCOEB.FEI else 0.55 if coeb == ClassificacaoCOEB.FEP else 0.42))
-            # Introduz anomalia de folha em parte das OMs FEC
-            cpfs_at = int(ef_decl * (0.86 if coeb == ClassificacaoCOEB.FEC and random.random() < 0.5 else 0.99))
-            custeio_decl = round(random.uniform(18_000_000, 38_000_000), 2)
-            empenhado = round(custeio_decl * (1.08 if coeb == ClassificacaoCOEB.FEC else 1.01), 2)
+        contador_cidade: Dict[str, int] = {}
 
-            todos_perfis.append(
-                {
-                    "sigla": sigla,
-                    "cidade": cidade,
-                    "lat": lat,
-                    "lon": lon,
-                    "coeb": coeb,
-                    "c4isr": c4isr,
-                    "a2ad": a2ad,
-                    "valor_spu": val_spu,
-                    "efetivo_decl": ef_decl,
-                    "efetivo_fim": ef_fim,
-                    "cpfs_ativos": cpfs_at,
-                    "cpfs_reserva": random.randint(20, 160),
-                    "custeio_decl": custeio_decl,
-                    "empenhado_cgu": empenhado,
-                    "acionamentos": random.randint(15, 40) if coeb == ClassificacaoCOEB.FEI else random.randint(4, 15) if coeb == ClassificacaoCOEB.FEP else random.randint(0, 3),
-                    "disponibilidade": round(random.uniform(86, 97), 1) if coeb != ClassificacaoCOEB.FEC else round(random.uniform(52, 74), 1),
-                    "dist_fronteira": dist_f,
-                    "area_urbana": urbana,
-                }
-            )
+        for idx, (sigla, guarnicao, coeb, c4isr, a2ad, perfil_anomalia) in enumerate(CATALOGO_OMS, start=1):
+            base_lat, base_lon, dist_fronteira, area_urbana, mult_spu = GUARNICOES[guarnicao]
+            ocorrencia = contador_cidade.get(guarnicao, 0)
+            contador_cidade[guarnicao] = ocorrencia + 1
 
-        for idx, p in enumerate(todos_perfis, start=1):
-            uasg = f"160{idx:03d}"
+            # Pequeno deslocamento em espiral para OMs na mesma guarnição não se sobreporem no mapa
+            angulo = ocorrencia * 0.9
+            raio = 0.008 * (ocorrencia % 6)
+            lat = round(base_lat + (raio * (1 if ocorrencia % 2 == 0 else -1) * (0.5 + (angulo % 1))), 6)
+            lon = round(base_lon + (raio * (-1 if ocorrencia % 3 == 0 else 1) * (0.4 + (angulo % 1))), 6)
+
+            # Perfil de efetivo, custeio, prontidão e valor imobiliário coerente com COEB
+            if sigla.startswith("1º BInt"):
+                ef_decl, ef_fim = 185, 165
+                valor_spu = 42_000_000.0
+                custeio_decl = 18_500_000.0
+                acionamentos, disponibilidade = 48, 96.5
+            elif sigla.startswith("2º BIG"):
+                ef_decl, ef_fim = 780, 320
+                valor_spu = 485_000_000.0
+                custeio_decl = 34_000_000.0
+                acionamentos, disponibilidade = 1, 58.0
+            elif coeb == ClassificacaoCOEB.FEI:
+                is_tech_niche = any(k in sigla for k in ("BInt", "ComDCiber", "BGE", "CIGE", "CDS", "CITEx", "CTA", "CTEx", "PEF", "Cia"))
+                ef_decl = random.randint(140, 290) if is_tech_niche else random.randint(420, 680)
+                ef_fim = int(ef_decl * random.uniform(0.82, 0.92))
+                valor_spu = round(random.uniform(14_000_000, 75_000_000) * mult_spu, 2)
+                custeio_decl = round(ef_decl * random.uniform(52_000, 105_000), 2)
+                acionamentos = random.randint(28, 60)
+                disponibilidade = 76.0 if perfil_anomalia == "prontidao" else round(random.uniform(88.0, 98.5), 1)
+            elif coeb == ClassificacaoCOEB.FEP:
+                ef_decl = random.randint(450, 740)
+                ef_fim = int(ef_decl * random.uniform(0.58, 0.72))
+                valor_spu = round(random.uniform(40_000_000, 125_000_000) * mult_spu, 2)
+                custeio_decl = round(ef_decl * random.uniform(44_000, 72_000), 2)
+                acionamentos = random.randint(8, 22)
+                disponibilidade = round(random.uniform(82.0, 94.0), 1)
+            else:  # FEC
+                ef_decl = random.randint(360, 820)
+                ef_fim = int(ef_decl * random.uniform(0.32, 0.48))
+                valor_spu = round(random.uniform(85_000_000, 210_000_000) * mult_spu, 2)
+                custeio_decl = round(ef_decl * random.uniform(42_000, 68_000), 2)
+                acionamentos = random.randint(0, 4)
+                disponibilidade = round(random.uniform(50.0, 76.0), 1)
+
+            # Aplica divergências CGU/SIGPES conforme perfil de auditoria
+            if perfil_anomalia in ("folha", "ambos"):
+                cpfs_ativos = int(ef_decl * random.uniform(0.80, 0.89))
+                cpfs_reserva = random.randint(110, 260)
+            else:
+                cpfs_ativos = max(1, ef_decl - random.randint(0, 3))
+                cpfs_reserva = random.randint(6, 45)
+
+            if perfil_anomalia in ("financeiro", "ambos"):
+                empenhado_cgu = round(custeio_decl * random.uniform(1.09, 1.18), 2)
+            else:
+                empenhado_cgu = round(custeio_decl * random.uniform(0.985, 1.02), 2)
+
+            uasg = f"160{500 + idx:03d}"
             rip = f"RIP-{7000 + idx:04d}-SPU"
             cnpj = fake.cnpj()
             cep = fake.postcode()
-            endereco = f"{fake.street_address()}, {p['cidade']}"
+            endereco = f"{fake.street_address()}, {guarnicao}"
 
             om = OM(
                 codigo_uasg=uasg,
                 rip_spu=rip,
                 cnpj_ug=cnpj,
-                sigla=p["sigla"],
+                sigla=sigla,
                 cep=cep,
                 endereco=endereco,
-                latitude=p["lat"],
-                longitude=p["lon"],
+                latitude=lat,
+                longitude=lon,
                 alertas_auditoria=[],
             )
             db.add(om)
@@ -273,56 +639,56 @@ def gerar_oms(reset: bool = True) -> int:
             db.add(
                 DoutrinaTecnologia(
                     id_om=om.id_om,
-                    classificacao_coeb=p["coeb"],
-                    indice_tecnologia_c4isr=p["c4isr"],
-                    papel_a2ad=p["a2ad"],
+                    classificacao_coeb=coeb,
+                    indice_tecnologia_c4isr=c4isr,
+                    papel_a2ad=a2ad,
                 )
             )
             db.add(
                 PatrimonioUniao(
                     id_om=om.id_om,
                     rip_spu=rip,
-                    valor_imovel_brl=p["valor_spu"],
+                    valor_imovel_brl=valor_spu,
                 )
             )
             db.add(
                 Sigpes(
                     id_om=om.id_om,
-                    efetivo_total_declarado=p["efetivo_decl"],
-                    efetivo_fim=p["efetivo_fim"],
-                    custeio_declarado_brl=p["custeio_decl"],
+                    efetivo_total_declarado=ef_decl,
+                    efetivo_fim=ef_fim,
+                    custeio_declarado_brl=custeio_decl,
                 )
             )
             db.add(
                 TransparenciaDados(
                     id_om=om.id_om,
                     ano_mes="2026-10",
-                    total_empenhado=p["empenhado_cgu"],
-                    cpfs_ativos=p["cpfs_ativos"],
-                    cpfs_reserva=p["cpfs_reserva"],
+                    total_empenhado=empenhado_cgu,
+                    cpfs_ativos=cpfs_ativos,
+                    cpfs_reserva=cpfs_reserva,
                 )
             )
             db.add(
                 Sislog(
                     id_om=om.id_om,
-                    acionamentos_reais_36m=p["acionamentos"],
-                    taxa_disponibilidade=p["disponibilidade"],
+                    acionamentos_reais_36m=acionamentos,
+                    taxa_disponibilidade=disponibilidade,
                 )
             )
             db.add(
                 Estrategia(
                     id_om=om.id_om,
-                    dist_fronteira_km=p["dist_fronteira"],
-                    area_urbana=p["area_urbana"],
+                    dist_fronteira_km=dist_fronteira,
+                    area_urbana=area_urbana,
                 )
             )
 
         db.commit()
-        return len(todos_perfis)
+        return len(CATALOGO_OMS)
     finally:
         db.close()
 
 
 if __name__ == "__main__":
     total = gerar_oms(reset=True)
-    print(f"[SIGA-F4] {total} OMs geradas e persistidas com sucesso no banco de dados.")
+    print(f"[SIGA-F4] {total} OMs do Exército Brasileiro geradas e persistidas com sucesso.")
