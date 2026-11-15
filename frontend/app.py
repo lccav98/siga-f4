@@ -309,6 +309,78 @@ with col_rank:
 st.divider()
 
 # ------------------------------------------------------------------
+# 2B. Guia Doutrinário: Significado do IVE, Faixas e Alternativas Viáveis
+# ------------------------------------------------------------------
+st.subheader("📘 Significado do IVE, Classificações JEV e Alternativas Viáveis")
+
+with st.expander("🧮 Como o IVE (0–100) é calculado pelo Motor JEV", expanded=False):
+    st.markdown(
+        """
+        O **Índice de Valor Estratégico (IVE)** mede o retorno operacional, tecnológico e geoestratégico de cada OM
+        em relação ao seu custo de manutenção e patrimônio imobilizado:
+
+        - **Teeth-to-Tail (15%):** razão `efetivo_fim / cpfs_ativos` (peso da atividade-fim sobre a estrutura administrativa).
+        - **Eficiência de Custeio (15%):** `total_empenhado / cpfs_ativos` auditado via Portal da Transparência (CGU).
+        - **Nível Tecnológico Força 4.0 (25%):** `indice_tecnologia_c4isr` (C2, Guerra Eletrônica, IA, Ciber e Comunicações).
+        - **Prontidão e Emprego (25%):** disponibilidade e acionamentos reais nos últimos 36 meses (SISLOG), exigindo emprego imediato em `FEI` e mobilização D+ em `FEC`.
+        - **Geoestratégia e A2/AD (20%):** proximidade de fronteiras e integração à negação de área (Calha Amazônica / rotas críticas = 100 pts).
+        - **Multiplicador COEB:** `FEI × 1,5` | `FEP × 1,2` | `FEC × 0,8` (normalizado pelo teto `1,45` na escala `0–100`).
+        - **Penalidade de Auditoria (`-15%` por anomalia):** divergência `> 5%` entre custeio declarado e CGU, divergência `> 5%` entre efetivo SIGPES e CPFs ativos CGU, ou quebra de prontidão `FEI < 85%`.
+        """
+    )
+
+col_p, col_z_fusao, col_zumbi = st.columns(3)
+
+with col_p:
+    st.success("### 🟢 Ponta de Lança (`IVE > 75`)")
+    st.markdown(
+        """
+        **O que torna a OM Ponta de Lança:**
+        - Enquadramento prioritário (**FEI**) ou **FEP** de altíssimo desempenho.
+        - Elevada maturidade tecnológica **C4ISR**, alta taxa de **efetivo-fim** e disponibilidade **SISLOG ≥ 85%**.
+        - Papel ativo em **A2/AD** ou posição geoestratégica crítica, sem anomalias graves de auditoria.
+
+        **Alternativas Viáveis:**
+        1. **Injeção de Capital Força 4.0:** direcionar recursos para IA, Guerra Eletrônica, Ciber e sensores C4ISR.
+        2. **Sanar Gargalo Doutrinário (se FEI com C4ISR < 50):** transferir verbas de alienação SPU para modernização imediata de C2.
+        3. **Blindagem Orçamentária e Logística:** priorizar dotação SISLOG para preservar o nível de prontidão.
+        """
+    )
+
+with col_z_fusao:
+    st.warning("### 🟡 Zona de Fusão (`IVE 40 a 75`)")
+    st.markdown(
+        """
+        **O que torna a OM Zona de Fusão:**
+        - Tipicamente unidades **FEP** de prontidão intermediária ou **FEI** penalizadas por queda de disponibilidade (`-15%`).
+        - Nível tecnológico **C4ISR mediano (45–75)**, relação atividade-fim/meio moderada ou menor exposição geoestratégica A2/AD.
+
+        **Alternativas Viáveis:**
+        1. **Unificação Modular de Meios:** fundir estruturas administrativas e logísticas com OMs vizinhas na mesma guarnição, eliminando UGs redundantes.
+        2. **Upgrade via Digital Twin:** captar capital de OMs Zumbi alienadas para elevar o índice C4ISR e migrar para *Ponta de Lança*.
+        3. **Recuperação de Prontidão (se FEI < 85%):** recompor disponibilidade material no SISLOG para remover a penalidade de `-15%`.
+        """
+    )
+
+with col_zumbi:
+    st.error("### 🔴 OM Zumbi (`IVE < 40`)")
+    st.markdown(
+        """
+        **O que torna a OM Zumbi:**
+        - Enquadramento **FEC** (multiplicador `0,8`), baixo índice **C4ISR (< 35)** e raros acionamentos reais.
+        - Baixa proporção de tropa na atividade-fim e **alto Custo de Oportunidade Imobiliária** (imóveis SPU urbanos valorizados).
+        - Penalidades acumuladas (`-15%` a `-30%`) por divergências **CGU × SIGPES** (> 5% em folha/inativos ou custeio).
+
+        **Alternativas Viáveis:**
+        1. **Desativação e Alienação via SPU:** encerrar o CNPJ/UG, alienar ou permutar o imóvel urbano e reinvestir em brigadas **FEI/Força 4.0** (simule no *Digital Twin* abaixo).
+        2. **Absorção Administrativa:** extinguir a autonomia de UG e transferir encargos de guarnição/guarda para outra OM próxima.
+        3. **Saneamento Imediato de Folha/Custeio:** caso mantida por imposição legal, auditar CPFs inativos/pensionistas e corrigir o *burn rate* na CGU.
+        """
+    )
+
+st.divider()
+
+# ------------------------------------------------------------------
 # 3. Gráficos de Dispersão (Tecnologia vs. Valor SPU e IVE vs. Valor SPU)
 # ------------------------------------------------------------------
 st.subheader("📈 Análise de Custo de Oportunidade & Força 4.0")
@@ -342,7 +414,37 @@ if diag:
     c_c.metric("Índice C4ISR", f"{diag['indice_tecnologia_c4isr']:.1f}/100")
     c_d.metric("Custo / IVE", f"R$ {diag['indicador_financeiro_estrategico'] / 1e6:,.2f} Mi")
 
+    comp = diag.get("componentes_ive", {})
+    if comp:
+        st.caption("**Decomposição dos 5 Pilares do IVE (notas 0–100 antes do multiplicador COEB e penalidades):**")
+        p1, p2, p3, p4, p5 = st.columns(5)
+        p1.metric("Teeth-to-Tail (15%)", f"{comp.get('teeth_to_tail', 0):.1f}")
+        p2.metric("Efic. Custeio (15%)", f"{comp.get('eficiencia_custeio', 0):.1f}")
+        p3.metric("C4ISR 4.0 (25%)", f"{comp.get('nivel_tecnologico_c4isr', 0):.1f}")
+        p4.metric("Prontidão (25%)", f"{comp.get('prontidao_emprego', 0):.1f}")
+        p5.metric("Geo/A2AD (20%)", f"{comp.get('geoestrategia_a2ad', 0):.1f}")
+
     st.info(f"**Prescrição Doutrinária:** {diag['prescricao_doutrinaria']}")
+
+    if diag["classificacao_ive"] == "Ponta de Lança":
+        alternativas_om = (
+            "1) Manter prioridade orçamentária e dotação SISLOG; "
+            "2) Se C4ISR < 50, redirecionar capital de alienações SPU para modernização C2/C4ISR; "
+            "3) Integrar em rede multidomínio Força 4.0."
+        )
+    elif diag["classificacao_ive"] == "Zona de Fusão":
+        alternativas_om = (
+            "1) Avaliar unificação modular de encargos administrativos/logísticos na guarnição; "
+            "2) Receber aporte de capital via Digital Twin (alienação de OMs Zumbi) para upgrade C4ISR; "
+            "3) Se houver quebra de prontidão (<85%), reequilibrar disponibilidade no SISLOG."
+        )
+    else:
+        alternativas_om = (
+            "1) Desativação com encerramento de CNPJ/UG e alienação/permuta do imóvel SPU para capitalizar unidades FEI; "
+            "2) Absorção das atividades de guarnição/guarda por outra OM próxima; "
+            "3) Se mantida, auditar divergências >5% de folha (inativos) e custeio na CGU."
+        )
+    st.markdown(f"**Alternativas Viáveis para esta OM:** {alternativas_om}")
 
     if diag["alertas_auditoria"]:
         for alerta in diag["alertas_auditoria"]:
