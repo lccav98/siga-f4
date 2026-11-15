@@ -187,9 +187,10 @@ coeb_selecionado = st.sidebar.multiselect(
     options=["FEP", "FEI", "FEC"],
     default=["FEP", "FEI", "FEC"],
     help=(
-        "FEP — Forças de Emprego de Prontidão (3.1.1.2.b): 1ª prioridade em pessoal, material, sistemas e C4ISR | "
-        "FEI — Forças de Emprego Imediato (3.1.1.2.a): faixa de fronteira / resposta inicial (2º plano vs FEP) | "
-        "FEC — Forças de Emprego Continuado (3.1.1.2.c): dissuasão, presença, defesa territorial e mobilização"
+        "FEP — Forças de Emprego de Prontidão (5 Brigadas ForPron: Bda Inf Pqdt, 12ª Bda Inf Amv, "
+        "23ª Bda Inf Sl, 11ª Bda Inf Mec e 5ª Bda C Bld) — 1ª prioridade em pessoal, material, sistemas e C4ISR | "
+        "FEI — Forças de Emprego Imediato: fronteira, resposta inicial e módulos multidomínio (2º plano vs FEP) | "
+        "FEC — Forças de Emprego Continuado: dissuasão, presença, defesa territorial e mobilização"
     ),
 )
 status_jev_selecionado = st.sidebar.multiselect(
@@ -394,7 +395,7 @@ with st.expander("🧮 Como o IVE (0–100) é calculado pelo Motor JEV", expand
         - **Nível Tecnológico Força 4.0 (25%):** `indice_tecnologia_c4isr` — sensores, sistemas não tripulados, fogos de precisão, Ciber, Guerra Eletrônica e apoio à decisão (itens 1.3 e 3.2).
         - **Prontidão e Emprego (25%):** disponibilidade e acionamentos reais (SISLOG), sustentando a meta mínima de **20% do efetivo em elevado grau de prontidão** (itens 1.4 e 2.6).
         - **Geoestratégia e A2/AD (20%):** resposta inicial na faixa de fronteira, Amazônia/rotas críticas e proteção multidomínio.
-        - **Multiplicador COEB (Item 3.1.1.2):** `FEP — Emprego de Prontidão (× 1,5)` *(aptas a atuar em qualquer teatro, 1ª prioridade em pessoal, material, sistemas e C4ISR)* | `FEI — Emprego Imediato (× 1,2)` *(faixa de fronteira / áreas de crise, 2º plano relativo às FEP)* | `FEC — Emprego Continuado (× 0,8)` *(dissuasão, presença, defesa territorial e mobilização D+)*.
+        - **Multiplicador COEB (Item 3.1.1.2):** `FEP — Emprego de Prontidão (× 1,5)` *(OMs das 5 Brigadas ForPron: Bda Inf Pqdt, 12ª Bda Inf Amv, 23ª Bda Inf Sl, 11ª Bda Inf Mec e 5ª Bda C Bld — 1ª prioridade em pessoal, material, sistemas e C4ISR)* | `FEI — Emprego Imediato (× 1,2)` *(faixa de fronteira, áreas de crise e módulos multidomínio, 2º plano relativo às FEP)* | `FEC — Emprego Continuado (× 0,8)` *(dissuasão, presença, defesa territorial e mobilização D+)*.
         - **Penalidade de Auditoria (`-15%` por anomalia):** divergência `> 5%` entre custeio declarado e CGU, divergência `> 5%` entre efetivo SIGPES e CPFs ativos CGU, ou quebra de prontidão (`FEP < 85%` ou `FEI < 78%`).
         """
     )

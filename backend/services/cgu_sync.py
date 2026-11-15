@@ -63,22 +63,94 @@ def formatar_cnpj(valor: Optional[str], fallback_uasg: str) -> str:
 
 
 def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float, bool]:
-    """Classifica automaticamente uma OM (FEP, FEI ou FEC) conforme o COEB.
+    """Classifica automaticamente uma OM (FEP, FEI ou FEC) conforme o COEB e EB10-P-01.031.
 
-    - FEP: maior prioridade em recompletamento de pessoal, material, sistemas e tecnologia.
-    - FEI: tropas debruçadas na fronteira (2º plano relativo às FEP em pessoal e material).
-    - FEC: presença territorial, guarda, apoio administrativo, depósitos e hospitais.
+    - FEP: exclusivamente OMs das 5 Brigadas ForPron (Bda Inf Pqdt, 12ª Bda Inf Amv,
+      23ª Bda Inf Sl, 11ª Bda Inf Mec e 5ª Bda C Bld).
+    - FEI: tropas na faixa de fronteira, módulos multidomínio e resposta inicial imediata.
+    - FEC: presença territorial, guarda, apoio administrativo, depósitos, arsenais e hospitais.
     """
     nome = nome_uasg.upper()
 
     termos_fep = (
+        # Brigada de Infantaria Paraquedista
         "PQDT",
         "PARAQUED",
+        "DOMPSA",
+        "PRECURSOR",
+        # Brigada de Infantaria Aeromóvel (12ª Bda Inf Amv)
         "AEROMOVEL",
         "AEROMÓVEL",
-        "OPERAÇÕES ESPECIAIS",
-        "OPERACOES ESPECIAIS",
-        "COMANDOS",
+        "12ª BDA",
+        "12 BDA",
+        "4º BIL",
+        "4 BIL",
+        "5º BIL",
+        "5 BIL",
+        "6º BIL",
+        "6 BIL",
+        "20º GAC",
+        "20 GAC",
+        "12º BLOG",
+        "12 BLOG",
+        # 23ª Brigada de Infantaria de Selva
+        "23ª BDA",
+        "23 BDA",
+        "50º BIS",
+        "50 BIS",
+        "51º BIS",
+        "51 BIS",
+        "52º BIS",
+        "52 BIS",
+        "53º BIS",
+        "53 BIS",
+        "23º BLOG",
+        "23 BLOG",
+        "23ª CIA COM",
+        "23 CIA COM",
+        # 11ª Brigada de Infantaria Mecanizada
+        "11ª BDA",
+        "11 BDA",
+        "28º BI",
+        "28 BI",
+        "37º BI",
+        "37 BI",
+        "2º BIL",
+        "2 BIL",
+        "13º RC MEC",
+        "13 RC MEC",
+        "11ª CIA COM",
+        "11 CIA COM",
+        # 5ª Brigada de Cavalaria Blindada
+        "5ª BDA",
+        "5 BDA",
+        "3º RCC",
+        "3 RCC",
+        "5º RCC",
+        "5 RCC",
+        "13º BIB",
+        "13 BIB",
+        "20º BIB",
+        "20 BIB",
+        "5º GAC AP",
+        "5 GAC AP",
+        "15º GAC AP",
+        "15 GAC AP",
+        "5º BE CMB",
+        "5 BE CMB",
+        "5º BLOG",
+        "5 BLOG",
+        "5º CIA COM",
+        "5 CIA COM",
+    )
+    if any(t in nome for t in termos_fep):
+        return (ClassificacaoCOEB.FEP, 78.0, True)
+
+    termos_fei = (
+        "SELVA",
+        "FRONTEIRA",
+        "PEF",
+        "BIS",
         "CIBER",
         "GUERRA ELETRÔNICA",
         "GUERRA ELETRONICA",
@@ -86,15 +158,14 @@ def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float
         "INTELIGENCIA",
         "AVIAÇÃO",
         "AVIACAO",
+        "OPERAÇÕES ESPECIAIS",
+        "OPERACOES ESPECIAIS",
+        "COMANDOS",
         "ANTIAÉRE",
         "ANTIAERE",
         "MÍSSEIS",
         "MISSEIS",
         "FOGUETES",
-        "TELEMÁTICA",
-        "TELEMATICA",
-        "SISTEMAS",
-        "TECNOL",
         "BLINDAD",
         "MECANIZAD",
         "ARTILHARIA",
@@ -102,25 +173,10 @@ def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float
         "ENGENHARIA",
         "COMUNICAÇÕES",
         "COMUNICACOES",
-        "LOGÍSTIC",
-        "LOGISTIC",
-        "MONTANHA",
-        "CAATINGA",
-        "PANTANAL",
-    )
-    if any(t in nome for t in termos_fep):
-        c4isr = 88.0 if any(t in nome for t in ("CIBER", "INTELIG", "GUERRA ELETR", "SISTEMAS", "TELEM", "AVIA")) else 68.0
-        a2ad = any(t in nome for t in ("CIBER", "INTELIG", "PQDT", "AEROMOV", "BLINDAD", "MECANIZ", "ANTIA", "MISSEIS", "AVIA"))
-        return (ClassificacaoCOEB.FEP, c4isr, a2ad)
-
-    termos_fei = (
-        "SELVA",
-        "FRONTEIRA",
-        "PEF",
-        "BIS",
     )
     if any(t in nome for t in termos_fei):
-        return (ClassificacaoCOEB.FEI, 58.0, True)
+        c4isr = 86.0 if any(t in nome for t in ("CIBER", "INTELIG", "GUERRA ELETR", "AVIA")) else 58.0
+        return (ClassificacaoCOEB.FEI, c4isr, True)
 
     return (ClassificacaoCOEB.FEC, 26.0, False)
 
