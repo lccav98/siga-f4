@@ -9,10 +9,38 @@ from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
 
 
 MULTIPLICADOR_COEB: Dict[ClassificacaoCOEB, float] = {
-    ClassificacaoCOEB.FEP: 1.5,  # 1ª prioridade COEB: recompletamento pessoal, material, sistemas e C4ISR
-    ClassificacaoCOEB.FEI: 1.2,  # 2º plano relativo às FEP: tropas debruçadas na faixa de fronteira
-    ClassificacaoCOEB.FEC: 0.8,  # Emprego condicionado / territorial
+    ClassificacaoCOEB.FEP: 1.5,  # Forças de Emprego de Prontidão (EB10-P-01.031, 3.1.1.2.b): 1ª prioridade
+    ClassificacaoCOEB.FEI: 1.2,  # Forças de Emprego Imediato (3.1.1.2.a): faixa de fronteira / 2º plano vs FEP
+    ClassificacaoCOEB.FEC: 0.8,  # Forças de Emprego Continuado (3.1.1.2.c): presença, dissuasão, mobilização
 }
+
+META_EFETIVO_PRONTIDAO_PCT = 20.0  # EB10-P-01.031 itens 1.4 e 2.6: mínimo de 20% em elevada prontidão
+TERMOS_MODULO_MULTIDOMINIO = (
+    "BINT",
+    "INTELIG",
+    "CIBER",
+    "BGE",
+    "C COM",
+    "BCOM",
+    "AAA",
+    "GMF",
+    "AVEX",
+    "PQDT",
+    "FESP",
+    "COMANDOS",
+)
+TERMOS_APOIO_AMPLIADO = (
+    "BLOG",
+    "CTA",
+    "TECNOL",
+    "ARSENAL",
+    "BEC",
+    "BE CMB",
+    "ENG",
+    "H MIL",
+    "HGU",
+    "SUP",
+)
 
 PENALIDADE_ANOMALIA = 0.15
 LIMIAR_DELTA_AUDITORIA = 0.05  # 5%
@@ -254,58 +282,77 @@ class MotorIVE:
         return ("OM Zumbi", "Política de Transformação, Alienação")
 
     @staticmethod
+    def classificar_enquadramento_transformacao(
+        sigla: str, coeb: ClassificacaoCOEB, c4isr: float, papel_a2ad: bool
+    ) -> str:
+        """Enquadra a OM nos grupos de emprego e módulos da Política de Transformação (EB10-P-01.031, 3.1.1.2)."""
+        sigla_up = sigla.upper()
+        if any(t in sigla_up for t in TERMOS_MODULO_MULTIDOMINIO) or (
+            coeb == ClassificacaoCOEB.FEP and c4isr >= 78.0 and papel_a2ad
+        ):
+            return "Módulo Multidomínio (FTC / C Conj)"
+        if any(t in sigla_up for t in TERMOS_APOIO_AMPLIADO) and coeb != ClassificacaoCOEB.FEC:
+            return "Módulo de Apoio Ampliado (FTC)"
+        if coeb == ClassificacaoCOEB.FEP:
+            return "Força de Emprego de Prontidão (FEP)"
+        if coeb == ClassificacaoCOEB.FEI:
+            return "Força de Emprego Imediato (FEI)"
+        return "Força de Emprego Continuado (FEC)"
+
+    @staticmethod
     def gerar_prescricao(
         classificacao_ive: str,
         coeb: ClassificacaoCOEB,
         c4isr: float,
         alertas: List[AlertaAuditoria],
     ) -> str:
-        """Gera Linha de Ação Dinâmica conforme matriz COEB (FEP 1ª prioridade, FEI fronteira, FEC) x IVE x C4ISR."""
+        """Gera Linha de Ação Dinâmica conforme EB10-P-01.031 (FEP Prontidão > FEI Fronteira > FEC Continuado)."""
         if classificacao_ive == "OM Zumbi" and coeb == ClassificacaoCOEB.FEC:
             return (
-                "Desativação imediata. OM de emprego condicionado com alto custo de capital "
-                "imobilizado. Alienar patrimônio via SPU para capitalizar forças FEP (1ª prioridade COEB) e FEI de fronteira."
+                "Desativação/Otimização imediata (EB10-P-01.031, item 3.1.3.1): estrutura de Emprego Continuado "
+                "que não agrega poder de combate/letalidade ou alinhamento PEECFA. Alienar patrimônio via SPU "
+                "para capitalizar forças FEP (Prontidão), FEI (Fronteira) e Módulos Multidomínio."
             )
 
         if classificacao_ive == "Ponta de Lança" and coeb == ClassificacaoCOEB.FEP and c4isr < 50.0:
             return (
-                "Gargalo Doutrinário FEP. Tropa de maior prioridade no COEB carente de tecnologia C4ISR. "
-                "Redirecionar recursos imediatamente para recompletamento de sistemas e material."
+                "Gargalo Doutrinário FEP (Prontidão). Tropa de maior prioridade no COEB carente de tecnologia C4ISR "
+                "(Eixo Capacidades 3.2). Redirecionar recursos imediatamente para sistemas de apoio à decisão e material."
             )
 
         if any(a.tipo == "QUEBRA_PRONTIDAO_FEP" for a in alertas):
             return (
-                "Intervenção de Prontidão Imediata (FEP). Unidade de 1ª prioridade COEB operando abaixo de "
-                "85% de disponibilidade; recompletar pessoal, material e logística (SISLOG)."
+                "Intervenção de Prontidão Imediata (FEP). Unidade de Emprego de Prontidão abaixo de 85% de "
+                "disponibilidade (compromete meta ≥20% EB10-P-01.031); recompletar pessoal, material e SISLOG."
             )
 
         if any(a.tipo == "QUEBRA_PRONTIDAO_FEI" for a in alertas):
             return (
-                "Reforço na Faixa de Fronteira (FEI). Unidade debruçada na fronteira abaixo de 78% de "
-                "disponibilidade; ajustar logística SISLOG após cobertura das prioridades FEP."
+                "Reforço na Faixa de Fronteira (FEI). Unidade de Emprego Imediato abaixo de 78% de "
+                "disponibilidade; ajustar logística SISLOG para resposta inicial após cobertura das prioridades FEP."
             )
 
         if classificacao_ive == "Ponta de Lança" and coeb == ClassificacaoCOEB.FEP:
             return (
-                "Manter prioridade máxima de recompletamento (pessoal, material, sistemas e C4ISR) "
-                "como núcleo decisivo Força 4.0 do COEB."
+                "Manter prioridade máxima de recompletamento (pessoal, material, sistemas e C4ISR) como núcleo "
+                "ofensivo e módulo Multidomínio da FTC/Comando Conjunto (EB10-P-01.031, PEEx 2024–2031)."
             )
 
         if classificacao_ive == "Ponta de Lança":
             return (
-                "Preservar prontidão de vigilância e negação de área na faixa de fronteira (FEI), "
-                "mantendo integração C4ISR com as grandes unidades FEP."
+                "Preservar prontidão de resposta inicial e vigilância na faixa de fronteira (FEI), "
+                "integrando sensores ISR à arquitetura de comando e controle das grandes unidades FEP."
             )
 
         if classificacao_ive == "Zona de Fusão":
             return (
-                "Reestruturar conforme o COEB por meio de unificação modular de meios; se FEI de fronteira, "
-                "modernizar sensores após atendimento do núcleo FEP; se FEP, elevar C4ISR via Digital Twin."
+                "Rearticular conforme o COEB e PEECFA (item 3.1.2.1/3.1.3.2) via unificação modular na FTC; "
+                "se FEI de fronteira, modernizar sensores pós-FEP; se FEP, elevar C4ISR via Digital Twin."
             )
 
         return (
-            "Revisão estrutural severa pela Política de Transformação: auditar folha/custeio "
-            "e avaliar desativação ou fusão patrimonial."
+            "Revisão estrutural severa pela Política de Transformação (item 3.1.3.1): auditar folha/custeio "
+            "e avaliar fusão ou alienação patrimonial de estrutura sem agregação direta de letalidade."
         )
 
     def diagnosticar_om(self, db: Session, om: OM, persistir_alertas: bool = True) -> DiagnosticoOM:
@@ -331,6 +378,9 @@ class MotorIVE:
 
         indicador_fin = round(valor_imovel / max(nota_ive, 1.0), 2)
         prescricao = self.gerar_prescricao(classificacao_ive, coeb, c4isr, alertas)
+        enquadramento_eb10 = self.classificar_enquadramento_transformacao(
+            om.sigla, coeb, c4isr, papel_a2ad
+        )
 
         cgu = self._obter_transparencia_recente(om)
         sigpes = om.sigpes
@@ -357,6 +407,7 @@ class MotorIVE:
                 "latitude": om.latitude,
                 "longitude": om.longitude,
                 "endereco": om.endereco,
+                "enquadramento_transformacao": enquadramento_eb10,
                 "efetivo_declarado": sigpes.efetivo_total_declarado if sigpes else 0,
                 "efetivo_fim": sigpes.efetivo_fim if sigpes else 0,
                 "cpfs_ativos_cgu": cgu.cpfs_ativos if cgu else 0,
@@ -400,3 +451,41 @@ class MotorIVE:
 
         diagnosticos.sort(key=lambda d: d.nota_ive, reverse=True)
         return diagnosticos
+
+    @staticmethod
+    def resumo_politica_transformacao(diagnosticos: List[DiagnosticoOM]) -> Dict[str, Any]:
+        """Calcula indicadores da Política de Transformação (EB10-P-01.031, itens 1.4, 2.6 e 3.1)."""
+        efetivo_total = sum(d.dados_operacionais.get("cpfs_ativos_cgu", 0) for d in diagnosticos)
+        efetivo_prontidao = sum(
+            d.dados_operacionais.get("cpfs_ativos_cgu", 0)
+            for d in diagnosticos
+            if d.classificacao_coeb in ("FEP", "FEI")
+            and d.dados_operacionais.get("taxa_disponibilidade", 0.0) >= LIMIAR_PRONTIDAO_FEP
+        )
+        percentual_prontidao = round((efetivo_prontidao / max(efetivo_total, 1)) * 100.0, 1)
+
+        modulos_multidominio = sum(
+            1
+            for d in diagnosticos
+            if d.dados_operacionais.get("enquadramento_transformacao") == "Módulo Multidomínio (FTC / C Conj)"
+        )
+        modulos_apoio_ampliado = sum(
+            1
+            for d in diagnosticos
+            if d.dados_operacionais.get("enquadramento_transformacao") == "Módulo de Apoio Ampliado (FTC)"
+        )
+        estruturas_otimizacao = [d for d in diagnosticos if d.classificacao_ive == "OM Zumbi"]
+
+        return {
+            "norma": "EB10-P-01.031 (Portaria C Ex Nº 2.662/2026)",
+            "governanca": "EME / 7ª Subchefia • Ciclo PEEx 2024–2027 → 2028–2031",
+            "meta_prontidao_minima_pct": META_EFETIVO_PRONTIDAO_PCT,
+            "efetivo_total_ativos": efetivo_total,
+            "efetivo_elevada_prontidao": efetivo_prontidao,
+            "percentual_prontidao_forca": percentual_prontidao,
+            "atende_meta_prontidao": percentual_prontidao >= META_EFETIVO_PRONTIDAO_PCT,
+            "modulos_multidominio_ftc": modulos_multidominio,
+            "modulos_apoio_ampliado_ftc": modulos_apoio_ampliado,
+            "oms_otimizacao_item_3_1_3_1": len(estruturas_otimizacao),
+            "patrimonio_otimizacao_brl": round(sum(d.valor_imovel_brl for d in estruturas_otimizacao), 2),
+        }

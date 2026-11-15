@@ -51,6 +51,7 @@ class OMRankingItem(BaseModel):
     foco_estrategico: str
     indicador_financeiro_estrategico: float
     total_alertas: int
+    enquadramento_transformacao: str = ""
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
@@ -96,11 +97,20 @@ def listar_oms_ranking(
             foco_estrategico=d.foco_estrategico,
             indicador_financeiro_estrategico=d.indicador_financeiro_estrategico,
             total_alertas=len(d.alertas_auditoria),
+            enquadramento_transformacao=d.dados_operacionais.get("enquadramento_transformacao", ""),
             latitude=d.dados_operacionais.get("latitude"),
             longitude=d.dados_operacionais.get("longitude"),
         )
         for idx, d in enumerate(diagnosticos, start=1)
     ]
+
+
+@router.get("/politica-transformacao")
+def obter_resumo_politica_transformacao(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Retorna indicadores de aderência à Política de Transformação do Exército (EB10-P-01.031)."""
+    motor = MotorIVE()
+    diagnosticos = motor.diagnosticar_todas(db, persistir_alertas=False)
+    return motor.resumo_politica_transformacao(diagnosticos)
 
 
 @router.get("/oms/uasg/{codigo}")

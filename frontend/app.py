@@ -64,12 +64,30 @@ def carregar_ranking_oms() -> tuple[List[Dict[str, Any]], str]:
                     "foco_estrategico": d.foco_estrategico,
                     "indicador_financeiro_estrategico": d.indicador_financeiro_estrategico,
                     "total_alertas": len(d.alertas_auditoria),
+                    "enquadramento_transformacao": d.dados_operacionais.get("enquadramento_transformacao", ""),
                     "latitude": d.dados_operacionais.get("latitude"),
                     "longitude": d.dados_operacionais.get("longitude"),
                 }
                 for idx, d in enumerate(diags, start=1)
             ]
             return dados, "Local DB (Fallback)"
+        finally:
+            db.close()
+
+
+def carregar_politica_transformacao() -> Dict[str, Any]:
+    """Carrega os indicadores de aderência à EB10-P-01.031 via API ou MotorIVE local."""
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            resp = client.get(f"{API_URL}/api/politica-transformacao")
+            resp.raise_for_status()
+            return resp.json()
+    except httpx.HTTPError:
+        db = SessionLocal()
+        try:
+            motor = MotorIVE()
+            diags = motor.diagnosticar_todas(db, persistir_alertas=False)
+            return motor.resumo_politica_transformacao(diags)
         finally:
             db.close()
 
@@ -143,9 +161,13 @@ def capturar_om_uasg(codigo: str, coeb_opcao: str) -> Dict[str, Any]:
 # Cabeçalho e Carregamento
 # ------------------------------------------------------------------
 st.title("🛡️ SIGA-F4 — Sistema de Governança Algorítmica de Força")
-st.caption("Motor JEV (Julgamento, Estratégia e Validação) • COEB / Força 4.0 • Auditoria CGU & SPU")
+st.caption(
+    "Motor JEV (Julgamento, Estratégia e Validação) • Política de Transformação EB10-P-01.031 (2026) "
+    "& COEB • Auditoria CGU & SPU"
+)
 
 oms_brutas, fonte_dados = carregar_ranking_oms()
+resumo_eb10 = carregar_politica_transformacao()
 
 if not oms_brutas:
     st.warning(
@@ -159,22 +181,29 @@ df_all = pd.DataFrame(oms_brutas)
 # ------------------------------------------------------------------
 # 1. Filtros Doutrinários (Sidebar)
 # ------------------------------------------------------------------
-st.sidebar.header("🎯 Filtros Doutrinários (COEB)")
+st.sidebar.header("🎯 Filtros Doutrinários (COEB / EB10-P-01.031)")
 coeb_selecionado = st.sidebar.multiselect(
-    "Classificação COEB",
+    "Grupos de Emprego COEB",
     options=["FEP", "FEI", "FEC"],
     default=["FEP", "FEI", "FEC"],
     help=(
-        "FEP (1ª Prioridade COEB): maior prioridade em pessoal, material, sistemas e C4ISR "
-        "(OpEsp, Pqdt, Amv, AvEx, Ciber, Intlg, Bld, Mec, Art, Eng, Com, Log) | "
-        "FEI: tropas debruçadas na fronteira (2º plano relativo às FEP em pessoal/material) | "
-        "FEC: Emprego Condicionado (Guarda, PE, Territorial, Depósitos, Arsenais, RM)"
+        "FEP — Forças de Emprego de Prontidão (3.1.1.2.b): 1ª prioridade em pessoal, material, sistemas e C4ISR | "
+        "FEI — Forças de Emprego Imediato (3.1.1.2.a): faixa de fronteira / resposta inicial (2º plano vs FEP) | "
+        "FEC — Forças de Emprego Continuado (3.1.1.2.c): dissuasão, presença, defesa territorial e mobilização"
     ),
 )
 status_jev_selecionado = st.sidebar.multiselect(
     "Diagnóstico JEV (IVE)",
     options=["Ponta de Lança", "Zona de Fusão", "OM Zumbi"],
     default=["Ponta de Lança", "Zona de Fusão", "OM Zumbi"],
+)
+modulos_disponiveis = sorted(
+    [m for m in df_all["enquadramento_transformacao"].dropna().unique().tolist() if m]
+)
+modulos_selecionados = st.sidebar.multiselect(
+    "Estrutura EB10-P-01.031 (FTC / Módulos)",
+    options=modulos_disponiveis,
+    default=modulos_disponiveis,
 )
 busca_sigla = st.sidebar.text_input(
     "🔍 Buscar por UASG, UG/CNPJ ou Sigla",
@@ -184,16 +213,17 @@ apenas_a2ad = st.sidebar.checkbox("Apenas Eixo A2/AD (Negação de Área)", valu
 apenas_alertas = st.sidebar.checkbox("Apenas OMs com Alertas CGU/Prontidão", value=False)
 st.sidebar.divider()
 st.sidebar.caption(
-    "**Enquadramento COEB:**\n"
-    f"- **FEP (1ª Prioridade):** {int((df_all['classificacao_coeb'] == 'FEP').sum())} OMs\n"
-    f"- **FEI (Fronteira / 2º Plano):** {int((df_all['classificacao_coeb'] == 'FEI').sum())} OMs\n"
-    f"- **FEC (Condicionado):** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs"
+    "**Grupos de Emprego (EB10-P-01.031):**\n"
+    f"- **FEP (Prontidão / 1ª Prio):** {int((df_all['classificacao_coeb'] == 'FEP').sum())} OMs\n"
+    f"- **FEI (Imediato / Fronteira):** {int((df_all['classificacao_coeb'] == 'FEI').sum())} OMs\n"
+    f"- **FEC (Continuado / Territorial):** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs"
 )
 st.sidebar.info(f"Fonte ativa: **{fonte_dados}** ({len(df_all)} OMs na base)")
 
 df_filtrado = df_all[
     df_all["classificacao_coeb"].isin(coeb_selecionado)
     & df_all["classificacao_ive"].isin(status_jev_selecionado)
+    & df_all["enquadramento_transformacao"].isin(modulos_selecionados)
 ].copy()
 if busca_sigla.strip():
     termo = busca_sigla.strip().lower()
@@ -223,9 +253,45 @@ col3.metric(
     f"R$ {df_filtrado['valor_imovel_brl'].sum() / 1e9:,.2f} Bi",
 )
 col4.metric(
-    "OMs Zumbi (Alienação)",
+    "OMs Zumbi (Item 3.1.3.1)",
     int((df_filtrado["classificacao_ive"] == "OM Zumbi").sum()),
 )
+
+# Painel de Conformidade — Política de Transformação do Exército Brasileiro (EB10-P-01.031 / 2026)
+with st.expander(
+    f"📜 Conformidade Política de Transformação ({resumo_eb10['norma']}) — Meta ≥ 20% Prontidão & FTC Multidomínio",
+    expanded=True,
+):
+    eb1, eb2, eb3, eb4 = st.columns(4)
+    pct_pront = resumo_eb10["percentual_prontidao_forca"]
+    delta_meta = round(pct_pront - resumo_eb10["meta_prontidao_minima_pct"], 1)
+    eb1.metric(
+        "Efetivo em Elevada Prontidão (Meta ≥ 20%)",
+        f"{pct_pront:.1f}%",
+        delta=f"{delta_meta:+.1f} p.p. vs. meta (itens 1.4/2.6)",
+    )
+    eb2.metric(
+        "Módulos Multidomínio (Item 3.1.1.2 d)",
+        f"{resumo_eb10['modulos_multidominio_ftc']} OMs",
+        help="Forças aptas ao Multidomínio na Força Terrestre Componente (FTC) ou Comando Conjunto.",
+    )
+    eb3.metric(
+        "Apoio Ampliado à FTC (Item 3.1.1.2 e)",
+        f"{resumo_eb10['modulos_apoio_ampliado_ftc']} OMs",
+        help="Estruturas modulares de sustentação logística, engenharia e telemática da FTC.",
+    )
+    eb4.metric(
+        "Alvos Otimização PEECFA (Item 3.1.3.1)",
+        f"{resumo_eb10['oms_otimizacao_item_3_1_3_1']} OMs",
+        delta=f"R$ {resumo_eb10['patrimonio_otimizacao_brl'] / 1e9:,.2f} Bi SPU",
+        delta_color="off",
+    )
+    st.caption(
+        f"**Governança:** {resumo_eb10['governanca']} | "
+        "**4 Eixos (Item 2.10):** Desenho Institucional, Capacidades, Doutrina e Pessoal | "
+        "**5 Fatores de Efetividade (Item 1.7):** Superioridade de Informações, Letalidade, Sustentação, Proteção e Mobilidade | "
+        "**Escalões Multidomínio (Item 3.1.3.2):** Corpo de Exército (ideal) e Divisão de Exército."
+    )
 
 st.divider()
 
@@ -286,6 +352,7 @@ with col_rank:
             "codigo_uasg",
             "sigla",
             "classificacao_coeb",
+            "enquadramento_transformacao",
             "nota_ive",
             "classificacao_ive",
             "indice_tecnologia_c4isr",
@@ -299,6 +366,7 @@ with col_rank:
         "UASG",
         "OM",
         "COEB",
+        "Grupo / Módulo (EB10)",
         "IVE",
         "Status JEV",
         "C4ISR",
@@ -317,15 +385,16 @@ st.subheader("📘 Significado do IVE, Classificações JEV e Alternativas Viáv
 with st.expander("🧮 Como o IVE (0–100) é calculado pelo Motor JEV", expanded=False):
     st.markdown(
         """
-        O **Índice de Valor Estratégico (IVE)** mede o retorno operacional, tecnológico e geoestratégico de cada OM
-        em relação ao seu custo de manutenção e patrimônio imobilizado, respeitando a precedência do **COEB**:
+        O **Índice de Valor Estratégico (IVE)** mede a efetividade em combate e a aderência de cada OM à
+        **Política de Transformação do Exército Brasileiro (EB10-P-01.031 / 2026)** e aos **PEECFA**,
+        refletindo os 5 vetores do item 1.7 (*Superioridade de Informações, Letalidade, Sustentação, Proteção e Mobilidade*):
 
-        - **Teeth-to-Tail (15%):** razão `efetivo_fim / cpfs_ativos` (peso da atividade-fim sobre a estrutura administrativa).
-        - **Eficiência de Custeio (15%):** `total_empenhado / cpfs_ativos` auditado via Portal da Transparência (CGU).
-        - **Nível Tecnológico Força 4.0 (25%):** `indice_tecnologia_c4isr` (C2, Guerra Eletrônica, IA, Ciber e Comunicações).
-        - **Prontidão e Emprego (25%):** disponibilidade e acionamentos reais nos últimos 36 meses (SISLOG), com maior exigência sobre as **FEP** (1ª prioridade), vigilância/resposta inicial nas **FEI** de fronteira e mobilização D+ nas **FEC**.
-        - **Geoestratégia e A2/AD (20%):** proximidade de fronteiras e integração à negação de área (Calha Amazônica / rotas críticas = 100 pts).
-        - **Multiplicador COEB:** `FEP × 1,5` *(maior prioridade em pessoal, material, sistemas e C4ISR)* | `FEI × 1,2` *(tropas na fronteira, 2º plano relativo às FEP)* | `FEC × 0,8` (normalizado pelo teto `1,45` na escala `0–100`).
+        - **Teeth-to-Tail (15%):** razão `efetivo_fim / cpfs_ativos` (peso do poder de combate e letalidade sobre a estrutura administrativa — item 3.1.3.1).
+        - **Eficiência de Custeio (15%):** `total_empenhado / cpfs_ativos` auditado via CGU sob restrição orçamentária (item 2.2).
+        - **Nível Tecnológico Força 4.0 (25%):** `indice_tecnologia_c4isr` — sensores, sistemas não tripulados, fogos de precisão, Ciber, Guerra Eletrônica e apoio à decisão (itens 1.3 e 3.2).
+        - **Prontidão e Emprego (25%):** disponibilidade e acionamentos reais (SISLOG), sustentando a meta mínima de **20% do efetivo em elevado grau de prontidão** (itens 1.4 e 2.6).
+        - **Geoestratégia e A2/AD (20%):** resposta inicial na faixa de fronteira, Amazônia/rotas críticas e proteção multidomínio.
+        - **Multiplicador COEB (Item 3.1.1.2):** `FEP — Emprego de Prontidão (× 1,5)` *(aptas a atuar em qualquer teatro, 1ª prioridade em pessoal, material, sistemas e C4ISR)* | `FEI — Emprego Imediato (× 1,2)` *(faixa de fronteira / áreas de crise, 2º plano relativo às FEP)* | `FEC — Emprego Continuado (× 0,8)` *(dissuasão, presença, defesa territorial e mobilização D+)*.
         - **Penalidade de Auditoria (`-15%` por anomalia):** divergência `> 5%` entre custeio declarado e CGU, divergência `> 5%` entre efetivo SIGPES e CPFs ativos CGU, ou quebra de prontidão (`FEP < 85%` ou `FEI < 78%`).
         """
     )
@@ -367,15 +436,15 @@ with col_zumbi:
     st.error("### 🔴 OM Zumbi (`IVE < 40`)")
     st.markdown(
         """
-        **O que torna a OM Zumbi:**
-        - Enquadramento **FEC** (multiplicador `0,8`), baixo índice **C4ISR (< 35)** e raros acionamentos reais.
-        - Baixa proporção de tropa na atividade-fim e **alto Custo de Oportunidade Imobiliária** (imóveis SPU urbanos valorizados).
+        **O que torna a OM Zumbi (Item 3.1.3.1):**
+        - Estrutura de **Emprego Continuado (FEC)** (multiplicador `0,8`) ou administrativa que não agrega poder de combate/letalidade nem alinhamento pleno aos **PEECFA**.
+        - Baixo índice **C4ISR (< 35)**, baixa proporção de tropa na atividade-fim e **alto Custo de Oportunidade Imobiliária** (SPU).
         - Penalidades acumuladas (`-15%` a `-30%`) por divergências **CGU × SIGPES** (> 5% em folha/inativos ou custeio).
 
         **Alternativas Viáveis:**
-        1. **Desativação e Alienação via SPU:** encerrar o CNPJ/UG, alienar ou permutar o imóvel urbano e reinvestir no recompletamento das **FEP** (1ª prioridade) e vigilância **FEI** (simule no *Digital Twin* abaixo).
-        2. **Absorção Administrativa:** extinguir a autonomia de UG e transferir encargos de guarnição/guarda para outra OM próxima.
-        3. **Saneamento Imediato de Folha/Custeio:** caso mantida por imposição legal, auditar CPFs inativos/pensionistas e corrigir o *burn rate* na CGU.
+        1. **Otimização e Alienação via SPU (Item 3.1.3.1):** encerrar o CNPJ/UG, alienar ou permutar o imóvel urbano e capitalizar **FEP (Prontidão)**, **FEI (Fronteira)** e **Módulos Multidomínio** (simule no *Digital Twin* abaixo).
+        2. **Rearticulação / Absorção Modular:** extinguir a autonomia de UG e consolidar encargos territoriais/de mobilização em outra OM da guarnição.
+        3. **Saneamento Imediato de Folha/Custeio:** caso mantida para defesa territorial/mobilização, auditar CPFs inativos e corrigir o *burn rate* na CGU.
         """
     )
 
@@ -409,6 +478,8 @@ label_om_sel = st.selectbox("Selecione uma OM para inspeção detalhada:", list(
 diag = carregar_diagnostico_om(opcoes_om[label_om_sel])
 
 if diag:
+    enq_eb10 = diag.get("dados_operacionais", {}).get("enquadramento_transformacao", diag["classificacao_coeb"])
+    st.caption(f"**Enquadramento EB10-P-01.031:** `{enq_eb10}` • UASG `{diag['codigo_uasg']}` • UG `{diag['cnpj_ug']}`")
     c_a, c_b, c_c, c_d = st.columns(4)
     c_a.metric("Classificação JEV", diag["classificacao_ive"])
     c_b.metric("Nota IVE", f"{diag['nota_ive']:.1f}")

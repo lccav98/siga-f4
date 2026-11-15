@@ -18,11 +18,11 @@ from backend.models.database import Base
 
 
 class ClassificacaoCOEB(str, enum.Enum):
-    """Classificação doutrinária conforme o Conceito Operacional do Exército Brasileiro."""
+    """Classificação doutrinária conforme o COEB e a Política de Transformação (EB10-P-01.031)."""
 
-    FEI = "FEI"  # Força de Emprego Imediato
-    FEP = "FEP"  # Força de Emprego Pronto
-    FEC = "FEC"  # Força de Emprego Condicionado
+    FEI = "FEI"  # Força de Emprego Imediato (faixa de fronteira / resposta inicial)
+    FEP = "FEP"  # Força de Emprego de Prontidão (poder de combate ofensivo / 1ª prioridade)
+    FEC = "FEC"  # Força de Emprego Continuado (dissuasão, presença, defesa territorial e mobilização)
 
 
 JSONBCompat = JSON().with_variant(JSONB, "postgresql")
