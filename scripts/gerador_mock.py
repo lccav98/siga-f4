@@ -412,7 +412,7 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("1º BPE", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 50.0, False, "limpo"),
 
     # --- FEC: FORÇAS DE EMPREGO CONDICIONADO (GUARDA, PE TERRITORIAL, GUARNIÇÕES CONVENCIONAIS, DEPÓSITOS, ARSENAIS, RM) ---
-    ("1º BG (Btl Guarda)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 19.0, False, "folha"),
+    ("1º BG (Btl Guarda)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 19.0, False, "folha"),
     ("BGP (Btl Guarda Presidencial)", "Brasília - DF", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
     ("1º RCG (Dragões Independência)", "Brasília - DF", ClassificacaoCOEB.FEC, 21.0, False, "limpo"),
     ("2º RCG (Reg C Guarda)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 18.0, False, "ambos"),
@@ -446,7 +446,7 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("56º BI", "Campos dos Goytacazes - RJ", ClassificacaoCOEB.FEC, 21.0, False, "folha"),
     ("3º BI", "Niterói - RJ", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
     ("26º BI", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 19.0, False, "ambos"),
-    ("4º BPE / Cia Gd CML", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 18.0, False, "ambos"),
+    ("Cia Gd CML", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 18.0, False, "ambos"),
     ("2º BI", "São Paulo - SP", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
     ("4º BI", "São Paulo - SP", ClassificacaoCOEB.FEC, 18.5, False, "ambos"),
     ("1º DSup (Depósito Suprimento)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 22.0, False, "financeiro"),
@@ -503,10 +503,6 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("Cia Cmdo CMA", "Manaus - AM", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
     ("Cia Cmdo CMN", "Belém - PA", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     ("Batalhão Escola Eng (Guarn.)", "Tubarão - SC", ClassificacaoCOEB.FEC, 25.0, False, "limpo"),
-    ("1º Btl Guardas Mecanizado", "Belo Horizonte - MG", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
-    ("2º Btl Guardas Territorial", "São Paulo - SP", ClassificacaoCOEB.FEC, 17.5, False, "ambos"),
-    ("3º Btl Guardas Territorial", "Salvador - BA", ClassificacaoCOEB.FEC, 18.0, False, "ambos"),
-    ("4º Btl Guardas Territorial", "Recife - PE", ClassificacaoCOEB.FEC, 19.5, False, "ambos"),
     ("3º Esqd C L", "Três Corações - MG", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
     ("1º Btl Instr (Apoio)", "Resende - RJ", ClassificacaoCOEB.FEC, 33.0, False, "limpo"),
     ("Btl Cmdo Sv AMAN", "Resende - RJ", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
