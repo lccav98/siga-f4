@@ -1,1 +1,348 @@
-"""Motor JEV (Validação, Estratégia e Julgamento) — a implementar na Fase 2."""
+"""Motor JEV (Julgamento, Estratégia e Validação) para diagnóstico doutrinário SIGA-F4."""
+
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy.orm import Session
+
+from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
+
+
+MULTIPLICADOR_COEB: Dict[ClassificacaoCOEB, float] = {
+    ClassificacaoCOEB.FEI: 1.5,
+    ClassificacaoCOEB.FEP: 1.2,
+    ClassificacaoCOEB.FEC: 0.8,
+}
+
+PENALIDADE_ANOMALIA = 0.15
+LIMIAR_DELTA_AUDITORIA = 0.05  # 5%
+LIMIAR_PRONTIDAO_FEI = 85.0    # 85%
+
+
+@dataclass
+class AlertaAuditoria:
+    """Representa uma anomalia detectada no cruzamento CGU / SIGPES / SISLOG."""
+
+    tipo: str
+    severidade: str
+    descricao: str
+    delta_percentual: Optional[float] = None
+
+
+@dataclass
+class DiagnosticoOM:
+    """Resultado consolidado do Motor JEV para uma Organização Militar."""
+
+    id_om: int
+    sigla: str
+    codigo_uasg: str
+    classificacao_coeb: str
+    indice_tecnologia_c4isr: float
+    papel_a2ad: bool
+    valor_imovel_brl: float
+    nota_ive: float
+    classificacao_ive: str
+    foco_estrategico: str
+    indicador_financeiro_estrategico: float
+    prescricao_doutrinaria: str
+    alertas_auditoria: List[Dict[str, Any]]
+    componentes_ive: Dict[str, float]
+    dados_operacionais: Dict[str, Any]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+class MotorIVE:
+    """Implementa os pilares Validação, Estratégia e Julgamento do framework JEV."""
+
+    def _obter_transparencia_recente(self, om: OM) -> Optional[TransparenciaDados]:
+        if not om.transparencia_dados:
+            return None
+        return max(om.transparencia_dados, key=lambda r: r.ano_mes)
+
+    # ------------------------------------------------------------------
+    # 1. VALIDAÇÃO (Auditorias via Dados Abertos CGU / SIGPES / SISLOG)
+    # ------------------------------------------------------------------
+    def validar_anomalias(self, om: OM) -> List[AlertaAuditoria]:
+        """Executa gatilhos de auditoria cruzando SIGPES, CGU e SISLOG."""
+        alertas: List[AlertaAuditoria] = []
+        sigpes = om.sigpes
+        cgu = self._obter_transparencia_recente(om)
+        doutrina = om.doutrina_tecnologia
+        sislog = om.sislog
+
+        if sigpes and cgu:
+            # Gatilho Financeiro: Delta(Custeio Declarado, CGU) > 5%
+            base_custeio = max(sigpes.custeio_declarado_brl, cgu.total_empenhado, 1.0)
+            delta_fin = abs(cgu.total_empenhado - sigpes.custeio_declarado_brl) / base_custeio
+            if delta_fin > LIMIAR_DELTA_AUDITORIA:
+                alertas.append(
+                    AlertaAuditoria(
+                        tipo="FINANCEIRO",
+                        severidade="ALTA",
+                        delta_percentual=round(delta_fin * 100, 2),
+                        descricao=(
+                            f"Divergência orçamentária de {delta_fin * 100:.1f}% entre custeio "
+                            f"declarado (R$ {sigpes.custeio_declarado_brl:,.2f}) e empenhado CGU "
+                            f"(R$ {cgu.total_empenhado:,.2f})."
+                        ),
+                    )
+                )
+
+            # Gatilho Folha/Inativos: Delta(Efetivo Declarado, CPFs Ativos CGU) > 5%
+            base_efetivo = max(sigpes.efetivo_total_declarado, cgu.cpfs_ativos, 1)
+            delta_folha = abs(sigpes.efetivo_total_declarado - cgu.cpfs_ativos) / base_efetivo
+            if delta_folha > LIMIAR_DELTA_AUDITORIA:
+                alertas.append(
+                    AlertaAuditoria(
+                        tipo="FOLHA_INATIVOS",
+                        severidade="ALTA",
+                        delta_percentual=round(delta_folha * 100, 2),
+                        descricao=(
+                            f"Divergência de efetivo de {delta_folha * 100:.1f}%: SIGPES declara "
+                            f"{sigpes.efetivo_total_declarado} militares vs. {cgu.cpfs_ativos} CPFs "
+                            f"ativos na CGU ({cgu.cpfs_reserva} inativos/pensionistas isolados)."
+                        ),
+                    )
+                )
+
+        # Gatilho Prontidão Falsa: FEI com disponibilidade < 85%
+        if (
+            doutrina
+            and sislog
+            and doutrina.classificacao_coeb == ClassificacaoCOEB.FEI
+            and sislog.taxa_disponibilidade < LIMIAR_PRONTIDAO_FEI
+        ):
+            alertas.append(
+                AlertaAuditoria(
+                    tipo="QUEBRA_PRONTIDAO_FEI",
+                    severidade="CRITICA",
+                    delta_percentual=round(LIMIAR_PRONTIDAO_FEI - sislog.taxa_disponibilidade, 2),
+                    descricao=(
+                        f"Quebra de Prontidão FEI: disponibilidade de {sislog.taxa_disponibilidade:.1f}% "
+                        f"abaixo do mínimo doutrinário de {LIMIAR_PRONTIDAO_FEI:.0f}%."
+                    ),
+                )
+            )
+
+        return alertas
+
+    # ------------------------------------------------------------------
+    # 2. ESTRATÉGIA (Cálculo do IVE Dinâmico com Pesos COEB & Força 4.0)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _em_rota_estrategica(om: OM) -> bool:
+        """Identifica OMs posicionadas em rotas de aproximação estratégica (ex: Calha Amazônica)."""
+        if om.latitude is None or om.longitude is None:
+            return False
+        calha_amazonica = om.latitude >= -10.5 and om.longitude <= -48.0
+        faixa_fronteira_critica = bool(om.estrategia and om.estrategia.dist_fronteira_km <= 150.0)
+        return calha_amazonica or faixa_fronteira_critica
+
+    def calcular_componentes_ive(self, om: OM) -> Dict[str, float]:
+        """Calcula os 5 subíndices (0-100) do IVE antes do multiplicador COEB e penalidades."""
+        sigpes = om.sigpes
+        cgu = self._obter_transparencia_recente(om)
+        doutrina = om.doutrina_tecnologia
+        sislog = om.sislog
+        estrategia = om.estrategia
+
+        cpfs_ativos = max(cgu.cpfs_ativos if cgu else (sigpes.efetivo_total_declarado if sigpes else 1), 1)
+        efetivo_fim = sigpes.efetivo_fim if sigpes else 0
+        total_empenhado = cgu.total_empenhado if cgu else (sigpes.custeio_declarado_brl if sigpes else 0.0)
+
+        # 1. Teeth-to-Tail (15%): efetivo_fim / cpfs_ativos
+        nota_teeth_to_tail = min(100.0, max(0.0, (efetivo_fim / cpfs_ativos) * 100.0))
+
+        # 2. Eficiência de Custeio (15%): total_empenhado / cpfs_ativos
+        # Faixa de referência: <= R$ 45k/CPF (100 pts) até R$ 220k/CPF (20 pts)
+        custo_por_cpf = total_empenhado / cpfs_ativos
+        if custo_por_cpf <= 45_000.0:
+            nota_eficiencia = 100.0
+        else:
+            nota_eficiencia = max(20.0, min(100.0, 100.0 - ((custo_por_cpf - 45_000.0) / 175_000.0) * 80.0))
+
+        # 3. Nível Tecnológico e Força 4.0 (25%)
+        c4isr = doutrina.indice_tecnologia_c4isr if doutrina else 0.0
+        nota_tecnologia = min(100.0, max(0.0, c4isr))
+
+        # 4. Prontidão e Emprego (25%): SISLOG cruzado com exigência COEB
+        disponibilidade = sislog.taxa_disponibilidade if sislog else 0.0
+        acionamentos = sislog.acionamentos_reais_36m if sislog else 0
+        coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
+
+        if coeb == ClassificacaoCOEB.FEI:
+            nota_acionamento = min(100.0, (acionamentos / 36.0) * 100.0)
+            nota_prontidao = 0.50 * disponibilidade + 0.50 * nota_acionamento
+        elif coeb == ClassificacaoCOEB.FEP:
+            nota_acionamento = min(100.0, (acionamentos / 18.0) * 100.0)
+            nota_prontidao = 0.70 * disponibilidade + 0.30 * nota_acionamento
+        else:  # FEC: foco na capacidade de mobilização em D+
+            nota_mobilizacao = min(100.0, (acionamentos / 6.0) * 100.0)
+            nota_prontidao = 0.85 * disponibilidade + 0.15 * nota_mobilizacao
+
+        # 5. Geoestratégia e A2/AD (20%)
+        papel_a2ad = bool(doutrina and doutrina.papel_a2ad)
+        dist_fronteira = estrategia.dist_fronteira_km if estrategia else 1000.0
+        if papel_a2ad and self._em_rota_estrategica(om):
+            nota_geo = 100.0
+        else:
+            base_fronteira = max(10.0, min(100.0, 100.0 - (dist_fronteira / 20.0)))
+            bonus_a2ad = 25.0 if papel_a2ad else 0.0
+            nota_geo = min(100.0, base_fronteira + bonus_a2ad)
+
+        return {
+            "teeth_to_tail": round(nota_teeth_to_tail, 2),
+            "eficiencia_custeio": round(nota_eficiencia, 2),
+            "nivel_tecnologico_c4isr": round(nota_tecnologia, 2),
+            "prontidao_emprego": round(nota_prontidao, 2),
+            "geoestrategia_a2ad": round(nota_geo, 2),
+        }
+
+    def calcular_nota_ive(
+        self,
+        om: OM,
+        componentes: Dict[str, float],
+        qtd_anomalias: int,
+        c4isr_override: Optional[float] = None,
+    ) -> float:
+        """Aplica pesos dinâmicos, multiplicador COEB e penalidade de -15% por anomalia."""
+        c4isr = c4isr_override if c4isr_override is not None else componentes["nivel_tecnologico_c4isr"]
+
+        score_ponderado = (
+            0.15 * componentes["teeth_to_tail"]
+            + 0.15 * componentes["eficiencia_custeio"]
+            + 0.25 * c4isr
+            + 0.25 * componentes["prontidao_emprego"]
+            + 0.20 * componentes["geoestrategia_a2ad"]
+        )
+
+        coeb = om.doutrina_tecnologia.classificacao_coeb if om.doutrina_tecnologia else ClassificacaoCOEB.FEC
+        multiplicador = MULTIPLICADOR_COEB[coeb]
+
+        fator_penalidade = max(0.10, 1.0 - (PENALIDADE_ANOMALIA * qtd_anomalias))
+        ive_bruto = score_ponderado * multiplicador * fator_penalidade
+        return round(min(100.0, max(0.0, ive_bruto)), 2)
+
+    # ------------------------------------------------------------------
+    # 3. JULGAMENTO (Classificação e Prescrição Doutrinária)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def classificar_ive(nota_ive: float) -> tuple[str, str]:
+        if nota_ive > 75.0:
+            return ("Ponta de Lança", "Força 4.0, Injeção C4ISR")
+        if nota_ive >= 40.0:
+            return ("Zona de Fusão", "COEB, Unificação Modular")
+        return ("OM Zumbi", "Política de Transformação, Alienação")
+
+    @staticmethod
+    def gerar_prescricao(
+        classificacao_ive: str,
+        coeb: ClassificacaoCOEB,
+        c4isr: float,
+        alertas: List[AlertaAuditoria],
+    ) -> str:
+        """Gera Linha de Ação Dinâmica conforme matriz COEB x IVE x C4ISR."""
+        if classificacao_ive == "OM Zumbi" and coeb == ClassificacaoCOEB.FEC:
+            return (
+                "Desativação imediata. OM de emprego condicionado com alto custo de capital "
+                "imobilizado. Alienar patrimônio via SPU para capitalizar brigadas FEI."
+            )
+
+        if classificacao_ive == "Ponta de Lança" and coeb == ClassificacaoCOEB.FEI and c4isr < 50.0:
+            return (
+                "Gargalo Doutrinário. Força de Emprego Imediato carente de tecnologia. "
+                "Redirecionar recursos para C4ISR."
+            )
+
+        if any(a.tipo == "QUEBRA_PRONTIDAO_FEI" for a in alertas):
+            return (
+                "Intervenção de Prontidão Imediata. Unidade FEI operando abaixo de 85% de "
+                "disponibilidade; reequilibrar logística (SISLOG) e efetivo-fim."
+            )
+
+        if classificacao_ive == "Ponta de Lança":
+            return (
+                "Manter prioridade máxima de modernização Força 4.0 e integração em rede C4ISR "
+                "como núcleo de dissuasão estratégica."
+            )
+
+        if classificacao_ive == "Zona de Fusão":
+            return (
+                "Reestruturar conforme o COEB por meio de unificação modular de meios e "
+                "absorção de capital oriundo de OMs alienadas para elevação à FEI."
+            )
+
+        return (
+            "Revisão estrutural severa pela Política de Transformação: auditar folha/custeio "
+            "e avaliar desativação ou fusão patrimonial."
+        )
+
+    def diagnosticar_om(self, db: Session, om: OM, persistir_alertas: bool = True) -> DiagnosticoOM:
+        """Executa o ciclo completo JEV (Validação -> Estratégia -> Julgamento) para uma OM."""
+        alertas = self.validar_anomalias(om)
+        alertas_dict = [asdict(a) for a in alertas]
+
+        if persistir_alertas and om.alertas_auditoria != alertas_dict:
+            om.alertas_auditoria = alertas_dict
+            db.add(om)
+            db.commit()
+            db.refresh(om)
+
+        componentes = self.calcular_componentes_ive(om)
+        nota_ive = self.calcular_nota_ive(om, componentes, len(alertas))
+        classificacao_ive, foco = self.classificar_ive(nota_ive)
+
+        doutrina = om.doutrina_tecnologia
+        coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
+        c4isr = doutrina.indice_tecnologia_c4isr if doutrina else 0.0
+        papel_a2ad = bool(doutrina and doutrina.papel_a2ad)
+        valor_imovel = om.patrimonio_uniao.valor_imovel_brl if om.patrimonio_uniao else 0.0
+
+        indicador_fin = round(valor_imovel / max(nota_ive, 1.0), 2)
+        prescricao = self.gerar_prescricao(classificacao_ive, coeb, c4isr, alertas)
+
+        cgu = self._obter_transparencia_recente(om)
+        sigpes = om.sigpes
+        sislog = om.sislog
+        estrategia = om.estrategia
+
+        return DiagnosticoOM(
+            id_om=om.id_om,
+            sigla=om.sigla,
+            codigo_uasg=om.codigo_uasg,
+            classificacao_coeb=coeb.value,
+            indice_tecnologia_c4isr=c4isr,
+            papel_a2ad=papel_a2ad,
+            valor_imovel_brl=valor_imovel,
+            nota_ive=nota_ive,
+            classificacao_ive=classificacao_ive,
+            foco_estrategico=foco,
+            indicador_financeiro_estrategico=indicador_fin,
+            prescricao_doutrinaria=prescricao,
+            alertas_auditoria=alertas_dict,
+            componentes_ive=componentes,
+            dados_operacionais={
+                "latitude": om.latitude,
+                "longitude": om.longitude,
+                "endereco": om.endereco,
+                "efetivo_declarado": sigpes.efetivo_total_declarado if sigpes else 0,
+                "efetivo_fim": sigpes.efetivo_fim if sigpes else 0,
+                "cpfs_ativos_cgu": cgu.cpfs_ativos if cgu else 0,
+                "cpfs_reserva_cgu": cgu.cpfs_reserva if cgu else 0,
+                "custeio_declarado_brl": sigpes.custeio_declarado_brl if sigpes else 0.0,
+                "total_empenhado_cgu": cgu.total_empenhado if cgu else 0.0,
+                "acionamentos_36m": sislog.acionamentos_reais_36m if sislog else 0,
+                "taxa_disponibilidade": sislog.taxa_disponibilidade if sislog else 0.0,
+                "dist_fronteira_km": estrategia.dist_fronteira_km if estrategia else 0.0,
+                "area_urbana": estrategia.area_urbana if estrategia else True,
+            },
+        )
+
+    def diagnosticar_todas(self, db: Session, persistir_alertas: bool = True) -> List[DiagnosticoOM]:
+        """Executa o Motor JEV em todas as OMs e retorna ordenado pelo IVE decrescente."""
+        oms = db.query(OM).all()
+        diagnosticos = [self.diagnosticar_om(db, om, persistir_alertas=persistir_alertas) for om in oms]
+        diagnosticos.sort(key=lambda d: d.nota_ive, reverse=True)
+        return diagnosticos
