@@ -14,7 +14,7 @@ COR_CLASSIFICACAO = {
 
 def criar_mapa_a2ad(oms: List[Dict[str, Any]]) -> folium.Map:
     """Constrói mapa Folium destacando OMs do Eixo A2/AD e status IVE."""
-    mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles="CartoDB dark_matter")
+    mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles="OpenStreetMap")
 
     camada_a2ad = folium.FeatureGroup(name="Eixo Estratégico A2/AD (Negação de Área)", show=True)
     camada_demais = folium.FeatureGroup(name="Demais OMs (FEP / FEC)", show=True)

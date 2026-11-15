@@ -222,7 +222,8 @@ class MotorIVE:
         multiplicador = MULTIPLICADOR_COEB[coeb]
 
         fator_penalidade = max(0.10, 1.0 - (PENALIDADE_ANOMALIA * qtd_anomalias))
-        ive_bruto = score_ponderado * multiplicador * fator_penalidade
+        # Normaliza pelo teto próximo ao multiplicador FEI (1.45) preservando a razão 1.5 : 1.2 : 0.8
+        ive_bruto = score_ponderado * (multiplicador / 1.45) * fator_penalidade
         return round(min(100.0, max(0.0, ive_bruto)), 2)
 
     # ------------------------------------------------------------------
