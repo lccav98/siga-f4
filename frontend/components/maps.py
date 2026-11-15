@@ -17,7 +17,7 @@ def criar_mapa_a2ad(oms: List[Dict[str, Any]]) -> folium.Map:
     mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles="OpenStreetMap")
 
     camada_a2ad = folium.FeatureGroup(name="Eixo Estratégico A2/AD (Negação de Área)", show=True)
-    camada_demais = folium.FeatureGroup(name="Demais OMs (FEP / FEC)", show=True)
+    camada_demais = folium.FeatureGroup(name="Demais OMs", show=True)
 
     for om in oms:
         lat = om.get("latitude")
@@ -29,10 +29,16 @@ def criar_mapa_a2ad(oms: List[Dict[str, Any]]) -> folium.Map:
         cor = COR_CLASSIFICACAO.get(classif_ive, "blue")
         papel_a2ad = bool(om.get("papel_a2ad", False))
         valor_spu_m = (om.get("valor_imovel_brl", 0.0) or 0.0) / 1_000_000.0
+        cma = om.get("comando_militar_area", "-")
+        rm = om.get("regiao_militar", "-")
+        uf = om.get("uf", "-")
+        brigada = om.get("brigada", "-")
 
         popup_html = f"""
-        <div style="font-family: Arial, sans-serif; min-width: 230px;">
+        <div style="font-family: Arial, sans-serif; min-width: 245px;">
             <h4 style="margin:0 0 6px 0;">{om.get('sigla', 'OM')}</h4>
+            <b>Local:</b> {uf} • {cma} / {rm}<br>
+            <b>Brigada / GU:</b> {brigada}<br>
             <b>UASG:</b> {om.get('codigo_uasg', '-')} | <b>COEB:</b> {om.get('classificacao_coeb')} | <b>A2/AD:</b> {'SIM' if papel_a2ad else 'NÃO'}<br>
             <b>IVE:</b> {om.get('nota_ive', 0):.1f} ({classif_ive})<br>
             <b>C4ISR:</b> {om.get('indice_tecnologia_c4isr', 0):.1f}/100<br>

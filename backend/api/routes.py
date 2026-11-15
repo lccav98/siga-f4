@@ -52,6 +52,10 @@ class OMRankingItem(BaseModel):
     indicador_financeiro_estrategico: float
     total_alertas: int
     enquadramento_transformacao: str = ""
+    comando_militar_area: str = ""
+    regiao_militar: str = ""
+    uf: str = ""
+    brigada: str = ""
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
@@ -64,9 +68,21 @@ def listar_oms_ranking(
     uasg: Optional[str] = Query(
         default=None, description="Filtro opcional por código UASG ou dígitos da UG/CNPJ"
     ),
+    cma: Optional[str] = Query(
+        default=None, description="Filtro opcional por Comando Militar de Área (ex: CMA, CMS)"
+    ),
+    rm: Optional[str] = Query(
+        default=None, description="Filtro opcional por Região Militar (ex: 3ª RM, 12ª RM)"
+    ),
+    uf: Optional[str] = Query(
+        default=None, description="Filtro opcional por UF (ex: AM, RJ, RS, SP)"
+    ),
+    brigada: Optional[str] = Query(
+        default=None, description="Filtro opcional por Brigada / Grande Comando"
+    ),
     db: Session = Depends(get_db),
 ) -> List[OMRankingItem]:
-    """Retorna o ranking das OMs com IVE, Valor SPU, UASG/UG e classificação COEB."""
+    """Retorna o ranking das OMs com IVE, Valor SPU, UASG/UG e localização territorial."""
     motor = MotorIVE()
     diagnosticos = motor.diagnosticar_todas(db, persistir_alertas=True)
 
@@ -80,6 +96,20 @@ def listar_oms_ranking(
             for d in diagnosticos
             if termo in d.codigo_uasg or termo in re.sub(r"\D", "", d.cnpj_ug)
         ]
+
+    for campo, valor_filtro in (
+        ("comando_militar_area", cma),
+        ("regiao_militar", rm),
+        ("uf", uf),
+        ("brigada", brigada),
+    ):
+        if valor_filtro:
+            termo_loc = valor_filtro.strip().lower()
+            diagnosticos = [
+                d
+                for d in diagnosticos
+                if termo_loc in str(d.dados_operacionais.get(campo, "")).lower()
+            ]
 
     return [
         OMRankingItem(
@@ -98,6 +128,10 @@ def listar_oms_ranking(
             indicador_financeiro_estrategico=d.indicador_financeiro_estrategico,
             total_alertas=len(d.alertas_auditoria),
             enquadramento_transformacao=d.dados_operacionais.get("enquadramento_transformacao", ""),
+            comando_militar_area=d.dados_operacionais.get("comando_militar_area", ""),
+            regiao_militar=d.dados_operacionais.get("regiao_militar", ""),
+            uf=d.dados_operacionais.get("uf", ""),
+            brigada=d.dados_operacionais.get("brigada", ""),
             latitude=d.dados_operacionais.get("latitude"),
             longitude=d.dados_operacionais.get("longitude"),
         )

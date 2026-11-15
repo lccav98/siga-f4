@@ -65,6 +65,10 @@ def carregar_ranking_oms() -> tuple[List[Dict[str, Any]], str]:
                     "indicador_financeiro_estrategico": d.indicador_financeiro_estrategico,
                     "total_alertas": len(d.alertas_auditoria),
                     "enquadramento_transformacao": d.dados_operacionais.get("enquadramento_transformacao", ""),
+                    "comando_militar_area": d.dados_operacionais.get("comando_militar_area", ""),
+                    "regiao_militar": d.dados_operacionais.get("regiao_militar", ""),
+                    "uf": d.dados_operacionais.get("uf", ""),
+                    "brigada": d.dados_operacionais.get("brigada", ""),
                     "latitude": d.dados_operacionais.get("latitude"),
                     "longitude": d.dados_operacionais.get("longitude"),
                 }
@@ -178,9 +182,54 @@ if not oms_brutas:
 
 df_all = pd.DataFrame(oms_brutas)
 
+def _ordem_rm(rm: str) -> int:
+    m = re.match(r"^(\d+)", rm or "")
+    return int(m.group(1)) if m else 999
+
+
 # ------------------------------------------------------------------
-# 1. Filtros Doutrinários (Sidebar)
+# 1. Filtros de Localização e Doutrina (Sidebar)
 # ------------------------------------------------------------------
+st.sidebar.header("📍 Localização e Enquadramento da OM")
+cmas_disponiveis = sorted([c for c in df_all["comando_militar_area"].dropna().unique().tolist() if c])
+cma_selecionado = st.sidebar.multiselect(
+    "Comando Militar de Área (C Mil A)",
+    options=cmas_disponiveis,
+    default=[],
+    placeholder="Todos (CMA, CMN, CMO, CMP, CML, CMSE, CMS, CMNE)",
+)
+
+df_loc_base = df_all[df_all["comando_militar_area"].isin(cma_selecionado)] if cma_selecionado else df_all
+rms_disponiveis = sorted(
+    [r for r in df_loc_base["regiao_militar"].dropna().unique().tolist() if r],
+    key=_ordem_rm,
+)
+rm_selecionada = st.sidebar.multiselect(
+    "Região Militar (RM)",
+    options=rms_disponiveis,
+    default=[],
+    placeholder="Todas (1ª RM a 12ª RM)",
+)
+
+df_loc_base = df_loc_base[df_loc_base["regiao_militar"].isin(rm_selecionada)] if rm_selecionada else df_loc_base
+ufs_disponiveis = sorted([u for u in df_loc_base["uf"].dropna().unique().tolist() if u])
+uf_selecionada = st.sidebar.multiselect(
+    "UF",
+    options=ufs_disponiveis,
+    default=[],
+    placeholder="Todas as UFs",
+)
+
+df_loc_base = df_loc_base[df_loc_base["uf"].isin(uf_selecionada)] if uf_selecionada else df_loc_base
+brigadas_disponiveis = sorted([b for b in df_loc_base["brigada"].dropna().unique().tolist() if b])
+brigada_selecionada = st.sidebar.multiselect(
+    "Brigada / Grande Comando",
+    options=brigadas_disponiveis,
+    default=[],
+    placeholder="Todas as Brigadas / GUs",
+)
+
+st.sidebar.divider()
 st.sidebar.header("🎯 Filtros Doutrinários (COEB / EB10-P-01.031)")
 coeb_selecionado = st.sidebar.multiselect(
     "Grupos de Emprego COEB",
@@ -204,7 +253,8 @@ modulos_disponiveis = sorted(
 modulos_selecionados = st.sidebar.multiselect(
     "Estrutura EB10-P-01.031 (FTC / Módulos)",
     options=modulos_disponiveis,
-    default=modulos_disponiveis,
+    default=[],
+    placeholder="Todos os Grupos / Módulos",
 )
 busca_sigla = st.sidebar.text_input(
     "🔍 Buscar por UASG, UG/CNPJ ou Sigla",
@@ -224,8 +274,17 @@ st.sidebar.info(f"Fonte ativa: **{fonte_dados}** ({len(df_all)} OMs na base)")
 df_filtrado = df_all[
     df_all["classificacao_coeb"].isin(coeb_selecionado)
     & df_all["classificacao_ive"].isin(status_jev_selecionado)
-    & df_all["enquadramento_transformacao"].isin(modulos_selecionados)
 ].copy()
+if modulos_selecionados:
+    df_filtrado = df_filtrado[df_filtrado["enquadramento_transformacao"].isin(modulos_selecionados)]
+if cma_selecionado:
+    df_filtrado = df_filtrado[df_filtrado["comando_militar_area"].isin(cma_selecionado)]
+if rm_selecionada:
+    df_filtrado = df_filtrado[df_filtrado["regiao_militar"].isin(rm_selecionada)]
+if uf_selecionada:
+    df_filtrado = df_filtrado[df_filtrado["uf"].isin(uf_selecionada)]
+if brigada_selecionada:
+    df_filtrado = df_filtrado[df_filtrado["brigada"].isin(brigada_selecionada)]
 if busca_sigla.strip():
     termo = busca_sigla.strip().lower()
     digitos_busca = re.sub(r"\D", "", termo)
@@ -352,6 +411,10 @@ with col_rank:
             "ranking",
             "codigo_uasg",
             "sigla",
+            "comando_militar_area",
+            "regiao_militar",
+            "uf",
+            "brigada",
             "classificacao_coeb",
             "enquadramento_transformacao",
             "nota_ive",
@@ -366,6 +429,10 @@ with col_rank:
         "#",
         "UASG",
         "OM",
+        "C Mil A",
+        "RM",
+        "UF",
+        "Brigada / GU",
         "COEB",
         "Grupo / Módulo (EB10)",
         "IVE",
@@ -474,13 +541,25 @@ st.divider()
 # 4. Diagnóstico Individual (Auditoria CGU & Prescrição Doutrinária)
 # ------------------------------------------------------------------
 st.subheader("🔍 Diagnóstico Individual e Prescrição Doutrinária")
-opcoes_om = {f"{r['sigla']} ({r['classificacao_coeb']} — IVE {r['nota_ive']:.1f})": r["id_om"] for _, r in df_all.iterrows()}
+df_opcoes_diag = df_filtrado if not df_filtrado.empty else df_all
+opcoes_om = {
+    f"{r['sigla']} [{r['comando_militar_area']}/{r['uf']} • {r['brigada']}] ({r['classificacao_coeb']} — IVE {r['nota_ive']:.1f})": r["id_om"]
+    for _, r in df_opcoes_diag.iterrows()
+}
 label_om_sel = st.selectbox("Selecione uma OM para inspeção detalhada:", list(opcoes_om.keys()))
 diag = carregar_diagnostico_om(opcoes_om[label_om_sel])
 
 if diag:
-    enq_eb10 = diag.get("dados_operacionais", {}).get("enquadramento_transformacao", diag["classificacao_coeb"])
-    st.caption(f"**Enquadramento EB10-P-01.031:** `{enq_eb10}` • UASG `{diag['codigo_uasg']}` • UG `{diag['cnpj_ug']}`")
+    dados_op = diag.get("dados_operacionais", {})
+    enq_eb10 = dados_op.get("enquadramento_transformacao", diag["classificacao_coeb"])
+    cma_om = dados_op.get("comando_militar_area", "-")
+    rm_om = dados_op.get("regiao_militar", "-")
+    uf_om = dados_op.get("uf", "-")
+    brig_om = dados_op.get("brigada", "-")
+    st.caption(
+        f"**Localização:** `{cma_om}` • `{rm_om}` • `{uf_om}` • **Brigada:** `{brig_om}` | "
+        f"**EB10-P-01.031:** `{enq_eb10}` • UASG `{diag['codigo_uasg']}` • UG `{diag['cnpj_ug']}`"
+    )
     c_a, c_b, c_c, c_d = st.columns(4)
     c_a.metric("Classificação JEV", diag["classificacao_ive"])
     c_b.metric("Nota IVE", f"{diag['nota_ive']:.1f}")

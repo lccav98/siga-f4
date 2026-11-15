@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session, joinedload
 
+from backend.core.estrutura_eb import inferir_localizacao_militar
 from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
 
 
@@ -381,6 +382,7 @@ class MotorIVE:
         enquadramento_eb10 = self.classificar_enquadramento_transformacao(
             om.sigla, coeb, c4isr, papel_a2ad
         )
+        local_eb = inferir_localizacao_militar(om.sigla, om.endereco)
 
         cgu = self._obter_transparencia_recente(om)
         sigpes = om.sigpes
@@ -407,6 +409,11 @@ class MotorIVE:
                 "latitude": om.latitude,
                 "longitude": om.longitude,
                 "endereco": om.endereco,
+                "municipio": local_eb["municipio"],
+                "uf": local_eb["uf"],
+                "regiao_militar": local_eb["regiao_militar"],
+                "comando_militar_area": local_eb["comando_militar_area"],
+                "brigada": local_eb["brigada"],
                 "enquadramento_transformacao": enquadramento_eb10,
                 "efetivo_declarado": sigpes.efetivo_total_declarado if sigpes else 0,
                 "efetivo_fim": sigpes.efetivo_fim if sigpes else 0,
