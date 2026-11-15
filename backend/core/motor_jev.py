@@ -9,14 +9,15 @@ from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
 
 
 MULTIPLICADOR_COEB: Dict[ClassificacaoCOEB, float] = {
-    ClassificacaoCOEB.FEI: 1.5,
-    ClassificacaoCOEB.FEP: 1.2,
-    ClassificacaoCOEB.FEC: 0.8,
+    ClassificacaoCOEB.FEP: 1.5,  # 1ª prioridade COEB: recompletamento pessoal, material, sistemas e C4ISR
+    ClassificacaoCOEB.FEI: 1.2,  # 2º plano relativo às FEP: tropas debruçadas na faixa de fronteira
+    ClassificacaoCOEB.FEC: 0.8,  # Emprego condicionado / territorial
 }
 
 PENALIDADE_ANOMALIA = 0.15
 LIMIAR_DELTA_AUDITORIA = 0.05  # 5%
-LIMIAR_PRONTIDAO_FEI = 85.0    # 85%
+LIMIAR_PRONTIDAO_FEP = 85.0    # 85% exigido para prioridade máxima FEP
+LIMIAR_PRONTIDAO_FEI = 78.0    # 78% mínimo operacional para tropas de fronteira (FEI)
 
 
 @dataclass
@@ -108,24 +109,38 @@ class MotorIVE:
                     )
                 )
 
-        # Gatilho Prontidão Falsa: FEI com disponibilidade < 85%
-        if (
-            doutrina
-            and sislog
-            and doutrina.classificacao_coeb == ClassificacaoCOEB.FEI
-            and sislog.taxa_disponibilidade < LIMIAR_PRONTIDAO_FEI
-        ):
-            alertas.append(
-                AlertaAuditoria(
-                    tipo="QUEBRA_PRONTIDAO_FEI",
-                    severidade="CRITICA",
-                    delta_percentual=round(LIMIAR_PRONTIDAO_FEI - sislog.taxa_disponibilidade, 2),
-                    descricao=(
-                        f"Quebra de Prontidão FEI: disponibilidade de {sislog.taxa_disponibilidade:.1f}% "
-                        f"abaixo do mínimo doutrinário de {LIMIAR_PRONTIDAO_FEI:.0f}%."
-                    ),
+        # Gatilho Prontidão Falsa: FEP (<85%) ou FEI de fronteira (<78%)
+        if doutrina and sislog:
+            if (
+                doutrina.classificacao_coeb == ClassificacaoCOEB.FEP
+                and sislog.taxa_disponibilidade < LIMIAR_PRONTIDAO_FEP
+            ):
+                alertas.append(
+                    AlertaAuditoria(
+                        tipo="QUEBRA_PRONTIDAO_FEP",
+                        severidade="CRITICA",
+                        delta_percentual=round(LIMIAR_PRONTIDAO_FEP - sislog.taxa_disponibilidade, 2),
+                        descricao=(
+                            f"Quebra de Prontidão FEP: disponibilidade de {sislog.taxa_disponibilidade:.1f}% "
+                            f"abaixo do mínimo de {LIMIAR_PRONTIDAO_FEP:.0f}% exigido para força de 1ª prioridade."
+                        ),
+                    )
                 )
-            )
+            elif (
+                doutrina.classificacao_coeb == ClassificacaoCOEB.FEI
+                and sislog.taxa_disponibilidade < LIMIAR_PRONTIDAO_FEI
+            ):
+                alertas.append(
+                    AlertaAuditoria(
+                        tipo="QUEBRA_PRONTIDAO_FEI",
+                        severidade="ALTA",
+                        delta_percentual=round(LIMIAR_PRONTIDAO_FEI - sislog.taxa_disponibilidade, 2),
+                        descricao=(
+                            f"Alerta de Prontidão na Fronteira (FEI): disponibilidade de {sislog.taxa_disponibilidade:.1f}% "
+                            f"abaixo do mínimo operacional de {LIMIAR_PRONTIDAO_FEI:.0f}%."
+                        ),
+                    )
+                )
 
         return alertas
 
@@ -173,12 +188,12 @@ class MotorIVE:
         acionamentos = sislog.acionamentos_reais_36m if sislog else 0
         coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
 
-        if coeb == ClassificacaoCOEB.FEI:
-            nota_acionamento = min(100.0, (acionamentos / 36.0) * 100.0)
+        if coeb == ClassificacaoCOEB.FEP:
+            nota_acionamento = min(100.0, (acionamentos / 32.0) * 100.0)
             nota_prontidao = 0.50 * disponibilidade + 0.50 * nota_acionamento
-        elif coeb == ClassificacaoCOEB.FEP:
-            nota_acionamento = min(100.0, (acionamentos / 18.0) * 100.0)
-            nota_prontidao = 0.70 * disponibilidade + 0.30 * nota_acionamento
+        elif coeb == ClassificacaoCOEB.FEI:
+            nota_acionamento = min(100.0, (acionamentos / 24.0) * 100.0)
+            nota_prontidao = 0.65 * disponibilidade + 0.35 * nota_acionamento
         else:  # FEC: foco na capacidade de mobilização em D+
             nota_mobilizacao = min(100.0, (acionamentos / 6.0) * 100.0)
             nota_prontidao = 0.85 * disponibilidade + 0.15 * nota_mobilizacao
@@ -223,7 +238,7 @@ class MotorIVE:
         multiplicador = MULTIPLICADOR_COEB[coeb]
 
         fator_penalidade = max(0.10, 1.0 - (PENALIDADE_ANOMALIA * qtd_anomalias))
-        # Normaliza pelo teto próximo ao multiplicador FEI (1.45) preservando a razão 1.5 : 1.2 : 0.8
+        # Normaliza pelo teto próximo ao multiplicador FEP (1.45) preservando a razão 1.5 : 1.2 : 0.8
         ive_bruto = score_ponderado * (multiplicador / 1.45) * fator_penalidade
         return round(min(100.0, max(0.0, ive_bruto)), 2)
 
@@ -245,35 +260,47 @@ class MotorIVE:
         c4isr: float,
         alertas: List[AlertaAuditoria],
     ) -> str:
-        """Gera Linha de Ação Dinâmica conforme matriz COEB x IVE x C4ISR."""
+        """Gera Linha de Ação Dinâmica conforme matriz COEB (FEP 1ª prioridade, FEI fronteira, FEC) x IVE x C4ISR."""
         if classificacao_ive == "OM Zumbi" and coeb == ClassificacaoCOEB.FEC:
             return (
                 "Desativação imediata. OM de emprego condicionado com alto custo de capital "
-                "imobilizado. Alienar patrimônio via SPU para capitalizar brigadas FEI."
+                "imobilizado. Alienar patrimônio via SPU para capitalizar forças FEP (1ª prioridade COEB) e FEI de fronteira."
             )
 
-        if classificacao_ive == "Ponta de Lança" and coeb == ClassificacaoCOEB.FEI and c4isr < 50.0:
+        if classificacao_ive == "Ponta de Lança" and coeb == ClassificacaoCOEB.FEP and c4isr < 50.0:
             return (
-                "Gargalo Doutrinário. Força de Emprego Imediato carente de tecnologia. "
-                "Redirecionar recursos para C4ISR."
+                "Gargalo Doutrinário FEP. Tropa de maior prioridade no COEB carente de tecnologia C4ISR. "
+                "Redirecionar recursos imediatamente para recompletamento de sistemas e material."
+            )
+
+        if any(a.tipo == "QUEBRA_PRONTIDAO_FEP" for a in alertas):
+            return (
+                "Intervenção de Prontidão Imediata (FEP). Unidade de 1ª prioridade COEB operando abaixo de "
+                "85% de disponibilidade; recompletar pessoal, material e logística (SISLOG)."
             )
 
         if any(a.tipo == "QUEBRA_PRONTIDAO_FEI" for a in alertas):
             return (
-                "Intervenção de Prontidão Imediata. Unidade FEI operando abaixo de 85% de "
-                "disponibilidade; reequilibrar logística (SISLOG) e efetivo-fim."
+                "Reforço na Faixa de Fronteira (FEI). Unidade debruçada na fronteira abaixo de 78% de "
+                "disponibilidade; ajustar logística SISLOG após cobertura das prioridades FEP."
+            )
+
+        if classificacao_ive == "Ponta de Lança" and coeb == ClassificacaoCOEB.FEP:
+            return (
+                "Manter prioridade máxima de recompletamento (pessoal, material, sistemas e C4ISR) "
+                "como núcleo decisivo Força 4.0 do COEB."
             )
 
         if classificacao_ive == "Ponta de Lança":
             return (
-                "Manter prioridade máxima de modernização Força 4.0 e integração em rede C4ISR "
-                "como núcleo de dissuasão estratégica."
+                "Preservar prontidão de vigilância e negação de área na faixa de fronteira (FEI), "
+                "mantendo integração C4ISR com as grandes unidades FEP."
             )
 
         if classificacao_ive == "Zona de Fusão":
             return (
-                "Reestruturar conforme o COEB por meio de unificação modular de meios e "
-                "absorção de capital oriundo de OMs alienadas para elevação à FEI."
+                "Reestruturar conforme o COEB por meio de unificação modular de meios; se FEI de fronteira, "
+                "modernizar sensores após atendimento do núcleo FEP; se FEP, elevar C4ISR via Digital Twin."
             )
 
         return (

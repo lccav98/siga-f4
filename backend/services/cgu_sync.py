@@ -63,15 +63,19 @@ def formatar_cnpj(valor: Optional[str], fallback_uasg: str) -> str:
 
 
 def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float, bool]:
-    """Classifica automaticamente uma OM (FEI, FEP ou FEC) a partir da denominação oficial."""
+    """Classifica automaticamente uma OM (FEP, FEI ou FEC) conforme o COEB.
+
+    - FEP: maior prioridade em recompletamento de pessoal, material, sistemas e tecnologia.
+    - FEI: tropas debruçadas na fronteira (2º plano relativo às FEP em pessoal e material).
+    - FEC: presença territorial, guarda, apoio administrativo, depósitos e hospitais.
+    """
     nome = nome_uasg.upper()
 
-    termos_fei = (
-        "SELVA",
-        "FRONTEIRA",
+    termos_fep = (
         "PQDT",
         "PARAQUED",
         "AEROMOVEL",
+        "AEROMÓVEL",
         "OPERAÇÕES ESPECIAIS",
         "OPERACOES ESPECIAIS",
         "COMANDOS",
@@ -91,12 +95,6 @@ def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float
         "TELEMATICA",
         "SISTEMAS",
         "TECNOL",
-    )
-    if any(t in nome for t in termos_fei):
-        c4isr = 88.0 if any(t in nome for t in ("CIBER", "INTELIG", "GUERRA ELETR", "SISTEMAS", "TELEM")) else 74.0
-        return (ClassificacaoCOEB.FEI, c4isr, True)
-
-    termos_fep = (
         "BLINDAD",
         "MECANIZAD",
         "ARTILHARIA",
@@ -111,7 +109,18 @@ def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float
         "PANTANAL",
     )
     if any(t in nome for t in termos_fep):
-        return (ClassificacaoCOEB.FEP, 62.0, "BLINDAD" in nome or "MECANIZAD" in nome)
+        c4isr = 88.0 if any(t in nome for t in ("CIBER", "INTELIG", "GUERRA ELETR", "SISTEMAS", "TELEM", "AVIA")) else 68.0
+        a2ad = any(t in nome for t in ("CIBER", "INTELIG", "PQDT", "AEROMOV", "BLINDAD", "MECANIZ", "ANTIA", "MISSEIS", "AVIA"))
+        return (ClassificacaoCOEB.FEP, c4isr, a2ad)
+
+    termos_fei = (
+        "SELVA",
+        "FRONTEIRA",
+        "PEF",
+        "BIS",
+    )
+    if any(t in nome for t in termos_fei):
+        return (ClassificacaoCOEB.FEI, 58.0, True)
 
     return (ClassificacaoCOEB.FEC, 26.0, False)
 
@@ -332,9 +341,9 @@ class TransparenciaSyncService:
         db.add(om)
         db.flush()
 
-        efetivo_base = 220 if coeb == ClassificacaoCOEB.FEI else 480 if coeb == ClassificacaoCOEB.FEP else 310
+        efetivo_base = 520 if coeb == ClassificacaoCOEB.FEP else 280 if coeb == ClassificacaoCOEB.FEI else 310
         custeio_base = float(efetivo_base * 65_000)
-        valor_spu_base = 45_000_000.0 if coeb == ClassificacaoCOEB.FEI else 95_000_000.0 if coeb == ClassificacaoCOEB.FEP else 180_000_000.0
+        valor_spu_base = 95_000_000.0 if coeb == ClassificacaoCOEB.FEP else 38_000_000.0 if coeb == ClassificacaoCOEB.FEI else 180_000_000.0
 
         db.add(
             DoutrinaTecnologia(
@@ -349,7 +358,7 @@ class TransparenciaSyncService:
             Sigpes(
                 id_om=om.id_om,
                 efetivo_total_declarado=efetivo_base,
-                efetivo_fim=int(efetivo_base * (0.85 if coeb == ClassificacaoCOEB.FEI else 0.62 if coeb == ClassificacaoCOEB.FEP else 0.40)),
+                efetivo_fim=int(efetivo_base * (0.86 if coeb == ClassificacaoCOEB.FEP else 0.72 if coeb == ClassificacaoCOEB.FEI else 0.40)),
                 custeio_declarado_brl=custeio_base,
             )
         )
@@ -365,8 +374,8 @@ class TransparenciaSyncService:
         db.add(
             Sislog(
                 id_om=om.id_om,
-                acionamentos_reais_36m=28 if coeb == ClassificacaoCOEB.FEI else 12 if coeb == ClassificacaoCOEB.FEP else 2,
-                taxa_disponibilidade=92.0 if coeb == ClassificacaoCOEB.FEI else 86.0 if coeb == ClassificacaoCOEB.FEP else 64.0,
+                acionamentos_reais_36m=32 if coeb == ClassificacaoCOEB.FEP else 20 if coeb == ClassificacaoCOEB.FEI else 2,
+                taxa_disponibilidade=93.0 if coeb == ClassificacaoCOEB.FEP else 83.0 if coeb == ClassificacaoCOEB.FEI else 64.0,
             )
         )
         db.add(

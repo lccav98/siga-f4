@@ -182,93 +182,97 @@ GUARNICOES: Dict[str, Tuple[float, float, float, bool, float]] = {
 }
 
 # Catálogo doutrinário (sigla, guarnicao, coeb, c4isr, a2ad, perfil_anomalia)
-# perfil_anomalia: "limpo", "folha", "financeiro", "ambos", "prontidao"
+# Regra COEB:
+# - FEP: maior prioridade em recompletamento de pessoal, material, sistemas e tecnologia C4ISR.
+# - FEI: tropas debruçadas na fronteira (2º plano relativo às FEP em pessoal e material).
+# - FEC: emprego condicionado / presença territorial, guarda, depósitos, arsenais e hospitais.
 CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     # --- CASOS DE REFERÊNCIA E CONTRASTE DOUTRINÁRIO ---
-    ("1º BInt (Btl Intlg Mil)", "Manaus - AM", ClassificacaoCOEB.FEI, 94.5, True, "limpo"),
+    ("1º BInt (Btl Intlg Mil)", "Manaus - AM", ClassificacaoCOEB.FEP, 94.5, True, "limpo"),
     ("2º BIG (Btl Inf Gda)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 16.0, False, "ambos"),
-    ("ComDCiber (Cmdo Def Ciber)", "Brasília - DF", ClassificacaoCOEB.FEI, 98.0, True, "limpo"),
-    ("1º BFEsp (Btl Forças Esp)", "Goiânia - GO", ClassificacaoCOEB.FEI, 44.0, True, "limpo"),
-    ("1º BGE (Btl Guerra Elet)", "Brasília - DF", ClassificacaoCOEB.FEI, 91.0, True, "limpo"),
+    ("ComDCiber (Cmdo Def Ciber)", "Brasília - DF", ClassificacaoCOEB.FEP, 98.0, True, "limpo"),
+    ("1º BFEsp (Btl Forças Esp)", "Goiânia - GO", ClassificacaoCOEB.FEP, 44.0, True, "limpo"),
+    ("1º BGE (Btl Guerra Elet)", "Brasília - DF", ClassificacaoCOEB.FEP, 91.0, True, "limpo"),
 
-    # --- FEI: FORÇAS DE EMPREGO IMEDIATO (FARE / OPESP / PQDT / AMV / AVEX / CIBER / INTLG / AAAe / SELVA E FRONTEIRA A2/AD) ---
-    ("2º BInt (Btl Intlg Mil)", "Brasília - DF", ClassificacaoCOEB.FEI, 92.0, True, "limpo"),
-    ("3º BInt (Btl Intlg Mil)", "Porto Alegre - RS", ClassificacaoCOEB.FEI, 89.0, True, "limpo"),
-    ("4º BInt (Btl Intlg Mil)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 88.5, True, "limpo"),
-    ("5º BInt (Btl Intlg Mil)", "Campo Grande - MS", ClassificacaoCOEB.FEI, 87.0, True, "limpo"),
-    ("6º BInt (Btl Intlg Mil)", "Recife - PE", ClassificacaoCOEB.FEI, 84.0, False, "limpo"),
-    ("COpEsp (Cmdo Op Esp)", "Goiânia - GO", ClassificacaoCOEB.FEI, 86.0, True, "limpo"),
-    ("1º BAC (Btl Ações Comandos)", "Goiânia - GO", ClassificacaoCOEB.FEI, 79.0, True, "limpo"),
-    ("1º BOpPsc (Btl Op Psic)", "Goiânia - GO", ClassificacaoCOEB.FEI, 81.0, True, "limpo"),
-    ("3ª Cia FE (Forças Esp)", "Manaus - AM", ClassificacaoCOEB.FEI, 83.5, True, "limpo"),
-    ("25º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 74.0, True, "limpo"),
-    ("26º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 75.5, True, "limpo"),
-    ("27º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 73.0, True, "limpo"),
-    ("8º GAC Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
-    ("20º BLog Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 68.0, False, "limpo"),
-    ("1º Esqd C Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 71.0, True, "limpo"),
-    ("Btl DOMPSA", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 70.0, False, "limpo"),
-    ("4º BIL (12ª Bda Amv)", "Osasco - SP", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
-    ("5º BIL (12ª Bda Amv)", "Lorena - SP", ClassificacaoCOEB.FEI, 70.5, True, "limpo"),
-    ("6º BIL (12ª Bda Amv)", "Caçapava - SP", ClassificacaoCOEB.FEI, 74.0, True, "limpo"),
-    ("20º GAC L (12ª Bda Amv)", "Barueri - SP", ClassificacaoCOEB.FEI, 71.5, True, "limpo"),
-    ("12º BLog L (12ª Bda Amv)", "Taubaté - SP", ClassificacaoCOEB.FEI, 67.0, False, "limpo"),
-    ("1º BAvEx", "Taubaté - SP", ClassificacaoCOEB.FEI, 88.0, True, "limpo"),
-    ("2º BAvEx", "Taubaté - SP", ClassificacaoCOEB.FEI, 87.5, True, "limpo"),
-    ("3º BAvEx", "Campo Grande - MS", ClassificacaoCOEB.FEI, 85.0, True, "limpo"),
-    ("4º BAvEx", "Manaus - AM", ClassificacaoCOEB.FEI, 86.5, True, "limpo"),
-    ("6º GMF (Mísseis/Foguetes)", "Formosa - GO", ClassificacaoCOEB.FEI, 90.0, True, "limpo"),
-    ("16º GMF (Mísseis/Foguetes)", "Formosa - GO", ClassificacaoCOEB.FEI, 89.0, True, "limpo"),
-    ("1º GAAAe (Def Antiaérea)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 84.0, True, "limpo"),
-    ("2º GAAAe (Def Antiaérea)", "Praia Grande - SP", ClassificacaoCOEB.FEI, 82.0, True, "limpo"),
-    ("3º GAAAe (Def Antiaérea)", "Caxias do Sul - RS", ClassificacaoCOEB.FEI, 80.5, True, "limpo"),
-    ("4º GAAAe (Def Antiaérea)", "Sete Lagoas - MG" if False else "Belo Horizonte - MG", ClassificacaoCOEB.FEI, 79.5, True, "limpo"),
-    ("11º GAAAe (Def Antiaérea)", "Brasília - DF", ClassificacaoCOEB.FEI, 85.5, True, "limpo"),
-    ("12º GAAAe Sl (Def Antiaérea)", "Manaus - AM", ClassificacaoCOEB.FEI, 83.0, True, "limpo"),
-    # Selva e Faixa de Fronteira (FEI Geográfica / A2/AD)
-    ("1º BIS (Amv)", "Manaus - AM", ClassificacaoCOEB.FEI, 77.0, True, "limpo"),
-    ("2º BIS", "Belém - PA", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
-    ("3º BIS", "Barcelos - AM", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
-    ("4º BIS", "Rio Branco - AC", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
-    ("5º BIS (Btl Inf Sl)", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
-    ("6º BIS", "Guajará-Mirim - RO", ClassificacaoCOEB.FEI, 67.5, True, "limpo"),
-    ("7º BIS", "Boa Vista - RR", ClassificacaoCOEB.FEI, 73.5, True, "limpo"),
-    ("8º BIS", "Tabatinga - AM", ClassificacaoCOEB.FEI, 75.0, True, "limpo"),
-    ("17º BIS", "Tefé - AM", ClassificacaoCOEB.FEI, 68.5, True, "limpo"),
-    ("24º BIS", "São Luís - MA", ClassificacaoCOEB.FEI, 60.0, False, "limpo"),
-    ("50º BIS", "Imperatriz - MA", ClassificacaoCOEB.FEI, 62.0, False, "limpo"),
-    ("51º BIS", "Altamira - PA", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
-    ("52º BIS", "Marabá - PA", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
-    ("53º BIS", "Itaituba - PA", ClassificacaoCOEB.FEI, 63.0, True, "limpo"),
-    ("54º BIS", "Humaitá - AM", ClassificacaoCOEB.FEI, 64.5, True, "limpo"),
-    ("61º BIS", "Cruzeiro do Sul - AC", ClassificacaoCOEB.FEI, 67.0, True, "limpo"),
-    ("1º Esqd C Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 71.0, True, "limpo"),
-    ("12º Esqd C Mec", "Boa Vista - RR", ClassificacaoCOEB.FEI, 70.0, True, "limpo"),
-    ("10º GAC Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
-    ("34º BI Mec (Tríplice Front.)", "Foz do Iguaçu - PR", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
-    ("2º Btl Fron", "Cáceres - MT", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
-    ("17º Btl Fron", "Corumbá - MS", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
-    ("10º RC Mec", "Bela Vista - MS", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
-    ("11º RC Mec", "Ponta Porã - MS", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
-    ("17º RC Mec", "Amambai - MS", ClassificacaoCOEB.FEI, 67.0, True, "limpo"),
-    ("5º RC Mec", "Quaraí - RS" if False else "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
-    ("7º RC Mec", "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
-    ("8º RC Mec", "Uruguaiana - RS", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
-    ("12º RC Mec", "Jaguarão - RS", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
-    ("2º RC Mec", "São Borja - RS", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
-    ("14º RC Mec", "São Miguel do Oeste - SC", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
-    ("15ª Cia Inf Mtz", "Guaíra - PR", ClassificacaoCOEB.FEI, 67.0, True, "limpo"),
-    ("34º BIS (Cia Fron Amapá)", "Macapá - AP", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
-    ("Cia Esp Fron Oiapoque", "Oiapoque - AP", ClassificacaoCOEB.FEI, 63.0, True, "limpo"),
-    ("PEF Pacaraima", "Pacaraima - RR", ClassificacaoCOEB.FEI, 62.0, True, "limpo"),
-    ("PEF Bonfim", "Bonfim - RR", ClassificacaoCOEB.FEI, 61.0, True, "limpo"),
-    ("PEF Epitaciolândia", "Epitaciolândia - AC", ClassificacaoCOEB.FEI, 60.0, True, "limpo"),
-    ("1º Cia Com Sl", "Manaus - AM", ClassificacaoCOEB.FEI, 82.0, True, "limpo"),
-    ("2º Cia Com Sl", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 78.0, True, "limpo"),
-    ("16ª Cia Com Sl", "Tefé - AM", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
-    ("17ª Cia Com Sl", "Porto Velho - RO", ClassificacaoCOEB.FEI, 77.0, True, "limpo"),
-    ("23ª Cia Com Sl", "Marabá - PA", ClassificacaoCOEB.FEI, 75.0, True, "limpo"),
-    ("2º RCC (Quebra Prontidão)", "Pirassununga - SP", ClassificacaoCOEB.FEI, 62.0, False, "prontidao"),
+    # --- FEP: 1ª PRIORIDADE COEB (CIBER / INTLG / OPESP / PQDT / AMV / AVEX / GMF / AAAe) ---
+    ("2º BInt (Btl Intlg Mil)", "Brasília - DF", ClassificacaoCOEB.FEP, 92.0, True, "limpo"),
+    ("3º BInt (Btl Intlg Mil)", "Porto Alegre - RS", ClassificacaoCOEB.FEP, 89.0, True, "limpo"),
+    ("4º BInt (Btl Intlg Mil)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 88.5, True, "limpo"),
+    ("5º BInt (Btl Intlg Mil)", "Campo Grande - MS", ClassificacaoCOEB.FEP, 87.0, True, "limpo"),
+    ("6º BInt (Btl Intlg Mil)", "Recife - PE", ClassificacaoCOEB.FEP, 84.0, False, "limpo"),
+    ("COpEsp (Cmdo Op Esp)", "Goiânia - GO", ClassificacaoCOEB.FEP, 86.0, True, "limpo"),
+    ("1º BAC (Btl Ações Comandos)", "Goiânia - GO", ClassificacaoCOEB.FEP, 79.0, True, "limpo"),
+    ("1º BOpPsc (Btl Op Psic)", "Goiânia - GO", ClassificacaoCOEB.FEP, 81.0, True, "limpo"),
+    ("3ª Cia FE (Forças Esp)", "Manaus - AM", ClassificacaoCOEB.FEP, 83.5, True, "limpo"),
+    ("25º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 76.0, True, "limpo"),
+    ("26º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 77.5, True, "limpo"),
+    ("27º BI Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 75.0, True, "limpo"),
+    ("8º GAC Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 78.0, True, "limpo"),
+    ("20º BLog Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 71.0, False, "limpo"),
+    ("1º Esqd C Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 74.0, True, "limpo"),
+    ("Btl DOMPSA", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 72.0, False, "limpo"),
+    ("4º BIL (12ª Bda Amv)", "Osasco - SP", ClassificacaoCOEB.FEP, 75.0, True, "limpo"),
+    ("5º BIL (12ª Bda Amv)", "Lorena - SP", ClassificacaoCOEB.FEP, 73.5, True, "limpo"),
+    ("6º BIL (12ª Bda Amv)", "Caçapava - SP", ClassificacaoCOEB.FEP, 76.0, True, "limpo"),
+    ("20º GAC L (12ª Bda Amv)", "Barueri - SP", ClassificacaoCOEB.FEP, 74.5, True, "limpo"),
+    ("12º BLog L (12ª Bda Amv)", "Taubaté - SP", ClassificacaoCOEB.FEP, 70.0, False, "limpo"),
+    ("1º BAvEx", "Taubaté - SP", ClassificacaoCOEB.FEP, 88.0, True, "limpo"),
+    ("2º BAvEx", "Taubaté - SP", ClassificacaoCOEB.FEP, 87.5, True, "limpo"),
+    ("3º BAvEx", "Campo Grande - MS", ClassificacaoCOEB.FEP, 85.0, True, "limpo"),
+    ("4º BAvEx", "Manaus - AM", ClassificacaoCOEB.FEP, 86.5, True, "limpo"),
+    ("6º GMF (Mísseis/Foguetes)", "Formosa - GO", ClassificacaoCOEB.FEP, 90.0, True, "limpo"),
+    ("16º GMF (Mísseis/Foguetes)", "Formosa - GO", ClassificacaoCOEB.FEP, 89.0, True, "limpo"),
+    ("1º GAAAe (Def Antiaérea)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 84.0, True, "limpo"),
+    ("2º GAAAe (Def Antiaérea)", "Praia Grande - SP", ClassificacaoCOEB.FEP, 82.0, True, "limpo"),
+    ("3º GAAAe (Def Antiaérea)", "Caxias do Sul - RS", ClassificacaoCOEB.FEP, 80.5, True, "limpo"),
+    ("4º GAAAe (Def Antiaérea)", "Belo Horizonte - MG", ClassificacaoCOEB.FEP, 79.5, True, "limpo"),
+    ("11º GAAAe (Def Antiaérea)", "Brasília - DF", ClassificacaoCOEB.FEP, 85.5, True, "limpo"),
+    ("12º GAAAe Sl (Def Antiaérea)", "Manaus - AM", ClassificacaoCOEB.FEP, 83.0, True, "limpo"),
+
+    # --- FEI: TROPAS DEBRUÇADAS NA FRONTEIRA (2º PLANO PESSOAL/MATERIAL RELATIVO ÀS FEP) ---
+    ("1º BIS (Amv)", "Manaus - AM", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
+    ("2º BIS", "Belém - PA", ClassificacaoCOEB.FEI, 54.0, True, "limpo"),
+    ("3º BIS", "Barcelos - AM", ClassificacaoCOEB.FEI, 56.0, True, "limpo"),
+    ("4º BIS", "Rio Branco - AC", ClassificacaoCOEB.FEI, 55.0, True, "limpo"),
+    ("5º BIS (Btl Inf Sl)", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 59.0, True, "limpo"),
+    ("6º BIS", "Guajará-Mirim - RO", ClassificacaoCOEB.FEI, 54.5, True, "limpo"),
+    ("7º BIS", "Boa Vista - RR", ClassificacaoCOEB.FEI, 60.5, True, "limpo"),
+    ("8º BIS", "Tabatinga - AM", ClassificacaoCOEB.FEI, 62.0, True, "limpo"),
+    ("17º BIS", "Tefé - AM", ClassificacaoCOEB.FEI, 55.5, True, "limpo"),
+    ("24º BIS", "São Luís - MA", ClassificacaoCOEB.FEI, 49.0, False, "limpo"),
+    ("50º BIS", "Imperatriz - MA", ClassificacaoCOEB.FEI, 50.0, False, "limpo"),
+    ("51º BIS", "Altamira - PA", ClassificacaoCOEB.FEI, 52.0, True, "limpo"),
+    ("52º BIS", "Marabá - PA", ClassificacaoCOEB.FEI, 53.0, True, "limpo"),
+    ("53º BIS", "Itaituba - PA", ClassificacaoCOEB.FEI, 51.0, True, "limpo"),
+    ("54º BIS", "Humaitá - AM", ClassificacaoCOEB.FEI, 52.5, True, "limpo"),
+    ("61º BIS", "Cruzeiro do Sul - AC", ClassificacaoCOEB.FEI, 54.0, True, "limpo"),
+    ("1º Esqd C Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 58.0, True, "limpo"),
+    ("12º Esqd C Mec", "Boa Vista - RR", ClassificacaoCOEB.FEI, 57.0, True, "limpo"),
+    ("10º GAC Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 56.0, True, "limpo"),
+    ("34º BI Mec (Tríplice Front.)", "Foz do Iguaçu - PR", ClassificacaoCOEB.FEI, 63.0, True, "limpo"),
+    ("2º Btl Fron", "Cáceres - MT", ClassificacaoCOEB.FEI, 53.0, True, "limpo"),
+    ("17º Btl Fron", "Corumbá - MS", ClassificacaoCOEB.FEI, 55.0, True, "limpo"),
+    ("10º RC Mec", "Bela Vista - MS", ClassificacaoCOEB.FEI, 54.0, True, "limpo"),
+    ("11º RC Mec", "Ponta Porã - MS", ClassificacaoCOEB.FEI, 56.0, True, "limpo"),
+    ("17º RC Mec", "Amambai - MS", ClassificacaoCOEB.FEI, 55.0, True, "limpo"),
+    ("5º RC Mec", "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 53.0, True, "limpo"),
+    ("7º RC Mec", "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 54.0, True, "limpo"),
+    ("8º RC Mec", "Uruguaiana - RS", ClassificacaoCOEB.FEI, 56.0, True, "limpo"),
+    ("12º RC Mec", "Jaguarão - RS", ClassificacaoCOEB.FEI, 52.0, True, "limpo"),
+    ("2º RC Mec", "São Borja - RS", ClassificacaoCOEB.FEI, 53.0, True, "limpo"),
+    ("14º RC Mec", "São Miguel do Oeste - SC", ClassificacaoCOEB.FEI, 54.0, True, "limpo"),
+    ("15ª Cia Inf Mtz", "Guaíra - PR", ClassificacaoCOEB.FEI, 55.0, True, "limpo"),
+    ("34º BIS (Cia Fron Amapá)", "Macapá - AP", ClassificacaoCOEB.FEI, 52.0, True, "limpo"),
+    ("Cia Esp Fron Oiapoque", "Oiapoque - AP", ClassificacaoCOEB.FEI, 51.0, True, "limpo"),
+    ("PEF Pacaraima", "Pacaraima - RR", ClassificacaoCOEB.FEI, 49.0, True, "limpo"),
+    ("PEF Bonfim", "Bonfim - RR", ClassificacaoCOEB.FEI, 48.0, True, "limpo"),
+    ("PEF Epitaciolândia", "Epitaciolândia - AC", ClassificacaoCOEB.FEI, 47.0, True, "limpo"),
+    ("1º Cia Com Sl", "Manaus - AM", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
+    ("2º Cia Com Sl", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 62.0, True, "limpo"),
+    ("16ª Cia Com Sl", "Tefé - AM", ClassificacaoCOEB.FEI, 60.0, True, "limpo"),
+    ("17ª Cia Com Sl", "Porto Velho - RO", ClassificacaoCOEB.FEI, 61.0, True, "limpo"),
+    ("23ª Cia Com Sl", "Marabá - PA", ClassificacaoCOEB.FEI, 59.0, True, "limpo"),
+    ("2º RCC (Quebra Prontidão)", "Pirassununga - SP", ClassificacaoCOEB.FEP, 62.0, False, "prontidao"),
 
     # --- FEP: FORÇAS DE EMPREGO PRONTO (FORPRON — BLINDADOS, MECANIZADOS, ARTILHARIA, ENG, COM, LOG) ---
     ("1º RCC", "Santa Maria - RS", ClassificacaoCOEB.FEP, 68.0, True, "limpo"),
@@ -482,22 +486,22 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("1º Btl Instr (Apoio)", "Resende - RJ", ClassificacaoCOEB.FEC, 33.0, False, "limpo"),
     ("Btl Cmdo Sv AMAN", "Resende - RJ", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
     ("Btl Cmdo Sv EsSA", "Três Corações - MG", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
-    ("Cia Prec Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 88.0, True, "limpo"),
-    ("1º Cia Intlg (CML)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 85.0, True, "limpo"),
-    ("2º Cia Intlg (CMSE)", "São Paulo - SP", ClassificacaoCOEB.FEI, 86.0, True, "limpo"),
-    ("4º Cia Intlg (CMP)", "Brasília - DF", ClassificacaoCOEB.FEI, 87.0, True, "limpo"),
+    ("Cia Prec Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 88.0, True, "limpo"),
+    ("1º Cia Intlg (CML)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 85.0, True, "limpo"),
+    ("2º Cia Intlg (CMSE)", "São Paulo - SP", ClassificacaoCOEB.FEP, 86.0, True, "limpo"),
+    ("4º Cia Intlg (CMP)", "Brasília - DF", ClassificacaoCOEB.FEP, 87.0, True, "limpo"),
     ("5º Cia Com Bld", "Ponta Grossa - PR", ClassificacaoCOEB.FEP, 72.0, True, "limpo"),
     ("6º Cia Com", "Cristalina - GO", ClassificacaoCOEB.FEP, 70.0, False, "limpo"),
     ("11º Cia Com Mec", "Campinas - SP", ClassificacaoCOEB.FEP, 73.0, True, "limpo"),
     ("15º Cia Com Mec", "Cascavel - PR", ClassificacaoCOEB.FEP, 72.0, True, "limpo"),
-    ("1ª Cia Eng Cmb Mec", "São Borja - RS", ClassificacaoCOEB.FEI, 66.0, True, "limpo"),
+    ("1ª Cia Eng Cmb Mec", "São Borja - RS", ClassificacaoCOEB.FEI, 58.0, True, "limpo"),
     ("2ª Cia Eng Cmb Mec", "Alegrete - RS", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
     ("3ª Cia Eng Cmb Mec", "Dom Pedrito - RS", ClassificacaoCOEB.FEP, 63.0, True, "limpo"),
     ("4ª Cia Eng Cmb Mec", "Jardim - MS", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
-    ("10ª Cia Eng Cmb", "São Bento do Una - PE" if False else "Petrolina - PE", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
-    ("21ª Bia AAAe Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 81.0, True, "limpo"),
-    ("5ª Bia AAAe L", "Osasco - SP", ClassificacaoCOEB.FEI, 79.0, True, "limpo"),
-    ("9ª Bia AAAe (Es)", "Macaé - RJ" if False else "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 78.0, True, "limpo"),
+    ("10ª Cia Eng Cmb", "Petrolina - PE", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
+    ("21ª Bia AAAe Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 81.0, True, "limpo"),
+    ("5ª Bia AAAe L", "Osasco - SP", ClassificacaoCOEB.FEP, 79.0, True, "limpo"),
+    ("9ª Bia AAAe (Es)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 78.0, True, "limpo"),
     ("14º Pel PE", "Florianópolis - SC", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     ("38º Pel PE", "Goiânia - GO", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
     ("10º Pel PE", "Fortaleza - CE", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
@@ -507,36 +511,36 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("Cia Cmdo 1ª DE", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
     ("Cia Cmdo 2ª DE", "São Paulo - SP", ClassificacaoCOEB.FEP, 59.0, False, "limpo"),
     ("Cia Cmdo 7ª DE", "Recife - PE", ClassificacaoCOEB.FEP, 55.0, False, "limpo"),
-    ("Cia Cmdo Bda Inf Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEI, 78.0, True, "limpo"),
-    ("Cia Cmdo 12ª Bda Inf Amv", "Caçapava - SP", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
+    ("Cia Cmdo Bda Inf Pqdt", "Vila Militar - RJ", ClassificacaoCOEB.FEP, 78.0, True, "limpo"),
+    ("Cia Cmdo 12ª Bda Inf Amv", "Caçapava - SP", ClassificacaoCOEB.FEP, 76.0, True, "limpo"),
     ("Esqd Cmdo 5ª Bda C Bld", "Ponta Grossa - PR", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
     ("Esqd Cmdo 6ª Bda C Bld", "Santa Maria - RS", ClassificacaoCOEB.FEP, 65.0, True, "limpo"),
     ("Esqd Cmdo 4ª Bda C Mec", "Dourados - MS", ClassificacaoCOEB.FEP, 63.0, True, "limpo"),
     ("Cia Cmdo 15ª Bda Inf Mec", "Cascavel - PR", ClassificacaoCOEB.FEP, 64.0, True, "limpo"),
     ("Cia Cmdo 11ª Bda Inf Mec", "Campinas - SP", ClassificacaoCOEB.FEP, 63.0, False, "limpo"),
-    ("Cia Cmdo 16ª Bda Inf Sl", "Tefé - AM", ClassificacaoCOEB.FEI, 70.0, True, "limpo"),
-    ("Cia Cmdo 17ª Bda Inf Sl", "Porto Velho - RO", ClassificacaoCOEB.FEI, 71.0, True, "limpo"),
-    ("Cia Cmdo 2ª Bda Inf Sl", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
-    ("Cia Cmdo 1ª Bda Inf Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 72.0, True, "limpo"),
-    ("Cia Cmdo 23ª Bda Inf Sl", "Marabá - PA", ClassificacaoCOEB.FEI, 69.0, True, "limpo"),
-    ("Cia Cmdo 22ª Bda Inf Sl", "Macapá - AP", ClassificacaoCOEB.FEI, 68.0, True, "limpo"),
-    ("Cia Cmdo 18ª Bda Inf Pan", "Corumbá - MS", ClassificacaoCOEB.FEI, 70.0, True, "limpo"),
+    ("Cia Cmdo 16ª Bda Inf Sl", "Tefé - AM", ClassificacaoCOEB.FEI, 58.0, True, "limpo"),
+    ("Cia Cmdo 17ª Bda Inf Sl", "Porto Velho - RO", ClassificacaoCOEB.FEI, 59.0, True, "limpo"),
+    ("Cia Cmdo 2ª Bda Inf Sl", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.FEI, 60.0, True, "limpo"),
+    ("Cia Cmdo 1ª Bda Inf Sl", "Boa Vista - RR", ClassificacaoCOEB.FEI, 60.0, True, "limpo"),
+    ("Cia Cmdo 23ª Bda Inf Sl", "Marabá - PA", ClassificacaoCOEB.FEI, 57.0, True, "limpo"),
+    ("Cia Cmdo 22ª Bda Inf Sl", "Macapá - AP", ClassificacaoCOEB.FEI, 56.0, True, "limpo"),
+    ("Cia Cmdo 18ª Bda Inf Pan", "Corumbá - MS", ClassificacaoCOEB.FEI, 58.0, True, "limpo"),
     ("18º Btl Trns (Transporte)", "Campo Grande - MS", ClassificacaoCOEB.FEP, 52.0, False, "limpo"),
     ("1º Btl Trns", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 26.0, False, "financeiro"),
     ("2º Btl Trns", "São Paulo - SP", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     ("3º Btl Trns", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 25.0, False, "folha"),
-    ("CIGE (Centro Intlg Ex)", "Brasília - DF", ClassificacaoCOEB.FEI, 96.0, True, "limpo"),
-    ("CDS (Centro Desenv Sist)", "Brasília - DF", ClassificacaoCOEB.FEI, 95.0, True, "limpo"),
-    ("CTEx (Centro Tecnol Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 93.0, True, "limpo"),
-    ("CAEx (Campo Provas Marambaia)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEI, 84.0, True, "limpo"),
-    ("CITEx (Centro Integrado Telem)", "Brasília - DF", ClassificacaoCOEB.FEI, 94.0, True, "limpo"),
+    ("CIGE (Centro Intlg Ex)", "Brasília - DF", ClassificacaoCOEB.FEP, 96.0, True, "limpo"),
+    ("CDS (Centro Desenv Sist)", "Brasília - DF", ClassificacaoCOEB.FEP, 95.0, True, "limpo"),
+    ("CTEx (Centro Tecnol Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 93.0, True, "limpo"),
+    ("CAEx (Campo Provas Marambaia)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 84.0, True, "limpo"),
+    ("CITEx (Centro Integrado Telem)", "Brasília - DF", ClassificacaoCOEB.FEP, 94.0, True, "limpo"),
     ("1º CTA (Centro Telemática)", "Porto Alegre - RS", ClassificacaoCOEB.FEP, 82.0, False, "limpo"),
     ("2º CTA (Centro Telemática)", "São Paulo - SP", ClassificacaoCOEB.FEP, 83.0, False, "limpo"),
     ("3º CTA (Centro Telemática)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEP, 84.0, False, "limpo"),
-    ("4º CTA (Centro Telemática)", "Manaus - AM", ClassificacaoCOEB.FEI, 86.0, True, "limpo"),
+    ("4º CTA (Centro Telemática)", "Manaus - AM", ClassificacaoCOEB.FEP, 86.0, True, "limpo"),
     ("5º CTA (Centro Telemática)", "Recife - PE", ClassificacaoCOEB.FEP, 80.0, False, "limpo"),
     ("6º CTA (Centro Telemática)", "Campo Grande - MS", ClassificacaoCOEB.FEP, 81.0, False, "limpo"),
-    ("7º CTA (Centro Telemática)", "Brasília - DF", ClassificacaoCOEB.FEI, 88.0, True, "limpo"),
+    ("7º CTA (Centro Telemática)", "Brasília - DF", ClassificacaoCOEB.FEP, 88.0, True, "limpo"),
 ]
 
 
@@ -580,21 +584,24 @@ def gerar_oms(reset: bool = True) -> int:
                 valor_spu = 485_000_000.0
                 custeio_decl = 34_000_000.0
                 acionamentos, disponibilidade = 1, 58.0
-            elif coeb == ClassificacaoCOEB.FEI:
-                is_tech_niche = any(k in sigla for k in ("BInt", "ComDCiber", "BGE", "CIGE", "CDS", "CITEx", "CTA", "CTEx", "PEF", "Cia"))
-                ef_decl = random.randint(140, 290) if is_tech_niche else random.randint(420, 680)
-                ef_fim = int(ef_decl * random.uniform(0.82, 0.92))
-                valor_spu = round(random.uniform(14_000_000, 75_000_000) * mult_spu, 2)
-                custeio_decl = round(ef_decl * random.uniform(52_000, 105_000), 2)
-                acionamentos = random.randint(28, 60)
-                disponibilidade = 76.0 if perfil_anomalia == "prontidao" else round(random.uniform(88.0, 98.5), 1)
             elif coeb == ClassificacaoCOEB.FEP:
-                ef_decl = random.randint(450, 740)
-                ef_fim = int(ef_decl * random.uniform(0.58, 0.72))
-                valor_spu = round(random.uniform(40_000_000, 125_000_000) * mult_spu, 2)
-                custeio_decl = round(ef_decl * random.uniform(44_000, 72_000), 2)
-                acionamentos = random.randint(8, 22)
-                disponibilidade = round(random.uniform(82.0, 94.0), 1)
+                # 1ª prioridade COEB: maior recompletamento de pessoal, material, sistemas e prontidão
+                is_tech_niche = any(k in sigla for k in ("BInt", "ComDCiber", "BGE", "CIGE", "CDS", "CITEx", "CTA", "CTEx", "Cia Intlg"))
+                ef_decl = random.randint(180, 320) if is_tech_niche else random.randint(520, 780)
+                ef_fim = int(ef_decl * random.uniform(0.82, 0.92))
+                valor_spu = round(random.uniform(42_000_000, 125_000_000) * mult_spu, 2)
+                custeio_decl = round(ef_decl * random.uniform(55_000, 98_000), 2)
+                acionamentos = random.randint(24, 58)
+                disponibilidade = 76.0 if perfil_anomalia == "prontidao" else round(random.uniform(88.0, 98.5), 1)
+            elif coeb == ClassificacaoCOEB.FEI:
+                # 2º plano relativo às FEP em pessoal e material, debruçadas na fronteira
+                is_pef = "PEF" in sigla or "Cia" in sigla
+                ef_decl = random.randint(95, 220) if is_pef else random.randint(360, 560)
+                ef_fim = int(ef_decl * random.uniform(0.64, 0.77))
+                valor_spu = round(random.uniform(12_000_000, 52_000_000) * mult_spu, 2)
+                custeio_decl = round(ef_decl * random.uniform(44_000, 70_000), 2)
+                acionamentos = random.randint(14, 32)
+                disponibilidade = round(random.uniform(79.0, 88.5), 1)
             else:  # FEC
                 ef_decl = random.randint(360, 820)
                 ef_fim = int(ef_decl * random.uniform(0.32, 0.48))

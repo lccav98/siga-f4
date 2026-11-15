@@ -162,11 +162,12 @@ df_all = pd.DataFrame(oms_brutas)
 st.sidebar.header("🎯 Filtros Doutrinários (COEB)")
 coeb_selecionado = st.sidebar.multiselect(
     "Classificação COEB",
-    options=["FEI", "FEP", "FEC"],
-    default=["FEI", "FEP", "FEC"],
+    options=["FEP", "FEI", "FEC"],
+    default=["FEP", "FEI", "FEC"],
     help=(
-        "FEI: Emprego Imediato (Fronteira, Selva, OpEsp, Pqdt, Amv, Ciber, Intlg, AvEx, AAAe) | "
-        "FEP: Prontidão / FORPRON (Bld, Mec, Art, Eng, Com, Log) | "
+        "FEP (1ª Prioridade COEB): maior prioridade em pessoal, material, sistemas e C4ISR "
+        "(OpEsp, Pqdt, Amv, AvEx, Ciber, Intlg, Bld, Mec, Art, Eng, Com, Log) | "
+        "FEI: tropas debruçadas na fronteira (2º plano relativo às FEP em pessoal/material) | "
         "FEC: Emprego Condicionado (Guarda, PE, Territorial, Depósitos, Arsenais, RM)"
     ),
 )
@@ -184,9 +185,9 @@ apenas_alertas = st.sidebar.checkbox("Apenas OMs com Alertas CGU/Prontidão", va
 st.sidebar.divider()
 st.sidebar.caption(
     "**Enquadramento COEB:**\n"
-    f"- **FEI:** {int((df_all['classificacao_coeb'] == 'FEI').sum())} OMs\n"
-    f"- **FEP:** {int((df_all['classificacao_coeb'] == 'FEP').sum())} OMs\n"
-    f"- **FEC:** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs"
+    f"- **FEP (1ª Prioridade):** {int((df_all['classificacao_coeb'] == 'FEP').sum())} OMs\n"
+    f"- **FEI (Fronteira / 2º Plano):** {int((df_all['classificacao_coeb'] == 'FEI').sum())} OMs\n"
+    f"- **FEC (Condicionado):** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs"
 )
 st.sidebar.info(f"Fonte ativa: **{fonte_dados}** ({len(df_all)} OMs na base)")
 
@@ -317,15 +318,15 @@ with st.expander("🧮 Como o IVE (0–100) é calculado pelo Motor JEV", expand
     st.markdown(
         """
         O **Índice de Valor Estratégico (IVE)** mede o retorno operacional, tecnológico e geoestratégico de cada OM
-        em relação ao seu custo de manutenção e patrimônio imobilizado:
+        em relação ao seu custo de manutenção e patrimônio imobilizado, respeitando a precedência do **COEB**:
 
         - **Teeth-to-Tail (15%):** razão `efetivo_fim / cpfs_ativos` (peso da atividade-fim sobre a estrutura administrativa).
         - **Eficiência de Custeio (15%):** `total_empenhado / cpfs_ativos` auditado via Portal da Transparência (CGU).
         - **Nível Tecnológico Força 4.0 (25%):** `indice_tecnologia_c4isr` (C2, Guerra Eletrônica, IA, Ciber e Comunicações).
-        - **Prontidão e Emprego (25%):** disponibilidade e acionamentos reais nos últimos 36 meses (SISLOG), exigindo emprego imediato em `FEI` e mobilização D+ em `FEC`.
+        - **Prontidão e Emprego (25%):** disponibilidade e acionamentos reais nos últimos 36 meses (SISLOG), com maior exigência sobre as **FEP** (1ª prioridade), vigilância/resposta inicial nas **FEI** de fronteira e mobilização D+ nas **FEC**.
         - **Geoestratégia e A2/AD (20%):** proximidade de fronteiras e integração à negação de área (Calha Amazônica / rotas críticas = 100 pts).
-        - **Multiplicador COEB:** `FEI × 1,5` | `FEP × 1,2` | `FEC × 0,8` (normalizado pelo teto `1,45` na escala `0–100`).
-        - **Penalidade de Auditoria (`-15%` por anomalia):** divergência `> 5%` entre custeio declarado e CGU, divergência `> 5%` entre efetivo SIGPES e CPFs ativos CGU, ou quebra de prontidão `FEI < 85%`.
+        - **Multiplicador COEB:** `FEP × 1,5` *(maior prioridade em pessoal, material, sistemas e C4ISR)* | `FEI × 1,2` *(tropas na fronteira, 2º plano relativo às FEP)* | `FEC × 0,8` (normalizado pelo teto `1,45` na escala `0–100`).
+        - **Penalidade de Auditoria (`-15%` por anomalia):** divergência `> 5%` entre custeio declarado e CGU, divergência `> 5%` entre efetivo SIGPES e CPFs ativos CGU, ou quebra de prontidão (`FEP < 85%` ou `FEI < 78%`).
         """
     )
 
@@ -336,14 +337,14 @@ with col_p:
     st.markdown(
         """
         **O que torna a OM Ponta de Lança:**
-        - Enquadramento prioritário (**FEI**) ou **FEP** de altíssimo desempenho.
+        - Enquadramento de 1ª prioridade (**FEP**) com pleno recompletamento de pessoal/material ou **FEI** estratégica na fronteira com alto A2/AD.
         - Elevada maturidade tecnológica **C4ISR**, alta taxa de **efetivo-fim** e disponibilidade **SISLOG ≥ 85%**.
-        - Papel ativo em **A2/AD** ou posição geoestratégica crítica, sem anomalias graves de auditoria.
+        - Sem anomalias graves de auditoria CGU/SIGPES.
 
         **Alternativas Viáveis:**
-        1. **Injeção de Capital Força 4.0:** direcionar recursos para IA, Guerra Eletrônica, Ciber e sensores C4ISR.
-        2. **Sanar Gargalo Doutrinário (se FEI com C4ISR < 50):** transferir verbas de alienação SPU para modernização imediata de C2.
-        3. **Blindagem Orçamentária e Logística:** priorizar dotação SISLOG para preservar o nível de prontidão.
+        1. **Prioridade Máxima Força 4.0 (FEP):** concentrar injeção de IA, Guerra Eletrônica, Ciber e sistemas C4ISR.
+        2. **Sanar Gargalo Doutrinário (se FEP com C4ISR < 50):** redirecionar verbas de alienação SPU para recompletamento imediato de sistemas/material.
+        3. **Integração Fronteira–Núcleo:** conectar sensores de fronteira (**FEI**) à rede de C2 das grandes unidades **FEP**.
         """
     )
 
@@ -352,13 +353,13 @@ with col_z_fusao:
     st.markdown(
         """
         **O que torna a OM Zona de Fusão:**
-        - Tipicamente unidades **FEP** de prontidão intermediária ou **FEI** penalizadas por queda de disponibilidade (`-15%`).
-        - Nível tecnológico **C4ISR mediano (45–75)**, relação atividade-fim/meio moderada ou menor exposição geoestratégica A2/AD.
+        - Tropas **FEI** debruçadas na fronteira (que operam em 2º plano de pessoal/material em relação às **FEP** no COEB) ou unidades **FEP** com C4ISR intermediário / penalizadas por queda de prontidão (`-15%`).
+        - Maturidade tecnológica **C4ISR mediana (45–70)** ou lacunas pontuais de recompletamento material.
 
         **Alternativas Viáveis:**
-        1. **Unificação Modular de Meios:** fundir estruturas administrativas e logísticas com OMs vizinhas na mesma guarnição, eliminando UGs redundantes.
-        2. **Upgrade via Digital Twin:** captar capital de OMs Zumbi alienadas para elevar o índice C4ISR e migrar para *Ponta de Lança*.
-        3. **Recuperação de Prontidão (se FEI < 85%):** recompor disponibilidade material no SISLOG para remover a penalidade de `-15%`.
+        1. **Recompletamento Escalonado (Pós-FEP):** se **FEI** de fronteira, priorizar sensores ISR, comunicações táticas e logística de selva/fronteira após o atendimento do núcleo **FEP**.
+        2. **Upgrade via Digital Twin:** captar capital de OMs Zumbi alienadas para elevar o índice C4ISR e migrar unidades **FEP** medianas para *Ponta de Lança*.
+        3. **Unificação Modular / Recuperação SISLOG:** fundir encargos administrativos redundantes na guarnição e eliminar quebras de disponibilidade (`-15%`).
         """
     )
 
@@ -372,7 +373,7 @@ with col_zumbi:
         - Penalidades acumuladas (`-15%` a `-30%`) por divergências **CGU × SIGPES** (> 5% em folha/inativos ou custeio).
 
         **Alternativas Viáveis:**
-        1. **Desativação e Alienação via SPU:** encerrar o CNPJ/UG, alienar ou permutar o imóvel urbano e reinvestir em brigadas **FEI/Força 4.0** (simule no *Digital Twin* abaixo).
+        1. **Desativação e Alienação via SPU:** encerrar o CNPJ/UG, alienar ou permutar o imóvel urbano e reinvestir no recompletamento das **FEP** (1ª prioridade) e vigilância **FEI** (simule no *Digital Twin* abaixo).
         2. **Absorção Administrativa:** extinguir a autonomia de UG e transferir encargos de guarnição/guarda para outra OM próxima.
         3. **Saneamento Imediato de Folha/Custeio:** caso mantida por imposição legal, auditar CPFs inativos/pensionistas e corrigir o *burn rate* na CGU.
         """
@@ -428,19 +429,19 @@ if diag:
 
     if diag["classificacao_ive"] == "Ponta de Lança":
         alternativas_om = (
-            "1) Manter prioridade orçamentária e dotação SISLOG; "
-            "2) Se C4ISR < 50, redirecionar capital de alienações SPU para modernização C2/C4ISR; "
-            "3) Integrar em rede multidomínio Força 4.0."
+            "1) Manter prioridade máxima de recompletamento (pessoal, material, sistemas) e dotação SISLOG; "
+            "2) Se C4ISR < 50 (Gargalo FEP), redirecionar capital de alienações SPU para modernização C2/C4ISR; "
+            "3) Consolidar integração em rede multidomínio Força 4.0."
         )
     elif diag["classificacao_ive"] == "Zona de Fusão":
         alternativas_om = (
-            "1) Avaliar unificação modular de encargos administrativos/logísticos na guarnição; "
-            "2) Receber aporte de capital via Digital Twin (alienação de OMs Zumbi) para upgrade C4ISR; "
-            "3) Se houver quebra de prontidão (<85%), reequilibrar disponibilidade no SISLOG."
+            "1) Se FEI de fronteira (2º plano relativo às FEP), priorizar sensores ISR e logística de fronteira após cobertura FEP; "
+            "2) Se FEP mediana, receber aporte via Digital Twin (alienação de OMs Zumbi) para upgrade C4ISR; "
+            "3) Avaliar unificação modular na guarnição e sanar eventuais quebras de prontidão no SISLOG."
         )
     else:
         alternativas_om = (
-            "1) Desativação com encerramento de CNPJ/UG e alienação/permuta do imóvel SPU para capitalizar unidades FEI; "
+            "1) Desativação com encerramento de CNPJ/UG e alienação/permuta do imóvel SPU para capitalizar forças FEP (1ª prioridade) e FEI de fronteira; "
             "2) Absorção das atividades de guarnição/guarda por outra OM próxima; "
             "3) Se mantida, auditar divergências >5% de folha (inativos) e custeio na CGU."
         )
@@ -467,7 +468,9 @@ df_zumbis = df_all[df_all["classificacao_coeb"] == "FEC"]
 if df_zumbis.empty:
     df_zumbis = df_all.nsmallest(5, "nota_ive")
 
-df_destinos = df_all[df_all["classificacao_coeb"].isin(["FEP", "FEI"])]
+df_destinos = df_all[df_all["classificacao_coeb"].isin(["FEP", "FEI"])].sort_values(
+    by=["classificacao_coeb", "nota_ive"], ascending=[False, False]
+)
 if df_destinos.empty:
     df_destinos = df_all
 
@@ -486,7 +489,7 @@ with col_s1:
 with col_s2:
     # Evita selecionar a mesma OM por padrão
     chaves_dest = [k for k in mapa_destinos.keys() if mapa_destinos[k] != mapa_zumbis[sel_zumbi]]
-    sel_destino = st.selectbox("2. OM Destino a Transformar (FEI / Força 4.0):", chaves_dest)
+    sel_destino = st.selectbox("2. OM Destino a Recompletar/Modernizar (FEP Prioritária / FEI):", chaves_dest)
 
 if st.button("🚀 Simular Transformação Doutrinária", type="primary"):
     resultado = executar_simulacao(mapa_zumbis[sel_zumbi], mapa_destinos[sel_destino])
