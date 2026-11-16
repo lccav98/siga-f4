@@ -5,15 +5,22 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session, joinedload
 
-from backend.core.estrutura_eb import inferir_localizacao_militar
+from backend.core.estrutura_eb import (
+    BRIGADAS_FEC_COMBATE_DE,
+    eh_om_ensino,
+    eh_om_saude,
+    inferir_localizacao_militar,
+)
 from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
 
 
 MULTIPLICADOR_COEB: Dict[ClassificacaoCOEB, float] = {
-    ClassificacaoCOEB.FEP: 1.5,  # Forças de Emprego de Prontidão (EB10-P-01.031, 3.1.1.2.b): 1ª prioridade
-    ClassificacaoCOEB.FEI: 1.2,  # Forças de Emprego Imediato (3.1.1.2.a): faixa de fronteira / 2º plano vs FEP
-    ClassificacaoCOEB.FEC: 0.8,  # Forças de Emprego Continuado (3.1.1.2.c): presença, dissuasão, mobilização
+    ClassificacaoCOEB.FEP: 1.5,   # Forças de Emprego de Prontidão (EB10-P-01.031 / COEB 5.3.4.4 b): 1ª prioridade
+    ClassificacaoCOEB.FEI: 1.2,   # Forças de Emprego Imediato (COEB 5.3.4.4 a): faixa de fronteira / 2º plano vs FEP
+    ClassificacaoCOEB.FEC: 0.95,  # Forças de Emprego Continuado (COEB 5.3.4.4 c): teto <75 (sem virar Ponta de Lança), sem rebaixar Bda FEC limpa a OM Zumbi
 }
+MULTIPLICADOR_SAUDE = 1.15  # Sustentação Sanitária (COEB 5.6.1.2.4 b,f / 5.3.4.4 e)
+MULTIPLICADOR_INSTITUCIONAL = 1.10  # Capacidades Institucionais de Ensino/Formação (COEB 5.6.1.4)
 
 META_EFETIVO_PRONTIDAO_PCT = 20.0  # EB10-P-01.031 itens 1.4 e 2.6: mínimo de 20% em elevada prontidão
 TERMOS_MODULO_MULTIDOMINIO = (
@@ -38,9 +45,8 @@ TERMOS_APOIO_AMPLIADO = (
     "BEC",
     "BE CMB",
     "ENG",
-    "H MIL",
-    "HGU",
-    "SUP",
+    "B FV",
+    "BAPLOGEX",
 )
 
 PENALIDADE_ANOMALIA = 0.15
@@ -216,8 +222,17 @@ class MotorIVE:
         disponibilidade = sislog.taxa_disponibilidade if sislog else 0.0
         acionamentos = sislog.acionamentos_reais_36m if sislog else 0
         coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
+        is_saude = eh_om_saude(om.sigla)
+        is_ensino = eh_om_ensino(om.sigla)
+        local_eb = inferir_localizacao_militar(om.sigla, om.endereco)
 
-        if coeb == ClassificacaoCOEB.FEP:
+        if is_saude:
+            # OMS: disponibilidade assistencial/leitos e prontidão para módulo de saúde FTC
+            nota_mobilizacao_saude = min(100.0, (acionamentos / 4.0) * 100.0)
+            nota_prontidao = 0.85 * disponibilidade + 0.15 * nota_mobilizacao_saude
+        elif is_ensino:
+            nota_prontidao = disponibilidade
+        elif coeb == ClassificacaoCOEB.FEP:
             nota_acionamento = min(100.0, (acionamentos / 32.0) * 100.0)
             nota_prontidao = 0.50 * disponibilidade + 0.50 * nota_acionamento
         elif coeb == ClassificacaoCOEB.FEI:
@@ -227,14 +242,23 @@ class MotorIVE:
             nota_mobilizacao = min(100.0, (acionamentos / 6.0) * 100.0)
             nota_prontidao = 0.85 * disponibilidade + 0.15 * nota_mobilizacao
 
-        # 5. Geoestratégia e A2/AD (20%)
+        # 5. Geoestratégia e A2/AD (20%) — com COEB 2026 (Litoral, DE Multidomínio, Saúde e Capacidades Institucionais)
         papel_a2ad = bool(doutrina and doutrina.papel_a2ad)
         dist_fronteira = estrategia.dist_fronteira_km if estrategia else 1000.0
-        if papel_a2ad and self._em_rota_estrategica(om):
+        sigla_up = om.sigla.upper()
+        if is_saude:
+            nota_geo = 85.0 if ("HCE" in sigla_up or "HMA" in sigla_up) else 75.0
+        elif is_ensino:
+            nota_geo = 80.0
+        elif papel_a2ad and self._em_rota_estrategica(om):
             nota_geo = 100.0
         else:
             base_fronteira = max(10.0, min(100.0, 100.0 - (dist_fronteira / 20.0)))
             bonus_a2ad = 25.0 if papel_a2ad else 0.0
+            is_de_c2 = "CIA CMDO" in sigla_up and "DE" in sigla_up
+            if is_de_c2 or local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE:
+                # COEB 1.3.2.7 / 5.3.2 / 5.3.4.4 c: defesa da costa/litoral, C2 Divisionário e reserva mobilizável
+                base_fronteira = max(48.0, base_fronteira)
             nota_geo = min(100.0, base_fronteira + bonus_a2ad)
 
         return {
@@ -264,10 +288,15 @@ class MotorIVE:
         )
 
         coeb = om.doutrina_tecnologia.classificacao_coeb if om.doutrina_tecnologia else ClassificacaoCOEB.FEC
-        multiplicador = MULTIPLICADOR_COEB[coeb]
+        if eh_om_saude(om.sigla):
+            multiplicador = MULTIPLICADOR_SAUDE
+        elif eh_om_ensino(om.sigla):
+            multiplicador = MULTIPLICADOR_INSTITUCIONAL
+        else:
+            multiplicador = MULTIPLICADOR_COEB[coeb]
 
         fator_penalidade = max(0.10, 1.0 - (PENALIDADE_ANOMALIA * qtd_anomalias))
-        # Normaliza pelo teto próximo ao multiplicador FEP (1.45) preservando a razão 1.5 : 1.2 : 0.8
+        # Normaliza pelo teto próximo ao multiplicador FEP (1.45) preservando a prioridade FEP > FEI > Saúde/Inst > FEC
         ive_bruto = score_ponderado * (multiplicador / 1.45) * fator_penalidade
         return round(min(100.0, max(0.0, ive_bruto)), 2)
 
@@ -275,9 +304,15 @@ class MotorIVE:
     # 3. JULGAMENTO (Classificação e Prescrição Doutrinária)
     # ------------------------------------------------------------------
     @staticmethod
-    def classificar_ive(nota_ive: float) -> tuple[str, str]:
+    def classificar_ive(
+        nota_ive: float, is_saude: bool = False, is_ensino: bool = False
+    ) -> tuple[str, str]:
+        if is_saude:
+            return ("Sustentação Sanitária", "Saúde Operacional & FUSEx (DSau)")
+        if is_ensino:
+            return ("Capacidade Institucional", "Ensino, Liderança & DOAMEPI (COEB 5.6.1.4)")
         if nota_ive > 75.0:
-            return ("Ponta de Lança", "Força 4.0, Injeção C4ISR")
+            return ("Ponta de Lança", "Força 4.0, Injeção C4ISTAR")
         if nota_ive >= 40.0:
             return ("Zona de Fusão", "COEB, Unificação Modular")
         return ("OM Zumbi", "Política de Transformação, Alienação")
@@ -286,13 +321,17 @@ class MotorIVE:
     def classificar_enquadramento_transformacao(
         sigla: str, coeb: ClassificacaoCOEB, c4isr: float, papel_a2ad: bool
     ) -> str:
-        """Enquadra a OM nos grupos de emprego e módulos da Política de Transformação (EB10-P-01.031, 3.1.1.2)."""
+        """Enquadra a OM nos grupos de emprego e módulos (EB10-P-01.031 & COEB EB20-MF-07.101, 5.3.4.4)."""
+        if eh_om_saude(sigla):
+            return "Sustentação Sanitária (FUSEx / Apoio Ampliado FTC)"
+        if eh_om_ensino(sigla):
+            return "Capacidade Institucional (Ensino / DOAMEPI)"
         sigla_up = sigla.upper()
         if any(t in sigla_up for t in TERMOS_MODULO_MULTIDOMINIO) or (
             coeb == ClassificacaoCOEB.FEP and c4isr >= 78.0 and papel_a2ad
         ):
             return "Módulo Multidomínio (FTC / C Conj)"
-        if any(t in sigla_up for t in TERMOS_APOIO_AMPLIADO) and coeb != ClassificacaoCOEB.FEC:
+        if any(t in sigla_up for t in TERMOS_APOIO_AMPLIADO):
             return "Módulo de Apoio Ampliado (FTC)"
         if coeb == ClassificacaoCOEB.FEP:
             return "Força de Emprego de Prontidão (FEP)"
@@ -307,7 +346,28 @@ class MotorIVE:
         c4isr: float,
         alertas: List[AlertaAuditoria],
     ) -> str:
-        """Gera Linha de Ação Dinâmica conforme EB10-P-01.031 (FEP Prontidão > FEI Fronteira > FEC Continuado)."""
+        """Gera Linha de Ação Dinâmica conforme EB10-P-01.031 e COEB EB20-MF-07.101."""
+        if classificacao_ive == "Sustentação Sanitária":
+            if any(a.tipo in ("FINANCEIRO", "FOLHA_INATIVOS") for a in alertas):
+                return (
+                    "Auditoria e Racionalização de Área-Meio (EB10-P-01.031, item 3.1.3.1): sanear "
+                    "divergências CGU/SIGPES e custos administrativos preservando integralmente a "
+                    "vocação assistencial (FUSEx) e o núcleo de Apoio Ampliado à FTC (COEB 5.3.4.4 e) "
+                    "— vedada alienação patrimonial como OM Zumbi."
+                )
+            return (
+                "Preservar Vocação Assistencial (FUSEx / Eixo Pessoal 3.4.7) e Sustentação Sanitária "
+                "(COEB 5.6.1.2.4 b,f e 5.3.4.4 e): não computar como poder de combate ofensivo (FEP); "
+                "manter pronto o núcleo de Apoio Ampliado de Saúde para desdobramento na FTC."
+            )
+
+        if classificacao_ive == "Capacidade Institucional":
+            return (
+                "Preservar Capacidade Institucional de Ensino e Formação (COEB 5.6.1.4 e DOAMEPI 5.6.1.3.2 e): "
+                "sustentar formação de quadros e liderança para operações no multidomínio, "
+                "mantendo auditoria contínua de área-meio via CGU/SIGPES."
+            )
+
         if classificacao_ive == "OM Zumbi" and coeb == ClassificacaoCOEB.FEC:
             return (
                 "Desativação/Otimização imediata (EB10-P-01.031, item 3.1.3.1): estrutura de Emprego Continuado "
@@ -369,7 +429,9 @@ class MotorIVE:
 
         componentes = self.calcular_componentes_ive(om)
         nota_ive = self.calcular_nota_ive(om, componentes, len(alertas))
-        classificacao_ive, foco = self.classificar_ive(nota_ive)
+        classificacao_ive, foco = self.classificar_ive(
+            nota_ive, is_saude=eh_om_saude(om.sigla), is_ensino=eh_om_ensino(om.sigla)
+        )
 
         doutrina = om.doutrina_tecnologia
         coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
@@ -482,9 +544,13 @@ class MotorIVE:
             if d.dados_operacionais.get("enquadramento_transformacao") == "Módulo de Apoio Ampliado (FTC)"
         )
         estruturas_otimizacao = [d for d in diagnosticos if d.classificacao_ive == "OM Zumbi"]
+        oms_saude_sustentacao = sum(1 for d in diagnosticos if d.classificacao_ive == "Sustentação Sanitária")
+        oms_capacidade_institucional = sum(
+            1 for d in diagnosticos if d.classificacao_ive == "Capacidade Institucional"
+        )
 
         return {
-            "norma": "EB10-P-01.031 (Portaria C Ex Nº 2.662/2026)",
+            "norma": "EB10-P-01.031 • COEB EB20-MF-07.101 (2ª Ed. 2026)",
             "governanca": "EME / 7ª Subchefia • Ciclo PEEx 2024–2027 → 2028–2031",
             "meta_prontidao_minima_pct": META_EFETIVO_PRONTIDAO_PCT,
             "efetivo_total_ativos": efetivo_total,
@@ -493,6 +559,8 @@ class MotorIVE:
             "atende_meta_prontidao": percentual_prontidao >= META_EFETIVO_PRONTIDAO_PCT,
             "modulos_multidominio_ftc": modulos_multidominio,
             "modulos_apoio_ampliado_ftc": modulos_apoio_ampliado,
+            "oms_saude_sustentacao": oms_saude_sustentacao,
+            "oms_capacidade_institucional": oms_capacidade_institucional,
             "oms_otimizacao_item_3_1_3_1": len(estruturas_otimizacao),
             "patrimonio_otimizacao_brl": round(sum(d.valor_imovel_brl for d in estruturas_otimizacao), 2),
         }

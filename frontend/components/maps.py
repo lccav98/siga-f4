@@ -8,6 +8,8 @@ import folium
 COR_CLASSIFICACAO = {
     "Ponta de Lança": "green",
     "Zona de Fusão": "orange",
+    "Sustentação Sanitária": "blue",
+    "Capacidade Institucional": "purple",
     "OM Zumbi": "red",
 }
 

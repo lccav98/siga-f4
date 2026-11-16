@@ -84,8 +84,14 @@ def renderizar_dispersao_ive_spu(df: pd.DataFrame) -> None:
                 "type": "nominal",
                 "title": "Classificação JEV",
                 "scale": {
-                    "domain": ["Ponta de Lança", "Zona de Fusão", "OM Zumbi"],
-                    "range": ["#10b981", "#f59e0b", "#ef4444"],
+                    "domain": [
+                        "Ponta de Lança",
+                        "Zona de Fusão",
+                        "Sustentação Sanitária",
+                        "Capacidade Institucional",
+                        "OM Zumbi",
+                    ],
+                    "range": ["#10b981", "#f59e0b", "#3b82f6", "#8b5cf6", "#ef4444"],
                 },
             },
             "tooltip": [

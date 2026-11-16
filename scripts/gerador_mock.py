@@ -18,6 +18,12 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+from backend.core.estrutura_eb import (
+    BRIGADAS_FEC_COMBATE_DE,
+    eh_om_ensino,
+    eh_om_saude,
+    inferir_localizacao_militar,
+)
 from backend.models.database import Base, SessionLocal, engine
 from backend.models.schemas import (
     ClassificacaoCOEB,
@@ -456,14 +462,14 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("38º BI", "Vila Velha - ES", ClassificacaoCOEB.FEC, 27.0, False, "ambos"),
     ("12º BI", "Belo Horizonte - MG", ClassificacaoCOEB.FEC, 25.0, False, "ambos"),
     ("55º BI", "Montes Claros - MG", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
-    ("23º BI", "Blumenau - SC", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
+    ("23º BI", "Blumenau - SC", ClassificacaoCOEB.FEC, 48.0, False, "limpo"),
     ("62º BI", "Joinville - SC", ClassificacaoCOEB.FEC, 28.0, False, "folha"),
     ("63º BI", "Florianópolis - SC", ClassificacaoCOEB.FEC, 23.0, False, "ambos"),
     ("9º BI Mtz", "Pelotas - RS", ClassificacaoCOEB.FEC, 26.0, False, "folha"),
     ("18º BI Mtz", "Sapucaia do Sul - RS", ClassificacaoCOEB.FEC, 24.0, False, "financeiro"),
     ("19º BI Mtz", "São Leopoldo - RS", ClassificacaoCOEB.FEC, 25.0, False, "folha"),
     ("20º BI Bld (Guarnição)", "Curitiba - PR", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
-    ("31º BI Mtz", "Campina Grande - PB", ClassificacaoCOEB.FEC, 24.0, False, "limpo"),
+    ("31º BI Mtz", "Campina Grande - PB", ClassificacaoCOEB.FEC, 46.0, False, "limpo"),
     ("21º BI", "Recife - PE", ClassificacaoCOEB.FEC, 22.0, False, "ambos"),
     ("56º BI", "Campos dos Goytacazes - RJ", ClassificacaoCOEB.FEC, 21.0, False, "folha"),
     ("3º BI", "Niterói - RJ", ClassificacaoCOEB.FEC, 20.0, False, "ambos"),
@@ -495,15 +501,15 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("PqRMnt/9", "Campo Grande - MS", ClassificacaoCOEB.FEC, 30.0, False, "limpo"),
     ("PqRMnt/10", "Fortaleza - CE", ClassificacaoCOEB.FEC, 27.0, False, "folha"),
     ("PqRMnt/12", "Manaus - AM", ClassificacaoCOEB.FEC, 33.0, False, "limpo"),
-    ("HCE (Hospital Central Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 36.0, False, "financeiro"),
-    ("HMASP (Hosp Mil Área SP)", "São Paulo - SP", ClassificacaoCOEB.FEC, 35.0, False, "limpo"),
-    ("HMAPA (Hosp Mil Área PA)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 34.0, False, "limpo"),
-    ("HMAR (Hosp Mil Área Recife)", "Recife - PE", ClassificacaoCOEB.FEC, 32.0, False, "limpo"),
-    ("HMAB (Hosp Mil Área Brasília)", "Brasília - DF", ClassificacaoCOEB.FEC, 38.0, False, "limpo"),
-    ("HMAM (Hosp Mil Área Manaus)", "Manaus - AM", ClassificacaoCOEB.FEC, 35.0, False, "limpo"),
-    ("HGeS (Hosp Geral Salvador)", "Salvador - BA", ClassificacaoCOEB.FEC, 28.0, False, "folha"),
-    ("HGeF (Hosp Geral Fortaleza)", "Fortaleza - CE", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
-    ("HGeC (Hosp Geral Curitiba)", "Curitiba - PR", ClassificacaoCOEB.FEC, 31.0, False, "limpo"),
+    ("HCE (Hospital Central Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 68.0, False, "financeiro"),
+    ("HMASP (Hosp Mil Área SP)", "São Paulo - SP", ClassificacaoCOEB.FEC, 65.0, False, "limpo"),
+    ("HMAPA (Hosp Mil Área PA)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 63.0, False, "limpo"),
+    ("HMAR (Hosp Mil Área Recife)", "Recife - PE", ClassificacaoCOEB.FEC, 60.0, False, "limpo"),
+    ("HMAB (Hosp Mil Área Brasília)", "Brasília - DF", ClassificacaoCOEB.FEC, 66.0, False, "limpo"),
+    ("HMAM (Hosp Mil Área Manaus)", "Manaus - AM", ClassificacaoCOEB.FEC, 64.0, False, "limpo"),
+    ("HGeS (Hosp Geral Salvador)", "Salvador - BA", ClassificacaoCOEB.FEC, 55.0, False, "folha"),
+    ("HGeF (Hosp Geral Fortaleza)", "Fortaleza - CE", ClassificacaoCOEB.FEC, 56.0, False, "limpo"),
+    ("HGeC (Hosp Geral Curitiba)", "Curitiba - PR", ClassificacaoCOEB.FEC, 58.0, False, "limpo"),
     ("Cia Cmdo 1ª RM", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 24.0, False, "ambos"),
     ("Cia Cmdo 2ª RM", "São Paulo - SP", ClassificacaoCOEB.FEC, 25.0, False, "financeiro"),
     ("Cia Cmdo 3ª RM", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 24.0, False, "folha"),
@@ -640,13 +646,42 @@ def gerar_oms(reset: bool = True) -> int:
                     if perfil_anomalia == "prontidao"
                     else (round(random.uniform(86.0, 94.0), 1) if is_tech_niche else round(random.uniform(79.0, 87.5), 1))
                 )
-            else:  # FEC
+            elif eh_om_saude(sigla):
+                # OMS: vocação assistencial (FUSEx) + núcleo de Sustentação Sanitária (não combatente FEP)
+                ef_decl = random.randint(420, 920)
+                ef_fim = int(ef_decl * random.uniform(0.72, 0.84))
+                valor_spu = round(random.uniform(95_000_000, 240_000_000) * mult_spu, 2)
+                custeio_decl = round(ef_decl * random.uniform(52_000, 82_000), 2)
+                acionamentos = random.randint(2, 6)
+                disponibilidade = round(random.uniform(80.0, 93.0), 1)
+            elif eh_om_ensino(sigla):
+                # Capacidade Institucional (Ensino / Formação — COEB 5.6.1.4)
+                ef_decl = random.randint(540, 1100)
+                ef_fim = int(ef_decl * random.uniform(0.65, 0.78))
+                valor_spu = round(random.uniform(110_000_000, 260_000_000) * mult_spu, 2)
+                custeio_decl = round(ef_decl * random.uniform(48_000, 74_000), 2)
+                acionamentos = random.randint(2, 5)
+                disponibilidade = round(random.uniform(82.0, 92.0), 1)
+            else:  # FEC (Reserva Estratégica / Combate / Litoral vs. Guarda / Apoio Territorial)
+                local_eb = inferir_localizacao_militar(sigla, endereco)
+                sigla_up = sigla.upper()
+                is_de_c2 = "CIA CMDO" in sigla_up and "DE" in sigla_up
+                is_fec_comb_ou_apoio = (
+                    local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE
+                    or is_de_c2
+                    or any(k in sigla_up for k in ("BE CMB", "BEC", "B FV", "ARSENAL", "BLOG"))
+                )
                 ef_decl = random.randint(360, 820)
-                ef_fim = int(ef_decl * random.uniform(0.32, 0.48))
+                if is_fec_comb_ou_apoio and perfil_anomalia == "limpo":
+                    ef_fim = int(ef_decl * random.uniform(0.60, 0.72))
+                    acionamentos = random.randint(3, 6)
+                    disponibilidade = round(random.uniform(72.0, 84.0), 1)
+                else:
+                    ef_fim = int(ef_decl * random.uniform(0.32, 0.48))
+                    acionamentos = random.randint(0, 4)
+                    disponibilidade = round(random.uniform(50.0, 76.0), 1)
                 valor_spu = round(random.uniform(85_000_000, 210_000_000) * mult_spu, 2)
                 custeio_decl = round(ef_decl * random.uniform(42_000, 68_000), 2)
-                acionamentos = random.randint(0, 4)
-                disponibilidade = round(random.uniform(50.0, 76.0), 1)
 
             # Aplica divergências CGU/SIGPES conforme perfil de auditoria
             if perfil_anomalia in ("folha", "ambos"):

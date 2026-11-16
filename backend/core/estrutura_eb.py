@@ -111,6 +111,42 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
 ]
 
 
+_PADRAO_OM_SAUDE = re.compile(
+    r"\b(HCE|HMA[A-Z]*|HGE[A-Z]*|HMIL|HGU|H\s*MIL|H\s*GER|HOSPITAL|POLICL[IÍ]NICA|OCEX|IBEX|LQFEX|DSAU|HCMP|B\s*SAU)\b",
+    re.IGNORECASE,
+)
+
+
+_PADRAO_OM_ENSINO = re.compile(
+    r"\b(AMAN|ESSA|BTL\s+INSTR|ECEME|ESAO|ESFCEX|IME)\b",
+    re.IGNORECASE,
+)
+
+# Grandes Unidades de Combate / Apoio Divisionário FEC (Reserva Estratégica, Defesa do Litoral e C2 DE - COEB 2026)
+BRIGADAS_FEC_COMBATE_DE = frozenset({
+    "6ª Bda Inf Bld",
+    "3ª Bda Inf Mec",
+    "4ª Bda Inf L Mth",
+    "GUEs / 9ª Bda Inf Mtz",
+    "7ª Bda Inf Mtz",
+    "8ª Bda Inf Mtz",
+    "10ª Bda Inf Mtz",
+    "14ª Bda Inf Mtz",
+    "2ª DE / Apoio Mecanizado",
+    "Tropa Direta DE / AD",
+})
+
+
+def eh_om_saude(sigla: str) -> bool:
+    """Identifica Organizações Militares de Saúde (Hospitais, Policlínicas, Institutos DSau)."""
+    return bool(sigla and _PADRAO_OM_SAUDE.search(sigla))
+
+
+def eh_om_ensino(sigla: str) -> bool:
+    """Identifica OMs de Ensino/Formação (Capacidades Institucionais — COEB EB20-MF-07.101, 5.6.1.4)."""
+    return bool(sigla and _PADRAO_OM_ENSINO.search(sigla))
+
+
 def extrair_uf_e_municipio(endereco: str) -> Tuple[str, str]:
     """Extrai município e UF de strings como 'Rua X, Cidade - UF' ou 'Cidade - UF'."""
     if not endereco:

@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 from sqlalchemy.orm import Session
 
+from backend.core.estrutura_eb import eh_om_ensino, eh_om_saude
 from backend.core.motor_jev import MotorIVE
 from backend.models.schemas import OM
 
@@ -37,6 +38,11 @@ def simular_reestruturacao(
         raise ValueError(f"OM origem (id={id_om_zumbi}) não encontrada.")
     if not om_destino:
         raise ValueError(f"OM destino (id={id_om_fei_destino}) não encontrada.")
+    if eh_om_saude(om_zumbi.sigla) or eh_om_ensino(om_zumbi.sigla):
+        raise ValueError(
+            f"A {om_zumbi.sigla} integra categoria especial protegida (Sustentação Sanitária ou Capacidade Institucional) "
+            "e não pode ser enquadrada ou alienada como OM Zumbi."
+        )
 
     motor = MotorIVE()
     diag_zumbi = motor.diagnosticar_om(db, om_zumbi, persistir_alertas=False)
@@ -65,7 +71,11 @@ def simular_reestruturacao(
         qtd_anomalias=len(diag_destino_antes.alertas_auditoria),
         c4isr_override=c4isr_depois,
     )
-    classificacao_depois, foco_depois = motor.classificar_ive(ive_depois)
+    classificacao_depois, foco_depois = motor.classificar_ive(
+        ive_depois,
+        is_saude=eh_om_saude(om_destino.sigla),
+        is_ensino=eh_om_ensino(om_destino.sigla),
+    )
 
     economia_total_5_anos = valor_alienacao_spu + (economia_custeio_anual * 5.0)
     reserva_liquida_tesouro = valor_alienacao_spu * (1.0 - FRACAO_INVESTIMENTO_TECNOLOGIA)

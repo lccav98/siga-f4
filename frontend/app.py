@@ -244,8 +244,20 @@ coeb_selecionado = st.sidebar.multiselect(
 )
 status_jev_selecionado = st.sidebar.multiselect(
     "Diagnóstico JEV (IVE)",
-    options=["Ponta de Lança", "Zona de Fusão", "OM Zumbi"],
-    default=["Ponta de Lança", "Zona de Fusão", "OM Zumbi"],
+    options=[
+        "Ponta de Lança",
+        "Zona de Fusão",
+        "Sustentação Sanitária",
+        "Capacidade Institucional",
+        "OM Zumbi",
+    ],
+    default=[
+        "Ponta de Lança",
+        "Zona de Fusão",
+        "Sustentação Sanitária",
+        "Capacidade Institucional",
+        "OM Zumbi",
+    ],
 )
 modulos_disponiveis = sorted(
     [m for m in df_all["enquadramento_transformacao"].dropna().unique().tolist() if m]
@@ -338,7 +350,9 @@ with st.expander(
     eb3.metric(
         "Apoio Ampliado à FTC (Item 3.1.1.2 e)",
         f"{resumo_eb10['modulos_apoio_ampliado_ftc']} OMs",
-        help="Estruturas modulares de sustentação logística, engenharia e telemática da FTC.",
+        delta=f"+ {resumo_eb10.get('oms_saude_sustentacao', 0)} OMs Saúde (DSau/FUSEx)",
+        delta_color="off",
+        help="Estruturas modulares de sustentação logística, engenharia, telemática e núcleos hospitalares mobilizáveis da FTC.",
     )
     eb4.metric(
         "Alvos Otimização PEECFA (Item 3.1.3.1)",
@@ -462,7 +476,7 @@ with st.expander("🧮 Como o IVE (0–100) é calculado pelo Motor JEV", expand
         - **Nível Tecnológico Força 4.0 (25%):** `indice_tecnologia_c4isr` — sensores, sistemas não tripulados, fogos de precisão, Ciber, Guerra Eletrônica e apoio à decisão (itens 1.3 e 3.2).
         - **Prontidão e Emprego (25%):** disponibilidade e acionamentos reais (SISLOG), sustentando a meta mínima de **20% do efetivo em elevado grau de prontidão** (itens 1.4 e 2.6).
         - **Geoestratégia e A2/AD (20%):** resposta inicial na faixa de fronteira, Amazônia/rotas críticas e proteção multidomínio.
-        - **Multiplicador COEB (Item 3.1.1.2):** `FEP — Emprego de Prontidão (× 1,5)` *(OMs das 5 Brigadas ForPron: Bda Inf Pqdt, 12ª Bda Inf Amv, 23ª Bda Inf Sl, 11ª Bda Inf Mec e 5ª Bda C Bld — 1ª prioridade em pessoal, material, sistemas e C4ISR)* | `FEI — Emprego Imediato (× 1,2)` *(faixa de fronteira, áreas de crise e módulos multidomínio, 2º plano relativo às FEP)* | `FEC — Emprego Continuado (× 0,8)` *(dissuasão, presença, defesa territorial e mobilização D+)*.
+        - **Multiplicador COEB (Item 3.1.1.2 / COEB 5.3.4.4):** `FEP — Prontidão (× 1,5)` *(5 Brigadas ForPron — 1ª prioridade)* | `FEI — Imediato (× 1,2)` *(12 Brigadas da Faixa de Fronteira e módulos multidomínio)* | `Sustentação Sanitária (× 1,15)` *(DSau/FUSEx)* | `Capacidade Institucional (× 1,10)` *(Ensino/DOAMEPI)* | `FEC — Continuado (× 0,95)` *(Reserva Estratégica, Defesa Territorial/Litoral — teto 65,5 pts sem virar Ponta de Lança)*.
         - **Penalidade de Auditoria (`-15%` por anomalia):** divergência `> 5%` entre custeio declarado e CGU, divergência `> 5%` entre efetivo SIGPES e CPFs ativos CGU, ou quebra de prontidão (`FEP < 85%` ou `FEI < 78%`).
         """
     )
@@ -514,6 +528,14 @@ with col_zumbi:
         2. **Rearticulação / Absorção Modular:** extinguir a autonomia de UG e consolidar encargos territoriais/de mobilização em outra OM da guarnição.
         3. **Saneamento Imediato de Folha/Custeio:** caso mantida para defesa territorial/mobilização, auditar CPFs inativos e corrigir o *burn rate* na CGU.
         """
+    )
+
+    st.info(
+        "🏥 **Classificações Especiais JEV (COEB `EB20-MF-07.101` / `EB10-P-01.031`):** "
+        "**`Sustentação Sanitária`** (Hospitais — `HCE`, `HMA`, `HGe`) e **`Capacidade Institucional`** (Ensino — `AMAN`, `EsSA`, `1º Btl Instr`) "
+        "não são rotuladas como **OM Zumbi**, pois cumprem vocação assistencial (**FUSEx**) e de formação (**DOAMEPI 5.6.1.4**). "
+        "Igualmente, **não acrescem efetivo combatente (`FEP`)**, contribuindo para a FTC via **Módulos de Apoio Ampliado (`5.3.4.4 e`)** "
+        "e permanecendo auditáveis no eixo administrativo (`CGU/SIGPES`)."
     )
 
 st.divider()
@@ -590,6 +612,18 @@ if diag:
             "2) Se FEP mediana, receber aporte via Digital Twin (alienação de OMs Zumbi) para upgrade C4ISR; "
             "3) Avaliar unificação modular na guarnição e sanar eventuais quebras de prontidão no SISLOG."
         )
+    elif diag["classificacao_ive"] == "Sustentação Sanitária":
+        alternativas_om = (
+            "1) Preservar integralmente a vocação assistencial (FUSEx / Eixo Pessoal 3.4.7) — vedada alienação como OM Zumbi; "
+            "2) Manter núcleo de Saúde Operacional pronto para desdobramento como Módulo de Apoio Ampliado à FTC (COEB 5.3.4.4 e), sem inflar cômputo combatente (FEP); "
+            "3) Se houver alerta CGU/SIGPES, racionalizar exclusivamente contratos e área-meio administrativa (item 3.1.3.1)."
+        )
+    elif diag["classificacao_ive"] == "Capacidade Institucional":
+        alternativas_om = (
+            "1) Preservar infraestrutura de Ensino/Formação (COEB 5.6.1.4 e DOAMEPI Educação 5.6.1.3.2 e) — vedada alienação como OM Zumbi; "
+            "2) Atualizar currículos de liderança e emprego multidomínio (item 3.4.8 / COEB 5.6.2); "
+            "3) Auditar área-meio administrativa e divergências CGU/SIGPES."
+        )
     else:
         alternativas_om = (
             "1) Desativação com encerramento de CNPJ/UG e alienação/permuta do imóvel SPU para capitalizar forças FEP (1ª prioridade) e FEI de fronteira; "
@@ -615,9 +649,14 @@ st.markdown(
     "conversão em capacidade **C4ISR** para uma unidade mediana ou prioritária."
 )
 
-df_zumbis = df_all[df_all["classificacao_coeb"] == "FEC"]
+df_zumbis = df_all[
+    (df_all["classificacao_coeb"] == "FEC")
+    & (df_all["classificacao_ive"] == "OM Zumbi")
+]
 if df_zumbis.empty:
-    df_zumbis = df_all.nsmallest(5, "nota_ive")
+    df_zumbis = df_all[
+        ~df_all["classificacao_ive"].isin(["Sustentação Sanitária", "Capacidade Institucional"])
+    ].nsmallest(5, "nota_ive")
 
 df_destinos = df_all[df_all["classificacao_coeb"].isin(["FEP", "FEI"])].sort_values(
     by=["classificacao_coeb", "nota_ive"], ascending=[False, False]
