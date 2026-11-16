@@ -18,11 +18,12 @@ from backend.models.database import Base
 
 
 class ClassificacaoCOEB(str, enum.Enum):
-    """Classificação doutrinária conforme o COEB e a Política de Transformação (EB10-P-01.031)."""
+    """Classificação doutrinária conforme o COEB e a Política de Transformação (EB10-P-01.031 / DSau)."""
 
-    FEI = "FEI"  # Força de Emprego Imediato (faixa de fronteira / resposta inicial)
-    FEP = "FEP"  # Força de Emprego de Prontidão (poder de combate ofensivo / 1ª prioridade)
-    FEC = "FEC"  # Força de Emprego Continuado (dissuasão, presença, defesa territorial e mobilização)
+    FEI = "FEI"      # Força de Emprego Imediato (faixa de fronteira / resposta inicial)
+    FEP = "FEP"      # Força de Emprego de Prontidão (poder de combate ofensivo / 1ª prioridade)
+    FEC = "FEC"      # Força de Emprego Continuado (dissuasão, presença, defesa territorial e mobilização)
+    SAUDE = "SAUDE"  # Organizações Militares de Saúde (DSau / SAMMED-FUSEx — Sustentação Sanitária)
 
 
 JSONBCompat = JSON().with_variant(JSONB, "postgresql")
@@ -61,6 +62,9 @@ class OM(Base):
     )
     estrategia = relationship(
         "Estrategia", back_populates="om", uselist=False, cascade="all, delete-orphan"
+    )
+    saude_indicadores = relationship(
+        "SaudeIndicadores", back_populates="om", uselist=False, cascade="all, delete-orphan"
     )
 
 
@@ -139,3 +143,20 @@ class Estrategia(Base):
     area_urbana = Column(Boolean, nullable=False, default=True)
 
     om = relationship("OM", back_populates="estrategia")
+
+
+class SaudeIndicadores(Base):
+    """8. Indicadores de Eficiência Assistencial e Hospitalar SAMMED/FUSEx (tb_saude_indicadores)."""
+
+    __tablename__ = "tb_saude_indicadores"
+
+    id_om = Column(Integer, ForeignKey("tb_om.id_om", ondelete="CASCADE"), primary_key=True)
+    atendimentos_ano = Column(Integer, nullable=False, default=0)
+    beneficiarios_fusex = Column(Integer, nullable=False, default=0)
+    leitos_operacionais = Column(Integer, nullable=False, default=0)
+    taxa_ocupacao_leitos_pct = Column(Float, nullable=False, default=0.0)
+    custo_medio_atendimento_brl = Column(Float, nullable=False, default=0.0)
+    resolutividade_propria_pct = Column(Float, nullable=False, default=0.0)
+    indice_eficiencia_hospitalar = Column(Float, nullable=False, default=0.0)
+
+    om = relationship("OM", back_populates="saude_indicadores")

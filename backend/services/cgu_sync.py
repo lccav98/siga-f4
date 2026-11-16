@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Tuple
 import httpx
 from sqlalchemy.orm import Session
 
-from backend.core.estrutura_eb import BRIGADAS_FEI_FRONTEIRA, inferir_localizacao_militar
+from backend.core.estrutura_eb import BRIGADAS_FEI_FRONTEIRA, eh_om_saude, inferir_localizacao_militar
 from backend.models.schemas import (
     ClassificacaoCOEB,
     DoutrinaTecnologia,
@@ -96,6 +96,9 @@ def inferir_enquadramento_coeb(nome_uasg: str, endereco: str = "") -> Tuple[Clas
     ):
         nome_norm = nome_norm.replace(extenso, sigla)
     texto_busca = f"{nome} {nome_norm}"
+
+    if eh_om_saude(nome_norm):
+        return (ClassificacaoCOEB.SAUDE, 62.0, False)
 
     termos_fep = (
         # Brigada de Infantaria Paraquedista

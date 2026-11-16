@@ -104,15 +104,16 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
     (("2º B FV", "2º BFERR"), "DEC / Engenharia de Construção"),
     (("BEC", "GPT E", "B FV", "CRO/"), "Engenharia (Gpt E / DEC)"),
     (("BE CMB", "GAC", "BCOM", "BLOG"), "Tropa Direta DE / AD"),
-    (("DSUP", "ARSENAL", "AGR", "AGSP", "AGRS", "PQRMNT", "BAPLOGEX", "HCE", "HMA", "HGE", "BTL SUP", "BTL MNT", "BTL TRNS"), "Apoio Logístico / Saúde (RM)"),
-    (("BG", "BGP", "BIG", "RCG", "GUARDAS", "BPE", "PEL PE"), "Guarda / Polícia do Exército"),
+    (("HCE", "HMA", "HGE", "HGU", "HMIL", "POLICL", "PMRJ", "PMPV", "PMN", "PMPA", "PMCG", "PMCAMP", "OCEX", "IBEX", "LQFEX"), "Saúde Militar (DSau / FUSEx)"),
+    (("DSUP", "ARSENAL", "AGR", "AGSP", "AGRS", "PQRMNT", "BAPLOGEX", "BTL SUP", "BTL MNT", "BTL TRNS"), "Apoio Logístico (RM)"),
+    (("BG", "BGP", "RCG", "GUARDAS", "BPE", "PEL PE"), "Guarda / Polícia do Exército"),
     (("AMAN", "ESSA", "BTL INSTR"), "Estab. de Ensino / Instrução"),
     (("CIA CMDO", "CMDO "), "Comando de Área / DE / RM"),
 ]
 
 
 _PADRAO_OM_SAUDE = re.compile(
-    r"\b(HCE|HMA[A-Z]*|HGE[A-Z]*|HMIL|HGU|H\s*MIL|H\s*GER|HOSPITAL|POLICL[IÍ]NICA|OCEX|IBEX|LQFEX|DSAU|HCMP|B\s*SAU)\b",
+    r"\b(HCE|HMA[A-Z]*|HGE[A-Z]*|HGU[A-Z]*|HMIL|H\s*MIL|H\s*GER|HOSPITAL|POLICL[IÍ]NICA|PMRJ|PMPV|PMN|PMPA|PMCG|PMCAMP|OCEX|IBEX|LQFEX|DSAU|HCMP|B\s*SAU)\b",
     re.IGNORECASE,
 )
 

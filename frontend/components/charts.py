@@ -32,8 +32,8 @@ def renderizar_dispersao_tecnologia_spu(df: pd.DataFrame) -> None:
                 "type": "nominal",
                 "title": "Classificação COEB",
                 "scale": {
-                    "domain": ["FEI", "FEP", "FEC"],
-                    "range": ["#10b981", "#f59e0b", "#ef4444"],
+                    "domain": ["FEI", "FEP", "FEC", "SAUDE"],
+                    "range": ["#10b981", "#f59e0b", "#ef4444", "#3b82f6"],
                 },
             },
             "size": {

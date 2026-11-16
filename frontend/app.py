@@ -71,6 +71,7 @@ def carregar_ranking_oms() -> tuple[List[Dict[str, Any]], str]:
                     "brigada": d.dados_operacionais.get("brigada", ""),
                     "latitude": d.dados_operacionais.get("latitude"),
                     "longitude": d.dados_operacionais.get("longitude"),
+                    "indice_eficiencia_hospitalar": d.dados_operacionais.get("indice_eficiencia_hospitalar"),
                 }
                 for idx, d in enumerate(diags, start=1)
             ]
@@ -232,14 +233,14 @@ brigada_selecionada = st.sidebar.multiselect(
 st.sidebar.divider()
 st.sidebar.header("🎯 Filtros Doutrinários (COEB / EB10-P-01.031)")
 coeb_selecionado = st.sidebar.multiselect(
-    "Grupos de Emprego COEB",
-    options=["FEP", "FEI", "FEC"],
-    default=["FEP", "FEI", "FEC"],
+    "Grupos de Emprego COEB / Sistema",
+    options=["FEP", "FEI", "FEC", "SAUDE"],
+    default=["FEP", "FEI", "FEC", "SAUDE"],
     help=(
-        "FEP — Forças de Emprego de Prontidão (5 Brigadas ForPron: Bda Inf Pqdt, 12ª Bda Inf Amv, "
-        "23ª Bda Inf Sl, 11ª Bda Inf Mec e 5ª Bda C Bld) — 1ª prioridade em pessoal, material, sistemas e C4ISR | "
-        "FEI — Forças de Emprego Imediato: fronteira, resposta inicial e módulos multidomínio (2º plano vs FEP) | "
-        "FEC — Forças de Emprego Continuado: dissuasão, presença, defesa territorial e mobilização"
+        "FEP — Forças de Emprego de Prontidão (5 Brigadas ForPron) — 1ª prioridade | "
+        "FEI — Forças de Emprego Imediato: faixa de fronteira e módulos multidomínio | "
+        "FEC — Forças de Emprego Continuado: reserva estratégica, litoral e presença territorial | "
+        "SAUDE — Classificação em separado para OMs de Saúde (DSau / SAMMED-FUSEx)"
     ),
 )
 status_jev_selecionado = st.sidebar.multiselect(
@@ -279,7 +280,8 @@ st.sidebar.caption(
     "**Grupos de Emprego (EB10-P-01.031):**\n"
     f"- **FEP (Prontidão / 1ª Prio):** {int((df_all['classificacao_coeb'] == 'FEP').sum())} OMs\n"
     f"- **FEI (Imediato / Fronteira):** {int((df_all['classificacao_coeb'] == 'FEI').sum())} OMs\n"
-    f"- **FEC (Continuado / Territorial):** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs"
+    f"- **FEC (Continuado / Territorial):** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs\n"
+    f"- **SAUDE (DSau / Hospitais e Policlínicas):** {int((df_all['classificacao_coeb'] == 'SAUDE').sum())} OMs"
 )
 st.sidebar.info(f"Fonte ativa: **{fonte_dados}** ({len(df_all)} OMs na base)")
 
@@ -382,8 +384,8 @@ with st.expander("📡 Capturar / Sincronizar OM pelo Código UASG ou UG (Compra
         )
     with col_u2:
         coeb_captura = st.selectbox(
-            "Enquadramento COEB",
-            options=["Automático (COEB)", "FEI", "FEP", "FEC"],
+            "Enquadramento COEB / Sistema",
+            options=["Automático (COEB)", "FEI", "FEP", "FEC", "SAUDE"],
             key="select_coeb_captura",
         )
     with col_u3:
@@ -597,6 +599,22 @@ if diag:
         p3.metric("C4ISR 4.0 (25%)", f"{comp.get('nivel_tecnologico_c4isr', 0):.1f}")
         p4.metric("Prontidão (25%)", f"{comp.get('prontidao_emprego', 0):.1f}")
         p5.metric("Geo/A2AD (20%)", f"{comp.get('geoestrategia_a2ad', 0):.1f}")
+
+    if diag.get("classificacao_coeb") == "SAUDE" or dados_op.get("indice_eficiencia_hospitalar") is not None:
+        st.caption("**🏥 Indicadores de Eficiência Hospitalar & Assistencial (SAMMED / FUSEx — DSau):**")
+        h1, h2, h3, h4, h5, h6 = st.columns(6)
+        h1.metric("Índice Eficiência Hosp.", f"{dados_op.get('indice_eficiencia_hospitalar', 0):.1f}/100")
+        h2.metric("Atendimentos/Ano", f"{dados_op.get('atendimentos_ano', 0):,}")
+        h3.metric("Beneficiários FUSEx", f"{dados_op.get('beneficiarios_fusex', 0):,}")
+        leitos_op = dados_op.get("leitos_operacionais", 0)
+        h4.metric("Leitos Operacionais", f"{leitos_op}" if leitos_op > 0 else "Ambulatorial")
+        h5.metric("Ocupação / Giro", f"{dados_op.get('taxa_ocupacao_leitos_pct', 0):.1f}%")
+        h6.metric(
+            "Resolutividade Própria",
+            f"{dados_op.get('resolutividade_propria_pct', 0):.1f}%",
+            delta=f"R$ {dados_op.get('custo_medio_atendimento_brl', 0):,.0f}/atend.",
+            delta_color="off",
+        )
 
     st.info(f"**Prescrição Doutrinária:** {diag['prescricao_doutrinaria']}")
 

@@ -32,6 +32,7 @@ from backend.models.schemas import (
     Estrategia,
     OM,
     PatrimonioUniao,
+    SaudeIndicadores,
     Sigpes,
     Sislog,
     TransparenciaDados,
@@ -204,7 +205,7 @@ GUARNICOES: Dict[str, Tuple[float, float, float, bool, float]] = {
 CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     # --- CASOS DE REFERÊNCIA E CONTRASTE DOUTRINÁRIO ---
     ("1º BInt (Btl Intlg Mil)", "Manaus - AM", ClassificacaoCOEB.FEI, 94.5, True, "limpo"),
-    ("2º BIG (Btl Inf Gda)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 16.0, False, "ambos"),
+    ("2º BG (Btl Guarda)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 16.0, False, "ambos"),
     ("ComDCiber (Cmdo Def Ciber)", "Brasília - DF", ClassificacaoCOEB.FEI, 98.0, True, "limpo"),
     ("1º BFEsp (Btl Forças Esp)", "Goiânia - GO", ClassificacaoCOEB.FEI, 44.0, True, "limpo"),
     ("1º BGE (Btl Guerra Elet)", "Brasília - DF", ClassificacaoCOEB.FEI, 91.0, True, "limpo"),
@@ -472,7 +473,6 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("9º BI Mtz", "Pelotas - RS", ClassificacaoCOEB.FEC, 26.0, False, "folha"),
     ("18º BI Mtz", "Sapucaia do Sul - RS", ClassificacaoCOEB.FEC, 24.0, False, "financeiro"),
     ("19º BI Mtz", "São Leopoldo - RS", ClassificacaoCOEB.FEC, 25.0, False, "folha"),
-    ("20º BI Bld (Guarnição)", "Curitiba - PR", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     ("31º BI Mtz", "Campina Grande - PB", ClassificacaoCOEB.FEC, 46.0, False, "limpo"),
     ("21º BI", "Recife - PE", ClassificacaoCOEB.FEC, 22.0, False, "ambos"),
     ("56º BI", "Campos dos Goytacazes - RJ", ClassificacaoCOEB.FEC, 21.0, False, "folha"),
@@ -505,15 +505,41 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("PqRMnt/9", "Campo Grande - MS", ClassificacaoCOEB.FEC, 30.0, False, "limpo"),
     ("PqRMnt/10", "Fortaleza - CE", ClassificacaoCOEB.FEC, 27.0, False, "folha"),
     ("PqRMnt/12", "Manaus - AM", ClassificacaoCOEB.FEC, 33.0, False, "limpo"),
-    ("HCE (Hospital Central Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 68.0, False, "financeiro"),
-    ("HMASP (Hosp Mil Área SP)", "São Paulo - SP", ClassificacaoCOEB.FEC, 65.0, False, "limpo"),
-    ("HMAPA (Hosp Mil Área PA)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 63.0, False, "limpo"),
-    ("HMAR (Hosp Mil Área Recife)", "Recife - PE", ClassificacaoCOEB.FEC, 60.0, False, "limpo"),
-    ("HMAB (Hosp Mil Área Brasília)", "Brasília - DF", ClassificacaoCOEB.FEC, 66.0, False, "limpo"),
-    ("HMAM (Hosp Mil Área Manaus)", "Manaus - AM", ClassificacaoCOEB.FEC, 64.0, False, "limpo"),
-    ("HGeS (Hosp Geral Salvador)", "Salvador - BA", ClassificacaoCOEB.FEC, 55.0, False, "folha"),
-    ("HGeF (Hosp Geral Fortaleza)", "Fortaleza - CE", ClassificacaoCOEB.FEC, 56.0, False, "limpo"),
-    ("HGeC (Hosp Geral Curitiba)", "Curitiba - PR", ClassificacaoCOEB.FEC, 58.0, False, "limpo"),
+    # --- SAUDE: REDE DE ORGANIZAÇÕES MILITARES DE SAÚDE (DSau / SAMMED-FUSEx) ---
+    ("HCE (Hospital Central Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.SAUDE, 68.0, False, "financeiro"),
+    ("HMASP (Hosp Mil Área SP)", "São Paulo - SP", ClassificacaoCOEB.SAUDE, 66.0, False, "limpo"),
+    ("HMAPA (Hosp Mil Área PA)", "Porto Alegre - RS", ClassificacaoCOEB.SAUDE, 65.0, False, "limpo"),
+    ("HMAR (Hosp Mil Área Recife)", "Recife - PE", ClassificacaoCOEB.SAUDE, 62.0, False, "limpo"),
+    ("HMAB (Hosp Mil Área Brasília)", "Brasília - DF", ClassificacaoCOEB.SAUDE, 67.0, False, "limpo"),
+    ("HMAM (Hosp Mil Área Manaus)", "Manaus - AM", ClassificacaoCOEB.SAUDE, 66.0, False, "limpo"),
+    ("HMACG (Hosp Mil Área Campo Grande)", "Campo Grande - MS", ClassificacaoCOEB.SAUDE, 64.0, False, "limpo"),
+    ("HGeRJ (Hosp Geral Vila Militar)", "Vila Militar - RJ", ClassificacaoCOEB.SAUDE, 63.0, False, "limpo"),
+    ("HGeS (Hosp Geral Salvador)", "Salvador - BA", ClassificacaoCOEB.SAUDE, 56.0, False, "folha"),
+    ("HGeF (Hosp Geral Fortaleza)", "Fortaleza - CE", ClassificacaoCOEB.SAUDE, 58.0, False, "limpo"),
+    ("HGeC (Hosp Geral Curitiba)", "Curitiba - PR", ClassificacaoCOEB.SAUDE, 61.0, False, "limpo"),
+    ("HGeJF (Hosp Geral Juiz de Fora)", "Juiz de Fora - MG", ClassificacaoCOEB.SAUDE, 59.0, False, "limpo"),
+    ("HGeBE (Hosp Geral Belém)", "Belém - PA", ClassificacaoCOEB.SAUDE, 60.0, False, "limpo"),
+    ("HGeSM (Hosp Geral Santa Maria)", "Santa Maria - RS", ClassificacaoCOEB.SAUDE, 62.0, False, "limpo"),
+    ("HGuJP (Hosp Guarnição João Pessoa)", "João Pessoa - PB", ClassificacaoCOEB.SAUDE, 58.0, False, "limpo"),
+    ("HGuTab (Hosp Guarnição Tabatinga)", "Tabatinga - AM", ClassificacaoCOEB.SAUDE, 61.0, False, "limpo"),
+    ("HGuSGC (Hosp Guarnição S G Cachoeira)", "São Gabriel da Cachoeira - AM", ClassificacaoCOEB.SAUDE, 60.0, False, "limpo"),
+    ("HGuPV (Hosp Guarnição Porto Velho)", "Porto Velho - RO", ClassificacaoCOEB.SAUDE, 59.0, False, "limpo"),
+    ("HGuMa (Hosp Guarnição Marabá)", "Marabá - PA", ClassificacaoCOEB.SAUDE, 58.0, False, "limpo"),
+    ("HGuN (Hosp Guarnição Natal)", "Natal - RN", ClassificacaoCOEB.SAUDE, 57.0, False, "limpo"),
+    ("HGuF (Hosp Guarnição Florianópolis)", "Florianópolis - SC", ClassificacaoCOEB.SAUDE, 59.0, False, "limpo"),
+    ("HGuA (Hosp Guarnição Alegrete)", "Alegrete - RS", ClassificacaoCOEB.SAUDE, 57.0, False, "limpo"),
+    ("HGuBa (Hosp Guarnição Bagé)", "Bagé - RS", ClassificacaoCOEB.SAUDE, 56.0, False, "limpo"),
+    ("HGuS (Hosp Guarnição Santiago)", "Santiago - RS", ClassificacaoCOEB.SAUDE, 56.0, False, "limpo"),
+    ("HGuSA (Hosp Guarnição Santo Ângelo)", "Santo Ângelo - RS", ClassificacaoCOEB.SAUDE, 57.0, False, "limpo"),
+    ("PMRJ (Policlínica Militar RJ)", "Rio de Janeiro - RJ", ClassificacaoCOEB.SAUDE, 63.0, False, "limpo"),
+    ("PMPV (Policlínica Mil Praia Vermelha)", "Rio de Janeiro - RJ", ClassificacaoCOEB.SAUDE, 62.0, False, "limpo"),
+    ("PMN (Policlínica Militar Niterói)", "Niterói - RJ", ClassificacaoCOEB.SAUDE, 59.0, False, "limpo"),
+    ("PMPA (Policlínica Mil Porto Alegre)", "Porto Alegre - RS", ClassificacaoCOEB.SAUDE, 60.0, False, "limpo"),
+    ("PMCG (Policlínica Mil Campo Grande)", "Campo Grande - MS", ClassificacaoCOEB.SAUDE, 58.0, False, "limpo"),
+    ("PMCamp (Policlínica Mil Campinas)", "Campinas - SP", ClassificacaoCOEB.SAUDE, 61.0, False, "limpo"),
+    ("OCEx (Odontoclínica Central Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.SAUDE, 62.0, False, "limpo"),
+    ("IBEx (Instituto Biologia Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.SAUDE, 66.0, False, "limpo"),
+    ("LQFEx (Lab Químico Farmacêutico Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.SAUDE, 65.0, False, "limpo"),
     ("Cia Cmdo 1ª RM", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 24.0, False, "ambos"),
     ("Cia Cmdo 2ª RM", "São Paulo - SP", ClassificacaoCOEB.FEC, 25.0, False, "financeiro"),
     ("Cia Cmdo 3ª RM", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 24.0, False, "folha"),
@@ -609,11 +635,14 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
 
 def gerar_oms(reset: bool = True) -> int:
     """Popula o banco de dados com todo o catálogo de OMs do Exército Brasileiro."""
+    if reset:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
         if reset:
+            db.query(SaudeIndicadores).delete()
             db.query(TransparenciaDados).delete()
             db.query(Sislog).delete()
             db.query(Estrategia).delete()
@@ -642,7 +671,7 @@ def gerar_oms(reset: bool = True) -> int:
                 valor_spu = 42_000_000.0
                 custeio_decl = 18_500_000.0
                 acionamentos, disponibilidade = 48, 96.5
-            elif sigla.startswith("2º BIG"):
+            elif sigla.startswith("2º BG"):
                 ef_decl, ef_fim = 780, 320
                 valor_spu = 485_000_000.0
                 custeio_decl = 34_000_000.0
@@ -786,6 +815,58 @@ def gerar_oms(reset: bool = True) -> int:
                     area_urbana=area_urbana,
                 )
             )
+            if coeb == ClassificacaoCOEB.SAUDE or eh_om_saude(sigla):
+                sigla_u = sigla.upper()
+                is_policlinica = any(k in sigla_u for k in ("POLICL", "PMRJ", "PMPV", "PMN", "PMPA", "PMCG", "PMCAMP", "OCEX", "IBEX", "LQFEX"))
+                is_hce_hma = "HCE" in sigla_u or "HMA" in sigla_u
+                is_hge = "HGE" in sigla_u
+                if is_hce_hma:
+                    leitos = random.randint(180, 420) if "HCE" in sigla_u else random.randint(130, 260)
+                    benef = random.randint(35_000, 92_000)
+                    atend = random.randint(115_000, 240_000)
+                    ocup = round(random.uniform(76.0, 88.0), 1)
+                    resol = round(random.uniform(82.0, 92.0), 1)
+                elif is_hge:
+                    leitos = random.randint(75, 145)
+                    benef = random.randint(18_000, 42_000)
+                    atend = random.randint(62_000, 118_000)
+                    ocup = round(random.uniform(73.0, 85.0), 1)
+                    resol = round(random.uniform(76.0, 87.0), 1)
+                elif is_policlinica:
+                    leitos = 0
+                    benef = random.randint(14_000, 38_000)
+                    atend = random.randint(45_000, 95_000)
+                    ocup = round(random.uniform(78.0, 90.0), 1)  # Utilização de agenda ambulatorial
+                    resol = round(random.uniform(80.0, 91.0), 1)
+                else:  # HGu (Tabatinga, SGC, João Pessoa, etc.)
+                    leitos = random.randint(28, 68)
+                    benef = random.randint(5_500, 19_000)
+                    atend = random.randint(26_000, 58_000)
+                    ocup = round(random.uniform(70.0, 84.0), 1)
+                    resol = round(random.uniform(74.0, 86.0), 1)
+
+                custo_unit = round(empenhado_cgu / max(atend, 1), 2)
+                nota_custo = max(35.0, min(100.0, 100.0 - ((custo_unit - 180.0) / 360.0) * 65.0))
+                ef_hosp = (
+                    0.30 * nota_custo
+                    + 0.30 * resol
+                    + 0.20 * ocup
+                    + 0.20 * (0.5 * c4isr + 0.5 * disponibilidade)
+                )
+                if perfil_anomalia != "limpo":
+                    ef_hosp *= 0.85
+                db.add(
+                    SaudeIndicadores(
+                        id_om=om.id_om,
+                        atendimentos_ano=atend,
+                        beneficiarios_fusex=benef,
+                        leitos_operacionais=leitos,
+                        taxa_ocupacao_leitos_pct=ocup,
+                        custo_medio_atendimento_brl=custo_unit,
+                        resolutividade_propria_pct=resol,
+                        indice_eficiencia_hospitalar=round(min(100.0, max(0.0, ef_hosp)), 2),
+                    )
+                )
 
         db.commit()
         return len(CATALOGO_OMS)

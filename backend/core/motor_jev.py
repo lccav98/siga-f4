@@ -19,6 +19,7 @@ MULTIPLICADOR_COEB: Dict[ClassificacaoCOEB, float] = {
     ClassificacaoCOEB.FEP: 1.5,   # Forças de Emprego de Prontidão (EB10-P-01.031 / COEB 5.3.4.4 b): 1ª prioridade
     ClassificacaoCOEB.FEI: 1.2,   # Forças de Emprego Imediato (COEB 5.3.4.4 a): faixa de fronteira / 2º plano vs FEP
     ClassificacaoCOEB.FEC: 0.95,  # Forças de Emprego Continuado (COEB 5.3.4.4 c): teto <75 (sem virar Ponta de Lança), sem rebaixar Bda FEC limpa a OM Zumbi
+    ClassificacaoCOEB.SAUDE: 1.15,  # Sustentação Sanitária / OMs de Saúde (DSau / SAMMED-FUSEx)
 }
 MULTIPLICADOR_SAUDE = 1.15  # Sustentação Sanitária (COEB 5.6.1.2.4 b,f / 5.3.4.4 e)
 MULTIPLICADOR_INSTITUCIONAL = 1.10  # Capacidades Institucionais de Ensino/Formação (COEB 5.6.1.4)
@@ -207,10 +208,17 @@ class MotorIVE:
         # 1. Teeth-to-Tail (15%): efetivo_fim / cpfs_ativos
         nota_teeth_to_tail = min(100.0, max(0.0, (efetivo_fim / cpfs_ativos) * 100.0))
 
-        # 2. Eficiência de Custeio (15%): total_empenhado / cpfs_ativos
-        # Faixa de referência: <= R$ 45k/CPF (100 pts) até R$ 220k/CPF (20 pts)
+        # 2. Eficiência de Custeio (15%): total_empenhado / cpfs_ativos (ou eficiência assistencial SAMMED/FUSEx para OMS)
+        saude_ind = om.saude_indicadores
+        is_saude = eh_om_saude(om.sigla) or (doutrina and doutrina.classificacao_coeb == ClassificacaoCOEB.SAUDE)
         custo_por_cpf = total_empenhado / cpfs_ativos
-        if custo_por_cpf <= 45_000.0:
+        if is_saude and saude_ind:
+            nota_custo_unit = max(
+                35.0,
+                min(100.0, 100.0 - ((saude_ind.custo_medio_atendimento_brl - 180.0) / 360.0) * 65.0),
+            )
+            nota_eficiencia = 0.45 * nota_custo_unit + 0.55 * saude_ind.resolutividade_propria_pct
+        elif custo_por_cpf <= 45_000.0:
             nota_eficiencia = 100.0
         else:
             nota_eficiencia = max(20.0, min(100.0, 100.0 - ((custo_por_cpf - 45_000.0) / 175_000.0) * 80.0))
@@ -223,14 +231,16 @@ class MotorIVE:
         disponibilidade = sislog.taxa_disponibilidade if sislog else 0.0
         acionamentos = sislog.acionamentos_reais_36m if sislog else 0
         coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
-        is_saude = eh_om_saude(om.sigla)
         is_ensino = eh_om_ensino(om.sigla)
         local_eb = inferir_localizacao_militar(om.sigla, om.endereco)
 
         if is_saude:
-            # OMS: disponibilidade assistencial/leitos e prontidão para módulo de saúde FTC
-            nota_mobilizacao_saude = min(100.0, (acionamentos / 4.0) * 100.0)
-            nota_prontidao = 0.85 * disponibilidade + 0.15 * nota_mobilizacao_saude
+            # OMS: disponibilidade assistencial, taxa de ocupação de leitos/ambulatório e prontidão sanitária FTC
+            if saude_ind:
+                nota_prontidao = 0.55 * disponibilidade + 0.45 * saude_ind.taxa_ocupacao_leitos_pct
+            else:
+                nota_mobilizacao_saude = min(100.0, (acionamentos / 4.0) * 100.0)
+                nota_prontidao = 0.85 * disponibilidade + 0.15 * nota_mobilizacao_saude
         elif is_ensino:
             nota_prontidao = disponibilidade
         elif coeb == ClassificacaoCOEB.FEP:
@@ -451,6 +461,41 @@ class MotorIVE:
         sigpes = om.sigpes
         sislog = om.sislog
         estrategia = om.estrategia
+        saude_ind = om.saude_indicadores
+
+        dados_op = {
+            "latitude": om.latitude,
+            "longitude": om.longitude,
+            "endereco": om.endereco,
+            "municipio": local_eb["municipio"],
+            "uf": local_eb["uf"],
+            "regiao_militar": local_eb["regiao_militar"],
+            "comando_militar_area": local_eb["comando_militar_area"],
+            "brigada": local_eb["brigada"],
+            "enquadramento_transformacao": enquadramento_eb10,
+            "efetivo_declarado": sigpes.efetivo_total_declarado if sigpes else 0,
+            "efetivo_fim": sigpes.efetivo_fim if sigpes else 0,
+            "cpfs_ativos_cgu": cgu.cpfs_ativos if cgu else 0,
+            "cpfs_reserva_cgu": cgu.cpfs_reserva if cgu else 0,
+            "custeio_declarado_brl": sigpes.custeio_declarado_brl if sigpes else 0.0,
+            "total_empenhado_cgu": cgu.total_empenhado if cgu else 0.0,
+            "acionamentos_36m": sislog.acionamentos_reais_36m if sislog else 0,
+            "taxa_disponibilidade": sislog.taxa_disponibilidade if sislog else 0.0,
+            "dist_fronteira_km": estrategia.dist_fronteira_km if estrategia else 0.0,
+            "area_urbana": estrategia.area_urbana if estrategia else True,
+        }
+        if saude_ind:
+            dados_op.update(
+                {
+                    "atendimentos_ano": saude_ind.atendimentos_ano,
+                    "beneficiarios_fusex": saude_ind.beneficiarios_fusex,
+                    "leitos_operacionais": saude_ind.leitos_operacionais,
+                    "taxa_ocupacao_leitos_pct": saude_ind.taxa_ocupacao_leitos_pct,
+                    "custo_medio_atendimento_brl": saude_ind.custo_medio_atendimento_brl,
+                    "resolutividade_propria_pct": saude_ind.resolutividade_propria_pct,
+                    "indice_eficiencia_hospitalar": saude_ind.indice_eficiencia_hospitalar,
+                }
+            )
 
         return DiagnosticoOM(
             id_om=om.id_om,
@@ -468,27 +513,7 @@ class MotorIVE:
             prescricao_doutrinaria=prescricao,
             alertas_auditoria=alertas_dict,
             componentes_ive=componentes,
-            dados_operacionais={
-                "latitude": om.latitude,
-                "longitude": om.longitude,
-                "endereco": om.endereco,
-                "municipio": local_eb["municipio"],
-                "uf": local_eb["uf"],
-                "regiao_militar": local_eb["regiao_militar"],
-                "comando_militar_area": local_eb["comando_militar_area"],
-                "brigada": local_eb["brigada"],
-                "enquadramento_transformacao": enquadramento_eb10,
-                "efetivo_declarado": sigpes.efetivo_total_declarado if sigpes else 0,
-                "efetivo_fim": sigpes.efetivo_fim if sigpes else 0,
-                "cpfs_ativos_cgu": cgu.cpfs_ativos if cgu else 0,
-                "cpfs_reserva_cgu": cgu.cpfs_reserva if cgu else 0,
-                "custeio_declarado_brl": sigpes.custeio_declarado_brl if sigpes else 0.0,
-                "total_empenhado_cgu": cgu.total_empenhado if cgu else 0.0,
-                "acionamentos_36m": sislog.acionamentos_reais_36m if sislog else 0,
-                "taxa_disponibilidade": sislog.taxa_disponibilidade if sislog else 0.0,
-                "dist_fronteira_km": estrategia.dist_fronteira_km if estrategia else 0.0,
-                "area_urbana": estrategia.area_urbana if estrategia else True,
-            },
+            dados_operacionais=dados_op,
         )
 
     def diagnosticar_todas(self, db: Session, persistir_alertas: bool = True) -> List[DiagnosticoOM]:
@@ -502,6 +527,7 @@ class MotorIVE:
                 joinedload(OM.transparencia_dados),
                 joinedload(OM.sislog),
                 joinedload(OM.estrategia),
+                joinedload(OM.saude_indicadores),
             )
             .all()
         )

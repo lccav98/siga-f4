@@ -58,6 +58,7 @@ class OMRankingItem(BaseModel):
     brigada: str = ""
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    indice_eficiencia_hospitalar: Optional[float] = None
 
 
 @router.get("/oms", response_model=List[OMRankingItem])
@@ -134,6 +135,7 @@ def listar_oms_ranking(
             brigada=d.dados_operacionais.get("brigada", ""),
             latitude=d.dados_operacionais.get("latitude"),
             longitude=d.dados_operacionais.get("longitude"),
+            indice_eficiencia_hospitalar=d.dados_operacionais.get("indice_eficiencia_hospitalar"),
         )
         for idx, d in enumerate(diagnosticos, start=1)
     ]
