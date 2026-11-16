@@ -16,10 +16,11 @@ from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
 
 
 MULTIPLICADOR_COEB: Dict[ClassificacaoCOEB, float] = {
-    ClassificacaoCOEB.FEP: 1.5,   # Forças de Emprego de Prontidão (EB10-P-01.031 / COEB 5.3.4.4 b): 1ª prioridade
-    ClassificacaoCOEB.FEI: 1.2,   # Forças de Emprego Imediato (COEB 5.3.4.4 a): faixa de fronteira / 2º plano vs FEP
-    ClassificacaoCOEB.FEC: 0.95,  # Forças de Emprego Continuado (COEB 5.3.4.4 c): teto <75 (sem virar Ponta de Lança), sem rebaixar Bda FEC limpa a OM Zumbi
+    ClassificacaoCOEB.FEP: 1.5,     # Forças de Emprego de Prontidão (EB10-P-01.031 / COEB 5.3.4.4 b): 1ª prioridade
+    ClassificacaoCOEB.FEI: 1.2,     # Forças de Emprego Imediato (COEB 5.3.4.4 a): faixa de fronteira / 2º plano vs FEP
+    ClassificacaoCOEB.FEC: 0.95,    # Forças de Emprego Continuado (COEB 5.3.4.4 c): teto <75 (sem virar Ponta de Lança), sem rebaixar Bda FEC limpa a OM Zumbi
     ClassificacaoCOEB.SAUDE: 1.15,  # Sustentação Sanitária / OMs de Saúde (DSau / SAMMED-FUSEx)
+    ClassificacaoCOEB.ENSINO: 1.10, # Capacidades Institucionais / Ensino, Cultura e Adestramento (DECEx)
 }
 MULTIPLICADOR_SAUDE = 1.15  # Sustentação Sanitária (COEB 5.6.1.2.4 b,f / 5.3.4.4 e)
 MULTIPLICADOR_INSTITUCIONAL = 1.10  # Capacidades Institucionais de Ensino/Formação (COEB 5.6.1.4)
@@ -231,7 +232,7 @@ class MotorIVE:
         disponibilidade = sislog.taxa_disponibilidade if sislog else 0.0
         acionamentos = sislog.acionamentos_reais_36m if sislog else 0
         coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
-        is_ensino = eh_om_ensino(om.sigla)
+        is_ensino = eh_om_ensino(om.sigla) or (coeb == ClassificacaoCOEB.ENSINO)
         local_eb = inferir_localizacao_militar(om.sigla, om.endereco)
 
         if is_saude:
@@ -299,9 +300,9 @@ class MotorIVE:
         )
 
         coeb = om.doutrina_tecnologia.classificacao_coeb if om.doutrina_tecnologia else ClassificacaoCOEB.FEC
-        if eh_om_saude(om.sigla):
+        if eh_om_saude(om.sigla) or coeb == ClassificacaoCOEB.SAUDE:
             multiplicador = MULTIPLICADOR_SAUDE
-        elif eh_om_ensino(om.sigla):
+        elif eh_om_ensino(om.sigla) or coeb == ClassificacaoCOEB.ENSINO:
             multiplicador = MULTIPLICADOR_INSTITUCIONAL
         else:
             multiplicador = MULTIPLICADOR_COEB[coeb]
@@ -333,10 +334,13 @@ class MotorIVE:
         sigla: str, coeb: ClassificacaoCOEB, c4isr: float, papel_a2ad: bool
     ) -> str:
         """Enquadra a OM nos grupos de emprego e módulos (EB10-P-01.031 & COEB EB20-MF-07.101, 5.3.4.4)."""
-        if eh_om_saude(sigla):
+        if eh_om_saude(sigla) or coeb == ClassificacaoCOEB.SAUDE:
             return "Sustentação Sanitária (FUSEx / Apoio Ampliado FTC)"
-        if eh_om_ensino(sigla):
-            return "Capacidade Institucional (Ensino / DOAMEPI)"
+        if eh_om_ensino(sigla) or coeb == ClassificacaoCOEB.ENSINO:
+            sigla_up_ens = sigla.upper()
+            if any(k in sigla_up_ens for k in ("CIGS", "CI ", "CIAVEX", "CA-")):
+                return "Capacidade Institucional (DECEx / Adestramento FTC)"
+            return "Capacidade Institucional (DECEx / Ensino & Cultura)"
         sigla_up = sigla.upper()
         if any(t in sigla_up for t in TERMOS_MODULO_MULTIDOMINIO) or (
             coeb == ClassificacaoCOEB.FEP and c4isr >= 78.0 and papel_a2ad
@@ -438,14 +442,16 @@ class MotorIVE:
             db.commit()
             db.refresh(om)
 
+        doutrina = om.doutrina_tecnologia
+        coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
         componentes = self.calcular_componentes_ive(om)
         nota_ive = self.calcular_nota_ive(om, componentes, len(alertas))
         classificacao_ive, foco = self.classificar_ive(
-            nota_ive, is_saude=eh_om_saude(om.sigla), is_ensino=eh_om_ensino(om.sigla)
+            nota_ive,
+            is_saude=eh_om_saude(om.sigla) or coeb == ClassificacaoCOEB.SAUDE,
+            is_ensino=eh_om_ensino(om.sigla) or coeb == ClassificacaoCOEB.ENSINO,
         )
 
-        doutrina = om.doutrina_tecnologia
-        coeb = doutrina.classificacao_coeb if doutrina else ClassificacaoCOEB.FEC
         c4isr = doutrina.indice_tecnologia_c4isr if doutrina else 0.0
         papel_a2ad = bool(doutrina and doutrina.papel_a2ad)
         valor_imovel = om.patrimonio_uniao.valor_imovel_brl if om.patrimonio_uniao else 0.0

@@ -107,7 +107,6 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
     (("HCE", "HMA", "HGE", "HGU", "HMIL", "POLICL", "PMRJ", "PMPV", "PMN", "PMPA", "PMCG", "PMCAMP", "OCEX", "IBEX", "LQFEX"), "Saúde Militar (DSau / FUSEx)"),
     (("DSUP", "ARSENAL", "AGR", "AGSP", "AGRS", "PQRMNT", "BAPLOGEX", "BTL SUP", "BTL MNT", "BTL TRNS"), "Apoio Logístico (RM)"),
     (("BG", "BGP", "RCG", "GUARDAS", "BPE", "PEL PE"), "Guarda / Polícia do Exército"),
-    (("AMAN", "ESSA", "BTL INSTR"), "Estab. de Ensino / Instrução"),
     (("CIA CMDO", "CMDO "), "Comando de Área / DE / RM"),
 ]
 
@@ -119,7 +118,13 @@ _PADRAO_OM_SAUDE = re.compile(
 
 
 _PADRAO_OM_ENSINO = re.compile(
-    r"\b(AMAN|ESSA|BTL\s+INSTR|ECEME|ESAO|ESFCEX|IME)\b",
+    r"(?:\b(DECEX|DESMIL|DETMIL|DEPA|CCFEX|AMAN|ESPCEX|ECEME|ESAO|IME|ESSEX|ESFCEX|ESSA|ESSLOG|EASA|ESIE|ESACOSAAE|ESEFEX|ESCOM|CPOR|CIGS|CIAVEX)\b"
+    r"|\b(BTL\s+INSTR|COL[EÉ]GIO\s+MIL[A-Z]*|COL\s+MIL|CI\s+BLD|CI\s+PQDT|CI\s+ART|CI\s+OP\s+ESP|CI\s+ENG|CA-LESTE|CA-SUL|CA-OESTE)\b"
+    r"|\b(CMRJ|CMVM|CMBH|CMBEL|CMCG|CMJF|CMPA|CMSM|CMSP)\b"
+    r"|\b(CMB|CMM|CMC|CMR|CMF|CMS)\s*\(COL[EÉ]GIO"
+    r"|ACADEMIA\s+MILITAR|ESCOLA\s+(?:PREPARAT|DE\s+COMANDO|DE\s+APERFEIC|DE\s+SA[UÚ]DE|DE\s+FORMA[CÇ]|DE\s+SARGENTOS|DE\s+INSTRU[CÇ]|DE\s+ARTILH|DE\s+EDUCA[CÇ]|DE\s+COMUNICA[CÇ])"
+    r"|CENTRO\s+DE\s+(?:INSTRU[CÇ]|ADESTRAMENTO|CAPACITA[CÇ]|PREP\s+OF)"
+    r")",
     re.IGNORECASE,
 )
 
@@ -172,10 +177,13 @@ def inferir_localizacao_militar(sigla: str, endereco: str) -> Dict[str, str]:
     sigla_up = (sigla or "").upper()
     brigada = "Guarnição / Apoio Territorial"
 
-    for padroes, nome_brigada in _REGRAS_BRIGADA:
-        if any(re.search(rf"(?<!\d){re.escape(p)}", sigla_up) for p in padroes):
-            brigada = nome_brigada
-            break
+    if eh_om_ensino(sigla):
+        brigada = "DECEx (Educação, Cultura e Adestramento)"
+    else:
+        for padroes, nome_brigada in _REGRAS_BRIGADA:
+            if any(re.search(rf"(?<!\d){re.escape(p)}", sigla_up) for p in padroes):
+                brigada = nome_brigada
+                break
 
     return {
         "municipio": municipio,

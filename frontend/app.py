@@ -234,13 +234,14 @@ st.sidebar.divider()
 st.sidebar.header("🎯 Filtros Doutrinários (COEB / EB10-P-01.031)")
 coeb_selecionado = st.sidebar.multiselect(
     "Grupos de Emprego COEB / Sistema",
-    options=["FEP", "FEI", "FEC", "SAUDE"],
-    default=["FEP", "FEI", "FEC", "SAUDE"],
+    options=["FEP", "FEI", "FEC", "SAUDE", "ENSINO"],
+    default=["FEP", "FEI", "FEC", "SAUDE", "ENSINO"],
     help=(
         "FEP — Forças de Emprego de Prontidão (5 Brigadas ForPron) — 1ª prioridade | "
         "FEI — Forças de Emprego Imediato: faixa de fronteira e módulos multidomínio | "
         "FEC — Forças de Emprego Continuado: reserva estratégica, litoral e presença territorial | "
-        "SAUDE — Classificação em separado para OMs de Saúde (DSau / SAMMED-FUSEx)"
+        "SAUDE — Classificação em separado para OMs de Saúde (DSau / SAMMED-FUSEx) | "
+        "ENSINO — Estabelecimentos de Ensino, Colégios Militares e Centros de Instrução/Adestramento (DECEx)"
     ),
 )
 status_jev_selecionado = st.sidebar.multiselect(
@@ -281,7 +282,8 @@ st.sidebar.caption(
     f"- **FEP (Prontidão / 1ª Prio):** {int((df_all['classificacao_coeb'] == 'FEP').sum())} OMs\n"
     f"- **FEI (Imediato / Fronteira):** {int((df_all['classificacao_coeb'] == 'FEI').sum())} OMs\n"
     f"- **FEC (Continuado / Territorial):** {int((df_all['classificacao_coeb'] == 'FEC').sum())} OMs\n"
-    f"- **SAUDE (DSau / Hospitais e Policlínicas):** {int((df_all['classificacao_coeb'] == 'SAUDE').sum())} OMs"
+    f"- **SAUDE (DSau / Hospitais e Policlínicas):** {int((df_all['classificacao_coeb'] == 'SAUDE').sum())} OMs\n"
+    f"- **ENSINO (DECEx / Escolas, CMs e CIs):** {int((df_all['classificacao_coeb'] == 'ENSINO').sum())} OMs"
 )
 st.sidebar.info(f"Fonte ativa: **{fonte_dados}** ({len(df_all)} OMs na base)")
 
@@ -352,9 +354,12 @@ with st.expander(
     eb3.metric(
         "Apoio Ampliado à FTC (Item 3.1.1.2 e)",
         f"{resumo_eb10['modulos_apoio_ampliado_ftc']} OMs",
-        delta=f"+ {resumo_eb10.get('oms_saude_sustentacao', 0)} OMs Saúde (DSau/FUSEx)",
+        delta=(
+            f"+ {resumo_eb10.get('oms_saude_sustentacao', 0)} Saúde (DSau) • "
+            f"{resumo_eb10.get('oms_capacidade_institucional', 0)} Ensino/Adestr. (DECEx)"
+        ),
         delta_color="off",
-        help="Estruturas modulares de sustentação logística, engenharia, telemática e núcleos hospitalares mobilizáveis da FTC.",
+        help="Estruturas modulares de sustentação logística, engenharia, telemática, saúde e ensino/adestramento (DECEx).",
     )
     eb4.metric(
         "Alvos Otimização PEECFA (Item 3.1.3.1)",
@@ -385,7 +390,7 @@ with st.expander("📡 Capturar / Sincronizar OM pelo Código UASG ou UG (Compra
     with col_u2:
         coeb_captura = st.selectbox(
             "Enquadramento COEB / Sistema",
-            options=["Automático (COEB)", "FEI", "FEP", "FEC", "SAUDE"],
+            options=["Automático (COEB)", "FEI", "FEP", "FEC", "SAUDE", "ENSINO"],
             key="select_coeb_captura",
         )
     with col_u3:
@@ -534,10 +539,11 @@ with col_zumbi:
 
     st.info(
         "🏥 **Classificações Especiais JEV (COEB `EB20-MF-07.101` / `EB10-P-01.031`):** "
-        "**`Sustentação Sanitária`** (Hospitais — `HCE`, `HMA`, `HGe`) e **`Capacidade Institucional`** (Ensino — `AMAN`, `EsSA`, `1º Btl Instr`) "
-        "não são rotuladas como **OM Zumbi**, pois cumprem vocação assistencial (**FUSEx**) e de formação (**DOAMEPI 5.6.1.4**). "
-        "Igualmente, **não acrescem efetivo combatente (`FEP`)**, contribuindo para a FTC via **Módulos de Apoio Ampliado (`5.3.4.4 e`)** "
-        "e permanecendo auditáveis no eixo administrativo (`CGU/SIGPES`)."
+        "**`Sustentação Sanitária`** (`SAUDE` — `HCE`, `HMA`, `HGe`, `HGu`, `Policlínicas`) e "
+        "**`Capacidade Institucional`** (`ENSINO` / **DECEx** — Escolas como `AMAN`, `EsSA`, `EsPCEx`, `ECEME`, `IME`, "
+        "os 15 Colégios Militares `SCMB` e Centros de Instrução/Adestramento como `CIGS`, `CI Bld`, `CA-Leste`) "
+        "não são rotuladas como **OM Zumbi**, pois cumprem vocação assistencial (**FUSEx**) e de formação/adestramento (**DOAMEPI 5.6.1.4**). "
+        "Igualmente, **não acrescem efetivo combatente (`FEP`)**, permanecendo auditáveis no eixo administrativo (`CGU/SIGPES`)."
     )
 
 st.divider()

@@ -18,12 +18,13 @@ from backend.models.database import Base
 
 
 class ClassificacaoCOEB(str, enum.Enum):
-    """Classificação doutrinária conforme o COEB e a Política de Transformação (EB10-P-01.031 / DSau)."""
+    """Classificação doutrinária conforme o COEB e a Política de Transformação (EB10-P-01.031 / DSau / DECEx)."""
 
-    FEI = "FEI"      # Força de Emprego Imediato (faixa de fronteira / resposta inicial)
-    FEP = "FEP"      # Força de Emprego de Prontidão (poder de combate ofensivo / 1ª prioridade)
-    FEC = "FEC"      # Força de Emprego Continuado (dissuasão, presença, defesa territorial e mobilização)
-    SAUDE = "SAUDE"  # Organizações Militares de Saúde (DSau / SAMMED-FUSEx — Sustentação Sanitária)
+    FEI = "FEI"        # Força de Emprego Imediato (faixa de fronteira / resposta inicial)
+    FEP = "FEP"        # Força de Emprego de Prontidão (poder de combate ofensivo / 1ª prioridade)
+    FEC = "FEC"        # Força de Emprego Continuado (dissuasão, presença, defesa territorial e mobilização)
+    SAUDE = "SAUDE"    # Organizações Militares de Saúde (DSau / SAMMED-FUSEx — Sustentação Sanitária)
+    ENSINO = "ENSINO"  # Organizações Militares de Ensino, Cultura e Adestramento (DECEx — Capacidade Institucional)
 
 
 JSONBCompat = JSON().with_variant(JSONB, "postgresql")
