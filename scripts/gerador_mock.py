@@ -826,73 +826,136 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
 # (tupla_palavras_chave_sigla, nome_setor, lat_exata, lon_exata, valor_m2_terreno_brl)
 _SETORES_MILITARES: Dict[str, List[Tuple[Tuple[str, ...], str, float, float, float]]] = {
     "Rio de Janeiro - RJ": [
-        (("CAEX", "CTEX"), "Guaratiba / Marambaia", -23.043200, -43.574800, 680.0),
-        (("HCE", "ESSEX"), "Benfica / Triagem", -22.893940, -43.243500, 4_850.0),
-        (("CMRJ",), "Tijuca (R. São Francisco Xavier, 267 — CMRJ)", -22.917800, -43.225600, 6_400.0),
-        (("1º BG", "2º BG", "2º RCG", "OCEX", "IBEX", "LQFEX", "CPOR/RJ"), "São Cristóvão / Benfica", -22.905600, -43.222500, 4_900.0),
-        (("BAPLOGEX", "AGR ", "1º DSUP", "1º BTL TRNS", "PQRMNT/1"), "Caju / Benfica / Deodoro", -22.882500, -43.223800, 3_600.0),
-        (("PMPV", "9ª BIA AAAE", "CMDO 5º GPT E", "1º BE CMB", "ECEME", "IME", "CCFEX", "ESEFEX", "CEP/FDC", "CIDEX", "IPCFEX", "CDE"), "Praia Vermelha / Urca / Leme", -22.954700, -43.164900, 11_500.0),
-        (("MHEX",), "Copacabana (Forte de Copacabana)", -22.986600, -43.186900, 13_500.0),
-        (("MNMSGM",), "Flamengo (Monumento II GM)", -22.916300, -43.173600, 8_800.0),
-        (("1º GAAA",), "Duque de Caxias / Zona Norte", -22.785200, -43.305400, 2_250.0),
-        (("PMRJ", "1º BPE", "CML", "1ª RM", "2º BCOM", "1º CIA INTLG", "3º CTA", "CRO/1", "DECEX", "DESMIL", "DETMIL", "DEPA", "DPHCEX", "CEADEX", "AHEX", "BIBLEX", "B ADM AP/1ª RM", "B ADM CMPL SAU"), "Centro / Tijuca (Palácio Duque de Caxias)", -22.903600, -43.189700, 8_200.0),
+        (("CAEX", "CTEX"), "Estr. Roberto Burle Marx, 9140 - Barra de Guaratiba / Marambaia", -23.043200, -43.574800, 680.0),
+        (("HCE", "ESSEX"), "Rua Francisco Manuel, 126 - Benfica / Triagem", -22.893940, -43.243500, 4_850.0),
+        (("1º BPE",), "Rua Barão de Mesquita, 425 - Tijuca", -22.922800, -43.237500, 7_100.0),
+        (("CMRJ",), "Rua São Francisco Xavier, 267 - Maracanã / Tijuca", -22.917800, -43.225600, 6_400.0),
+        (("1º BG", "2º BG", "2º RCG", "OCEX", "IBEX", "LQFEX", "CPOR/RJ"), "Av. Pedro II / São Cristóvão - Benfica", -22.905600, -43.222500, 4_900.0),
+        (("BAPLOGEX", "1º DSUP", "1º BTL TRNS", "PQRMNT/1"), "Estr. do Camboatá / Av. Brasil - Deodoro / Parque Logístico", -22.861500, -43.394500, 2_350.0),
+        (("AGR ",), "Rua Monsenhor Manuel Gomes, 536 - Caju", -22.882500, -43.223800, 3_600.0),
+        (("PMPV", "9ª BIA AAAE", "CMDO 5º GPT E", "1º BE CMB", "ECEME", "IME", "CCFEX", "ESEFEX", "CIDEX", "IPCFEX", "CDE"), "Praça General Tibúrcio, 83 / Urca - Praia Vermelha", -22.954700, -43.164900, 11_500.0),
+        (("CEP/FDC",), "Praça Almirante Júlio de Noronha - Leme (Forte Duque de Caxias)", -22.962800, -43.164500, 11_500.0),
+        (("MHEX",), "Praça Coronel Eugênio Franco, 1 - Copacabana (Forte de Copacabana)", -22.986600, -43.186900, 13_500.0),
+        (("MNMSGM",), "Av. Infante Dom Henrique, 75 - Parque do Flamengo", -22.916300, -43.173600, 8_800.0),
+        (("1º GAAA",), "Rod. Washington Luís / Sarapuí - Duque de Caxias", -22.785200, -43.305400, 2_250.0),
+        (("PMRJ", "CML", "1ª RM", "2º BCOM", "1º CIA INTLG", "3º CTA", "CRO/1", "DECEX", "DESMIL", "DETMIL", "DEPA", "DPHCEX", "CEADEX", "AHEX", "BIBLEX", "B ADM AP/1ª RM", "B ADM CMPL SAU"), "Praça Duque de Caxias, 25 - Centro (Palácio Duque de Caxias)", -22.904500, -43.192200, 8_200.0),
     ],
     "Vila Militar - RJ": [
-        (("HGERJ",), "Vila Militar / Deodoro (Saúde)", -22.860200, -43.401800, 2_450.0),
-        (("ESAO", "ESLOG", "ESSLOG", "ESIE", "ESACOSAAE", "ESEQEX", "CMVM", "CI PQDT", "CA-LESTE"), "Vila Militar / Deodoro (Ensino & Adestramento)", -22.863200, -43.405800, 2_400.0),
-        (("PQDT", "DOMPSA", "ESQD C PQDT", "1ª DE", "GUES", "9ª BDA", "BI MTZ (ES)", "31º GAC", "1º BGE", "BTL INF", "B ADM BDA"), "Vila Militar / Deodoro", -22.861700, -43.403200, 2_400.0),
+        (("HGERJ",), "Rua Salustiano Silva, s/n - Vila Militar / Deodoro", -22.860200, -43.401800, 2_450.0),
+        (("ESAO", "ESLOG", "ESSLOG", "ESIE", "ESACOSAAE", "ESEQEX", "CMVM", "CI PQDT", "CA-LESTE"), "Estr. São Pedro de Alcântara / Av. Duque de Caxias - Vila Militar", -22.863200, -43.405800, 2_400.0),
+        (("PQDT", "DOMPSA", "ESQD C PQDT", "1ª DE", "GUES", "9ª BDA", "BI MTZ (ES)", "31º GAC", "1º BGE", "BTL INF", "B ADM BDA"), "Av. Duque de Caxias, s/n - Vila Militar / Deodoro", -22.861700, -43.403200, 2_400.0),
+    ],
+    "Niterói - RJ": [
+        (("21º GAC",), "Alameda Marechal Pessoa Leal, 265 - Jurujuba (Forte Barão do Rio Branco)", -22.931500, -43.116800, 3_200.0),
+        (("3º BI",), "Av. do Contorno / São Lourenço - Niterói", -22.881200, -43.097500, 3_800.0),
+        (("PMN",), "Rua Pereira Nunes / Santa Rosa - Centro / Santa Rosa", -22.901500, -43.102200, 5_400.0),
+    ],
+    "Resende - RJ": [
+        (("AMAN", "BTL INSTR", "BTL CMDO SV AMAN"), "Rod. Presidente Dutra, Km 306 - Parque das Agulhas Negras", -22.456200, -44.449500, 1_350.0),
     ],
     "Brasília - DF": [
-        (("11º GAAA",), "Planaltina / DF", -15.652500, -47.785500, 1_850.0),
-        (("CMB (",), "Asa Norte (SGAN 902/904 — Colégio Militar)", -15.774500, -47.887800, 5_800.0),
-        (("CMDO", "COMDCIBER", "CIGE", "CDS", "CITEX", "7º CTA", "BGP", "1º RCG", "11º BPE", "11º DSUP", "HMAB", "32º GAC", "16º BLOG", "1º BGE", "INTLG", "ESCOM", "B ADM"), "Setor Militar Urbano (SMU)", -15.770700, -47.922700, 5_400.0),
+        (("11º GAAA",), "Rodovia DF-128, Km 18 - Planaltina", -15.652500, -47.785500, 1_850.0),
+        (("CMB (",), "SGAN 902/904 - Asa Norte (Colégio Militar de Brasília)", -15.774500, -47.887800, 5_800.0),
+        (("CMDO", "COMDCIBER", "CIGE", "CDS", "CITEX", "7º CTA", "BGP", "1º RCG", "11º BPE", "11º DSUP", "HMAB", "32º GAC", "16º BLOG", "1º BGE", "INTLG", "ESCOM", "B ADM"), "Av. do Exército, s/n - Setor Militar Urbano (SMU)", -15.770700, -47.922700, 5_400.0),
     ],
     "São Paulo - SP": [
-        (("HMASP",), "Vila Mariana / Saúde", -23.591400, -46.643800, 10_400.0),
-        (("2º BI", "2º BTL TRNS", "CMSP", "CPOR/SP"), "Santana / Zona Norte", -23.496800, -46.625400, 6_200.0),
-        (("4º BI", "2º DSUP", "PQRMNT/2"), "Cambuci / Mooca", -23.562500, -46.618900, 7_400.0),
-        (("CMSE", "2ª RM", "2ª DE", "2º CTA", "2º CIA INTLG", "IBIRAPUERA"), "Ibirapuera (QGEx SP)", -23.578300, -46.657600, 12_800.0),
+        (("HMASP",), "Rua Ouvidor Peleja, 200 - Vila Mariana", -23.591400, -46.643800, 10_400.0),
+        (("CMSP", "CPOR/SP"), "Rua Alfredo Pujol, 681 - Santana", -23.496800, -46.625400, 6_800.0),
+        (("2º BI", "2º BTL TRNS"), "Av. Raimundo Pereira de Magalhães - Pirituba / Parque São Domingos", -23.492200, -46.724500, 3_600.0),
+        (("4º BI", "2º DSUP", "PQRMNT/2"), "Av. do Estado / Parque Dom Pedro - Cambuci", -23.562500, -46.618900, 7_400.0),
+        (("CMSE", "2ª RM", "2ª DE", "2º CTA", "2º CIA INTLG", "IBIRAPUERA", "8º BPE"), "Av. Sargento Mário Kozel Filho, 222 - Ibirapuera", -23.578300, -46.657600, 12_800.0),
+    ],
+    "Campinas - SP": [
+        (("ESPCEX",), "Av. Papa Pio XII, 350 - Jardim Chapadão", -22.885500, -47.081800, 3_900.0),
+        (("11ª BDA", "28º BI", "PMCAMP", "2º BLOG", "11ª CIA COM"), "Av. Soldado Passarinho, s/n - Fazenda Chapadão / Jd. Guanabara", -22.889500, -47.078500, 3_400.0),
+    ],
+    "Taubaté - SP": [
+        (("AVEX", "B MNT SUP AV EX"), "Estr. Municipal dos Remédios, 2135 - Itaim (Base de Aviação)", -23.041200, -45.515500, 1_150.0),
+    ],
+    "Belo Horizonte - MG": [
+        (("4ª RM", "CIA CMDO 4ª RM"), "Av. Raja Gabaglia, 450 - Gutierrez", -19.936800, -43.952200, 7_200.0),
+        (("12º BI",), "Rua Tenente Brito Melo, 58 - Barro Preto", -19.924200, -43.948500, 7_800.0),
+        (("CMBH", "CPOR/BH"), "Av. Marechal Esperidião Rosa, 400 - São Francisco / Pampulha", -19.869800, -43.955400, 3_800.0),
+    ],
+    "Juiz de Fora - MG": [
+        (("CMJF",), "Av. Juscelino Kubitschek, 5200 - Nova Era", -21.703200, -43.428500, 1_450.0),
+        (("4º DSUP",), "Av. Juscelino Kubitschek / Benfica - Zona Norte", -21.692500, -43.442000, 1_150.0),
+        (("4ª BDA", "10º BI", "4º GAC", "17º BLOG", "HGEJF"), "Rua Mariano Procópio / Av. Brasil - Mariano Procópio / Fábrica", -21.744800, -43.356800, 2_900.0),
+    ],
+    "Três Corações - MG": [
+        (("ESA", "ESSA", "3º ESQD"), "Av. Sete de Setembro, 628 - Centro", -21.694722, -45.255278, 1_400.0),
     ],
     "Curitiba - PR": [
-        (("HGEC", "CRO/5"), "Batel / Centro", -25.437500, -49.286900, 7_400.0),
-        (("CMC (",), "Tarumã (Colégio Militar de Curitiba)", -25.421800, -49.222500, 4_300.0),
-        (("20º BIB", "5º BLOG", "5º BPE"), "Bacacheri / Boa Vista", -25.398200, -49.235600, 3_950.0),
-        (("5ª DE", "5ª RM", "5º BCOM", "5º DSUP", "5º GAC AP", "PQRMNT/5", "B ADM AP/5ª"), "Pinheirinho (Forte Pinheirinho)", -25.525700, -49.293100, 2_650.0),
+        (("HGEC", "CRO/5"), "Av. Vicente Machado / Batel - Centro", -25.437500, -49.286900, 7_400.0),
+        (("CMC (",), "Praça Mal. Humberto Castelo Branco, s/n - Tarumã", -25.421800, -49.222500, 4_300.0),
+        (("20º BIB", "5º BLOG", "5º BPE"), "Av. Pref. Erasto Gaertner, 1874 - Bacacheri", -25.398200, -49.235600, 3_950.0),
+        (("5ª DE", "5ª RM", "5º BCOM", "5º DSUP", "5º GAC AP", "PQRMNT/5", "B ADM AP/5ª"), "Rua 31 de Março, s/n - Pinheirinho (Forte Pinheirinho)", -25.525700, -49.293100, 2_650.0),
+    ],
+    "Ponta Grossa - PR": [
+        (("13º BIB", "5ª BDA"), "Av. General Carlos Cavalcanti, 2179 - Uvaranas", -25.091200, -50.118500, 1_950.0),
+        (("3º RCC", "5º ESQD"), "Rod. PR-151 / Cará-Cará - Olarias", -25.118500, -50.149500, 1_150.0),
     ],
     "Porto Alegre - RS": [
-        (("HMAPA", "PMPA", "3º BINT", "CMPA"), "Bom Fim / Santo Antônio", -30.036100, -51.209700, 6_400.0),
-        (("3º RCG", "3º BCOM", "3º BPE", "AGRS", "3º BTL TRNS", "1º CTA", "6ª DE", "CPOR/PA"), "Partenon / Zona Norte", -30.062800, -51.174200, 3_200.0),
-        (("CMS (", "CMS ", "3ª RM", "CRO/3", "4º GPT E", "3º DSUP", "B ADM AP/3ª"), "Centro Histórico (Rua dos Andradas)", -30.032200, -51.231400, 5_800.0),
+        (("HMAPA", "PMPA", "3º BINT", "CMPA"), "Av. José Bonifácio / Av. Protásio Alves - Bom Fim / Farroupilha", -30.036100, -51.209700, 6_400.0),
+        (("3º RCG", "3º BCOM", "3º BPE", "AGRS", "3º BTL TRNS", "1º CTA", "6ª DE", "CPOR/PA", "3º DSUP"), "Av. Aparício Borges / Av. Bento Gonçalves - Partenon", -30.062800, -51.174200, 3_200.0),
+        (("CMS (", "CMS ", "3ª RM", "CRO/3", "4º GPT E", "B ADM AP/3ª"), "Rua dos Andradas, 562 - Centro Histórico", -30.032200, -51.231400, 5_800.0),
+    ],
+    "Santa Maria - RS": [
+        (("HGESM",), "Rua Marechal Hermes, 190 - Passo D'Areia", -29.689500, -53.825500, 2_150.0),
+        (("CMSM",), "Rua Radialista Osvaldo Nobre, 1132 - Juscelino Kubitschek", -29.698500, -53.852500, 1_850.0),
+        (("1º RCC", "29º BIB", "3º GAC", "4º BLOG", "CI BLD", "CA-SUL", "6ª BDA"), "Av. do Exército, 2650–3129 - Boi Morto (Campo de Instrução)", -29.708500, -53.864500, 620.0),
+        (("3ª DE", "7º BIB", "PQRMNT/3", "B ADM GU SM"), "Rua Dr. Bozano / Av. Presidente Vargas - Centro / Patronato", -29.686800, -53.809500, 2_800.0),
+    ],
+    "Campo Grande - MS": [
+        (("CMCG", "20º RCB", "9º BEC", "3º GPT E"), "Av. Presidente Vargas, 2800–3850 - Coophatrabalho", -20.449500, -54.663500, 1_650.0),
+        (("9º DSUP", "PQRMNT/9", "18º BTL", "9º BTL"), "Av. Duque de Caxias - Vila Sobrinho", -20.453500, -54.652000, 1_250.0),
+        (("CMO", "9ª RM", "HMACG", "B ADM", "9º BCOM", "6º CTA"), "Av. Duque de Caxias, 474–1628 - Vila Alba / Amambaí", -20.461800, -54.636500, 2_400.0),
+    ],
+    "Cuiabá - MT": [
+        (("13ª BDA", "44º BI", "CA-OESTE"), "Av. Historiador Rubens de Mendonça, s/n - Araés / Bosque da Saúde", -15.586500, -56.078500, 2_650.0),
+    ],
+    "Goiânia - GO": [
+        (("COPESP", "1º BFESP", "1º BAC", "CI OP ESP", "38º PEL PE"), "Av. Salvador / Av. São Francisco - Jardim Guanabara (Complexo Op Esp)", -16.632500, -49.218500, 1_850.0),
     ],
     "Manaus - AM": [
-        (("12º GAAA",), "Ponta Negra (Av. Cel. Teixeira, 5165)", -3.080641, -60.076852, 3_600.0),
-        (("2º GPT E",), "Ponta Negra (Av. Cel. Teixeira, 6800)", -3.085000, -60.063000, 3_500.0),
-        (("12ª RM", "B ADM GU MANAUS"), "Ponta Negra (Av. do Expedicionário, 6155)", -3.093000, -60.052000, 3_400.0),
-        (("CMDO CMA", "CIA CMDO CMA", "4º CTA", "1º BINT", "4º BCOM", "1º CIA COM SL"), "Ponta Negra (QG CMA — Av. Cel. Teixeira, 4715)", -3.097500, -60.088600, 3_600.0),
-        (("1º BIS", "3ª CIA FE", "CIGS"), "São Jorge (Av. São Jorge, 650–750)", -3.106542, -60.038925, 2_350.0),
-        (("7º BPE",), "São Jorge (Av. São Jorge, 1944)", -3.109200, -60.033500, 2_350.0),
-        (("12º BTL SUP", "PQRMNT/12", "1º BTL MNT", "CRO/12"), "Compensa / Santo Antônio", -3.118200, -60.046100, 1_950.0),
-        (("HMAM",), "Cachoeirinha (R. Prof. Ernani Simão, 1421)", -3.125000, -60.007000, 3_400.0),
-        (("CMM (",), "Centro (R. José Clemente, 157 — CMM)", -3.133200, -60.021800, 3_900.0),
-        (("4º BAVEX",), "Vila Buriti / Base Aérea (Estr. do Paredão)", -3.131000, -60.015000, 1_850.0),
+        (("12º GAAA",), "Av. Coronel Teixeira, 5165 - Ponta Negra", -3.080641, -60.076852, 3_600.0),
+        (("2º GPT E",), "Av. Coronel Teixeira, 6800 - Ponta Negra", -3.085000, -60.063000, 3_500.0),
+        (("12ª RM", "B ADM GU MANAUS"), "Av. do Expedicionário, 6155 - Ponta Negra", -3.093000, -60.052000, 3_400.0),
+        (("CMDO CMA", "CIA CMDO CMA", "4º CTA", "1º BINT", "4º BCOM", "1º CIA COM SL"), "Av. Coronel Teixeira, 4715 - Ponta Negra (QG CMA)", -3.097500, -60.088600, 3_600.0),
+        (("1º BIS", "3ª CIA FE", "CIGS"), "Av. São Jorge, 650–750 - São Jorge", -3.106542, -60.038925, 2_350.0),
+        (("7º BPE",), "Av. São Jorge, 1944 - São Jorge", -3.109200, -60.033500, 2_350.0),
+        (("12º BTL SUP", "PQRMNT/12", "1º BTL MNT", "CRO/12"), "Estr. da Compensa - Compensa / Santo Antônio", -3.118200, -60.046100, 1_950.0),
+        (("HMAM",), "Rua Prof. Ernani Simão, 1421 - Cachoeirinha", -3.125000, -60.007000, 3_400.0),
+        (("CMM (",), "Rua José Clemente, 157 - Centro", -3.133200, -60.021800, 3_900.0),
+        (("4º BAVEX",), "Estr. do Paredão, s/n - Vila Buriti / Ponta Pelada", -3.131000, -60.015000, 1_850.0),
+    ],
+    "Fortaleza - CE": [
+        (("CMF (",), "Av. Santos Dumont, 485 - Centro / Aldeota", -3.730200, -38.515800, 5_900.0),
+        (("23º BC",), "Av. 13 de Maio, 1589 - Fátima", -3.749500, -38.532200, 4_400.0),
+        (("10º DSUP", "PQRMNT/10"), "Av. Sargento Hermínio Sampaio - Jacarecanga", -3.719500, -38.549500, 2_200.0),
+        (("10ª RM", "HGEF", "B ADM GU FORTALEZA"), "Av. Alberto Nepomuceno, s/n - Centro", -3.723500, -38.524500, 4_100.0),
+    ],
+    "João Pessoa - PB": [
+        (("HGUJP",), "Av. Presidente Epitácio Pessoa, 2121 - Bairro dos Estados", -7.118200, -34.853500, 3_900.0),
+        (("1º GPT E", "15º BI", "16º RC MEC", "B ADM GU JP"), "Av. Presidente Epitácio Pessoa / Cruz das Armas - Centro", -7.131500, -34.889500, 2_100.0),
     ],
     "Recife - PE": [
-        (("HMAR", "21º BI", "CPOR/R"), "Santo Amaro / Casa Forte", -8.046100, -34.885600, 5_200.0),
-        (("CMR (",), "Várzea / Engenho do Meio (CMR)", -8.046800, -34.950200, 3_400.0),
-        (("CMNE", "7ª DE", "7ª RM", "10ª BDA", "7º BCOM", "4º BPE", "7º DSUP", "PQRMNT/7", "5º CTA", "CRO/7"), "Curado (Complexo Militar CMNE)", -8.067800, -34.942800, 1_950.0),
+        (("HMAR", "21º BI", "CPOR/R"), "Av. Visconde de Suassuna / Santo Amaro & Av. 17 de Agosto - Casa Forte", -8.046100, -34.885600, 5_200.0),
+        (("CMR (",), "Av. Visconde de São Leopoldo, 198 - Várzea / Engenho do Meio", -8.046800, -34.950200, 3_400.0),
+        (("CMNE", "7ª DE", "7ª RM", "10ª BDA", "7º BCOM", "4º BPE", "7º DSUP", "PQRMNT/7", "5º CTA", "CRO/7"), "Rod. BR-232 / Av. Visconde de São Leopoldo - Curado", -8.067800, -34.942800, 1_950.0),
     ],
     "Florianópolis - SC": [
-        (("63º BI",), "Estreito (Continente)", -27.588600, -48.579200, 4_600.0),
-        (("14ª BDA", "HGUF", "14º PEL PE"), "Centro / Bocaiúva", -27.587500, -48.550800, 8_900.0),
+        (("63º BI",), "Rua Gen. Eurico Gaspar Dutra, 831 - Estreito", -27.588600, -48.579200, 4_600.0),
+        (("14ª BDA", "HGUF", "14º PEL PE"), "Rua Bocaiúva, 1858 - Centro", -27.587500, -48.550800, 8_900.0),
     ],
     "Salvador - BA": [
-        (("HGES", "CMS (", "ESFCEX"), "Pituba / Amaralina", -13.001200, -38.455600, 6_800.0),
-        (("19º BC", "6º DSUP"), "Cabula / Paralela", -12.951200, -38.458200, 3_100.0),
-        (("6ª RM", "6º BPE"), "Mouraria / Nazaré", -12.978500, -38.510500, 4_900.0),
+        (("HGES", "CMS (", "ESFCEX"), "Rua Território do Amapá / Av. Manoel Dias - Pituba / Amaralina", -13.001200, -38.455600, 6_800.0),
+        (("19º BC", "6º DSUP"), "Rua Silveira Martins, s/n - Cabula", -12.951200, -38.458200, 3_100.0),
+        (("6ª RM", "6º BPE"), "Praça Conselheiro Almeida Couto / Mouraria - Nazaré", -12.978500, -38.510500, 4_900.0),
     ],
     "Belém - PA": [
-        (("HGEBE", "2º BIS", "8º DSUP", "PQRMNT/8", "CMBEL"), "Marco / Souza / São Brás", -1.434200, -48.458600, 3_800.0),
-        (("CMN", "8ª RM"), "Cidade Velha / Reduto", -1.454500, -48.501500, 4_300.0),
+        (("HGEBE", "2º BIS", "8º DSUP", "PQRMNT/8", "CMBEL"), "Av. Almirante Barroso - Marco / Souza / São Brás", -1.434200, -48.458600, 3_800.0),
+        (("CMN", "8ª RM", "B ADM AP/CMN"), "Av. Portugal / Rua Tamandaré - Cidade Velha / Reduto", -1.454500, -48.501500, 4_300.0),
     ],
 }
 
@@ -905,14 +968,22 @@ def _resolver_setor_e_terreno(
     mult_spu: float,
     coeb: ClassificacaoCOEB,
 ) -> Tuple[float, float, str, float]:
-    """Resolve coordenada real do aquartelamento, endereço setorial e valor do m² SPU local."""
+    """Resolve coordenada real do aquartelamento, endereço patrimonial SPU e valor do m² local."""
     sigla_up = sigla.upper()
     for chaves, setor_nome, lat_s, lon_s, valor_m2 in _SETORES_MILITARES.get(guarnicao, []):
         if any(c in sigla_up for c in chaves):
             return (lat_s, lon_s, f"{setor_nome}, {guarnicao}", valor_m2)
 
     valor_m2_base = round(1_450.0 * mult_spu, 2)
-    return (base_lat, base_lon, f"Guarnição Militar, {guarnicao}", valor_m2_base)
+    if eh_tiro_guerra(sigla):
+        return (base_lat, base_lon, f"Sede Municipal Conveniada (OFR/SMI), {guarnicao}", round(valor_m2_base * 0.75, 2))
+    if eh_om_saude(sigla):
+        return (base_lat, base_lon, f"Complexo Hospitalar Militar (DSau), {guarnicao}", valor_m2_base)
+    if eh_om_ensino(sigla) or coeb == ClassificacaoCOEB.ENSINO:
+        return (base_lat, base_lon, f"Campus Escolar / Estabelecimento DECEx, {guarnicao}", valor_m2_base)
+    if "PEF" in sigla_up:
+        return (base_lat, base_lon, f"Pelotão Especial de Fronteira (Faixa de Fronteira), {guarnicao}", round(valor_m2_base * 0.45, 2))
+    return (base_lat, base_lon, f"Quartel da Guarnição Militar, {guarnicao}", valor_m2_base)
 
 
 def _calcular_valor_spu_terreno(sigla: str, valor_m2_brl: float, coeb: ClassificacaoCOEB) -> float:
@@ -993,7 +1064,7 @@ def gerar_oms(reset: bool = True) -> int:
             lat_setor, lon_setor, setor_end, valor_m2_brl = _resolver_setor_e_terreno(
                 sigla, guarnicao, base_lat, base_lon, mult_spu, coeb
             )
-            endereco = f"{fake.street_address()}, {setor_end}"
+            endereco = setor_end
             ocorrencia = contador_setor.get(setor_end, 0)
             contador_setor[setor_end] = ocorrencia + 1
 

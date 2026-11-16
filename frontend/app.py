@@ -695,7 +695,10 @@ if diag:
     brig_om = dados_op.get("brigada", "-")
     st.caption(
         f"**Localização:** `{cma_om}` • `{rm_om}` • `{uf_om}` • **Brigada:** `{brig_om}` | "
-        f"**EB10-P-01.031:** `{enq_eb10}` • UASG `{diag['codigo_uasg']}` • UG `{diag['cnpj_ug']}`"
+        f"**EB10-P-01.031:** `{enq_eb10}` • UASG `{diag['codigo_uasg']}` • UG `{diag['cnpj_ug']}`\n\n"
+        f"📍 **Endereço SPU (Próprio Nacional):** {dados_op.get('endereco', 'Não informado')} "
+        f"• **Coord.:** `{dados_op.get('latitude', 0.0):.5f}, {dados_op.get('longitude', 0.0):.5f}` "
+        f"• **Valor Patrimonial SPU:** `R$ {diag.get('valor_imovel_brl', 0.0) / 1e6:,.2f} Mi`"
     )
     c_a, c_b, c_c, c_d = st.columns(4)
     c_a.metric("Classificação JEV", diag["classificacao_ive"])
