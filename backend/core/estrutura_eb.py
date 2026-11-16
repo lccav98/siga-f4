@@ -67,7 +67,7 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
     (("COPESP", "1º BFESP", "1º BAC", "1º BOPPSC", "3ª CIA FE"), "COpEsp (Cmdo Op Esp)"),
     (("BAVEX",), "CAvEx (Aviação do Exército)"),
     (("COMDCIBER", "BINT", "1º BGE", "CIGE", "CDS", "CTEX", "CAEX", "CITEX", "CTA", "CIA INTLG"), "DCT / Def Ciber / Intlg"),
-    (("GMF", "GAAAE", "9ª BIA AAAE"), "Cmdo Art Ex / 1ª Bda AAAe"),
+    (("GMF", "GAAAE", "9ª BIA AAAE", "1ª BDA AAAE", "ART EX"), "Cmdo Art Ex / 1ª Bda AAAe"),
 
     # --- BRIGADAS DE SELVA E PANTANAL (CMA / CMN / CMO) ---
     (("1ª BDA INF SL", "7º BIS", "1º ESQD C SL", "12º ESQD C MEC", "10º GAC SL", "1º BTL LOG SL", "PEF PACARAIMA", "PEF BONFIM"), "1ª Bda Inf Sl"),
@@ -90,7 +90,7 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
     (("4ª BDA C MEC", "10º RC MEC", "11º RC MEC", "17º RC MEC", "20º RCB", "9º GAC", "28º BLOG", "4ª CIA ENG", "9º BCOM GE"), "4ª Bda C Mec"),
     (("3ª BDA INF MEC", "36º BI MEC", "41º BI MTZ", "22º BI", "32º GAC", "16º BLOG", "6º BCOM", "6º CIA COM"), "3ª Bda Inf Mec"),
     (("4ª BDA INF L MTH", "10º BI L MTH", "11º BI MTH", "32º BI L MTH", "4º GAC L MTH", "17º BLOG L MTH"), "4ª Bda Inf L Mth"),
-    (("1º BI MTZ (ES)", "2º BI MTZ (ES)", "57º BI MTZ (ES)", "31º GAC (ES)"), "GUEs / 9ª Bda Inf Mtz"),
+    (("GUES", "9ª BDA", "1º BI MTZ (ES)", "2º BI MTZ (ES)", "57º BI MTZ (ES)", "31º GAC (ES)"), "GUEs / 9ª Bda Inf Mtz"),
     (("7ª BDA INF MTZ", "14º BI MTZ", "15º BI MTZ", "16º BI MTZ", "16º RC MEC", "7º GAC", "17º GAC"), "7ª Bda Inf Mtz"),
     (("10ª BDA INF MTZ", "71º BI MTZ", "72º BI CAAT", "31º BI MTZ", "59º BI MTZ", "10ª CIA ENG"), "10ª Bda Inf Mtz"),
     (("2º RCC", "22º BLOG L"), "2ª DE / Apoio Mecanizado"),
@@ -107,7 +107,7 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
     (("DSUP", "ARSENAL", "AGR", "AGSP", "AGRS", "PQRMNT", "BAPLOGEX", "HCE", "HMA", "HGE", "BTL SUP", "BTL MNT", "BTL TRNS"), "Apoio Logístico / Saúde (RM)"),
     (("BG", "BGP", "BIG", "RCG", "GUARDAS", "BPE", "PEL PE"), "Guarda / Polícia do Exército"),
     (("AMAN", "ESSA", "BTL INSTR"), "Estab. de Ensino / Instrução"),
-    (("CIA CMDO",), "Comando de Área / DE / RM"),
+    (("CIA CMDO", "CMDO "), "Comando de Área / DE / RM"),
 ]
 
 

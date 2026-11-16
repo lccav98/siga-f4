@@ -1,6 +1,7 @@
 """Motor JEV (Julgamento, Estratégia e Validação) para diagnóstico doutrinário SIGA-F4."""
 
 from dataclasses import asdict, dataclass
+import re
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session, joinedload
@@ -255,7 +256,7 @@ class MotorIVE:
         else:
             base_fronteira = max(10.0, min(100.0, 100.0 - (dist_fronteira / 20.0)))
             bonus_a2ad = 25.0 if papel_a2ad else 0.0
-            is_de_c2 = "CIA CMDO" in sigla_up and "DE" in sigla_up
+            is_de_c2 = bool(re.search(r"\bCMDO\b.*\bDE\b", sigla_up))
             if is_de_c2 or local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE:
                 # COEB 1.3.2.7 / 5.3.2 / 5.3.4.4 c: defesa da costa/litoral, C2 Divisionário e reserva mobilizável
                 base_fronteira = max(48.0, base_fronteira)

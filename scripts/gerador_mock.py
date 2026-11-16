@@ -8,6 +8,7 @@ com mais de 220 Organizações Militares reais classificadas conforme o COEB:
 """
 
 import random
+import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -129,6 +130,8 @@ GUARNICOES: Dict[str, Tuple[float, float, float, bool, float]] = {
     "Santiago - RS": (-29.191667, -54.866944, 115.0, False, 0.6),
     "Bagé - RS": (-31.331389, -54.106944, 48.0, True, 0.7),
     "São Borja - RS": (-28.660556, -56.004444, 6.0, False, 0.5),
+    "Itaqui - RS": (-29.125278, -56.553056, 2.0, False, 0.5),
+    "Quaraí - RS": (-30.387500, -56.451389, 2.0, False, 0.5),
     "Santana do Livramento - RS": (-30.890833, -55.532778, 2.0, True, 0.6),
     "Jaguarão - RS": (-32.566111, -53.375833, 3.0, False, 0.5),
     "Dom Pedrito - RS": (-30.982778, -54.673056, 42.0, False, 0.5),
@@ -307,7 +310,7 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("10º RC Mec", "Bela Vista - MS", ClassificacaoCOEB.FEI, 54.0, True, "limpo"),
     ("11º RC Mec", "Ponta Porã - MS", ClassificacaoCOEB.FEI, 56.0, True, "limpo"),
     ("17º RC Mec", "Amambai - MS", ClassificacaoCOEB.FEI, 55.0, True, "limpo"),
-    ("5º RC Mec", "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 53.0, True, "limpo"),
+    ("5º RC Mec", "Quaraí - RS", ClassificacaoCOEB.FEI, 53.0, True, "limpo"),
     ("7º RC Mec", "Santana do Livramento - RS", ClassificacaoCOEB.FEI, 54.0, True, "limpo"),
     ("8º RC Mec", "Uruguaiana - RS", ClassificacaoCOEB.FEI, 56.0, True, "limpo"),
     ("12º RC Mec", "Jaguarão - RS", ClassificacaoCOEB.FEI, 52.0, True, "limpo"),
@@ -336,7 +339,7 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("6º RCB", "Alegrete - RS", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
     ("9º RCB", "São Gabriel - RS", ClassificacaoCOEB.FEI, 62.0, True, "limpo"),
     ("19º RC Mec", "Santa Rosa - RS", ClassificacaoCOEB.FEI, 63.0, True, "limpo"),
-    ("1º RC Mec", "Santiago - RS", ClassificacaoCOEB.FEI, 61.0, True, "limpo"),
+    ("1º RC Mec", "Itaqui - RS", ClassificacaoCOEB.FEI, 61.0, True, "limpo"),
     ("3º RC Mec", "Bagé - RS", ClassificacaoCOEB.FEI, 62.0, True, "limpo"),
     ("30º BI Mec", "Apucarana - PR", ClassificacaoCOEB.FEI, 61.0, True, "limpo"),
     ("33º BI Mec", "Cascavel - PR", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
@@ -550,6 +553,12 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("14º Pel PE", "Florianópolis - SC", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     ("38º Pel PE", "Goiânia - GO", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
     ("10º Pel PE", "Fortaleza - CE", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
+    ("Cmdo 1ª DE", "Vila Militar - RJ", ClassificacaoCOEB.FEC, 64.0, False, "limpo"),
+    ("Cmdo 2ª DE", "São Paulo - SP", ClassificacaoCOEB.FEC, 64.0, False, "limpo"),
+    ("Cmdo 3ª DE", "Santa Maria - RS", ClassificacaoCOEB.FEC, 65.0, False, "limpo"),
+    ("Cmdo 5ª DE", "Curitiba - PR", ClassificacaoCOEB.FEC, 63.0, False, "limpo"),
+    ("Cmdo 6ª DE", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 62.0, False, "limpo"),
+    ("Cmdo 7ª DE", "Recife - PE", ClassificacaoCOEB.FEC, 60.0, False, "limpo"),
     ("Cia Cmdo 5ª DE", "Curitiba - PR", ClassificacaoCOEB.FEC, 58.0, False, "limpo"),
     ("Cia Cmdo 3ª DE", "Santa Maria - RS", ClassificacaoCOEB.FEC, 60.0, False, "limpo"),
     ("Cia Cmdo 6ª DE", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 57.0, False, "limpo"),
@@ -557,7 +566,21 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("Cia Cmdo 2ª DE", "São Paulo - SP", ClassificacaoCOEB.FEC, 59.0, False, "limpo"),
     ("Cia Cmdo 7ª DE", "Recife - PE", ClassificacaoCOEB.FEC, 55.0, False, "limpo"),
     ("Esqd Cmdo 6ª Bda C Bld", "Santa Maria - RS", ClassificacaoCOEB.FEC, 65.0, False, "limpo"),
+    ("Esqd Cmdo 1ª Bda C Mec", "Santiago - RS", ClassificacaoCOEB.FEI, 61.0, True, "limpo"),
+    ("Esqd Cmdo 2ª Bda C Mec", "Uruguaiana - RS", ClassificacaoCOEB.FEI, 62.0, True, "limpo"),
+    ("Esqd Cmdo 3ª Bda C Mec", "Bagé - RS", ClassificacaoCOEB.FEI, 60.0, True, "limpo"),
     ("Esqd Cmdo 4ª Bda C Mec", "Dourados - MS", ClassificacaoCOEB.FEI, 63.0, True, "limpo"),
+    ("Cia Cmdo 13ª Bda Inf Mtz", "Cuiabá - MT", ClassificacaoCOEB.FEI, 58.0, True, "limpo"),
+    ("Cia Cmdo 3ª Bda Inf Mec", "Cristalina - GO", ClassificacaoCOEB.FEC, 62.0, False, "limpo"),
+    ("Cia Cmdo 4ª Bda Inf L Mth", "Juiz de Fora - MG", ClassificacaoCOEB.FEC, 60.0, False, "limpo"),
+    ("Cia Cmdo 7ª Bda Inf Mtz", "Natal - RN", ClassificacaoCOEB.FEC, 57.0, False, "limpo"),
+    ("Cia Cmdo 8ª Bda Inf Mtz", "Pelotas - RS", ClassificacaoCOEB.FEC, 58.0, False, "limpo"),
+    ("Cia Cmdo GUEs / 9ª Bda Inf Mtz", "Vila Militar - RJ", ClassificacaoCOEB.FEC, 62.0, False, "limpo"),
+    ("Cia Cmdo 10ª Bda Inf Mtz", "Recife - PE", ClassificacaoCOEB.FEC, 58.0, False, "limpo"),
+    ("Cia Cmdo 14ª Bda Inf Mtz", "Florianópolis - SC", ClassificacaoCOEB.FEC, 59.0, False, "limpo"),
+    ("Cmdo 1ª Bda AAAe (Def Antiaérea)", "Guarujá - SP", ClassificacaoCOEB.FEI, 84.0, True, "limpo"),
+    ("Bia Cmdo 1ª Bda AAAe", "Guarujá - SP", ClassificacaoCOEB.FEI, 76.0, True, "limpo"),
+    ("Cmdo Art Ex (Artilharia Ex)", "Formosa - GO", ClassificacaoCOEB.FEI, 85.0, True, "limpo"),
     ("Cia Cmdo 15ª Bda Inf Mec", "Cascavel - PR", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
     ("Cia Cmdo 16ª Bda Inf Sl", "Tefé - AM", ClassificacaoCOEB.FEI, 58.0, True, "limpo"),
     ("Cia Cmdo 17ª Bda Inf Sl", "Porto Velho - RO", ClassificacaoCOEB.FEI, 59.0, True, "limpo"),
@@ -666,7 +689,7 @@ def gerar_oms(reset: bool = True) -> int:
             else:  # FEC (Reserva Estratégica / Combate / Litoral vs. Guarda / Apoio Territorial)
                 local_eb = inferir_localizacao_militar(sigla, endereco)
                 sigla_up = sigla.upper()
-                is_de_c2 = "CIA CMDO" in sigla_up and "DE" in sigla_up
+                is_de_c2 = bool(re.search(r"\bCMDO\b.*\bDE\b", sigla_up))
                 is_fec_comb_ou_apoio = (
                     local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE
                     or is_de_c2
