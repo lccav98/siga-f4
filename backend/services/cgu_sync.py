@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, Tuple
 import httpx
 from sqlalchemy.orm import Session
 
+from backend.core.estrutura_eb import BRIGADAS_FEI_FRONTEIRA, inferir_localizacao_militar
 from backend.models.schemas import (
     ClassificacaoCOEB,
     DoutrinaTecnologia,
@@ -62,15 +63,39 @@ def formatar_cnpj(valor: Optional[str], fallback_uasg: str) -> str:
     return f"{digitos[:2]}.{digitos[2:5]}.{digitos[5:8]}/{digitos[8:12]}-{digitos[12:14]}"
 
 
-def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float, bool]:
+def inferir_enquadramento_coeb(nome_uasg: str, endereco: str = "") -> Tuple[ClassificacaoCOEB, float, bool]:
     """Classifica automaticamente uma OM (FEP, FEI ou FEC) conforme o COEB e EB10-P-01.031.
 
     - FEP: exclusivamente OMs das 5 Brigadas ForPron (Bda Inf Pqdt, 12ª Bda Inf Amv,
       23ª Bda Inf Sl, 11ª Bda Inf Mec e 5ª Bda C Bld).
-    - FEI: tropas na faixa de fronteira, módulos multidomínio e resposta inicial imediata.
-    - FEC: presença territorial, guarda, apoio administrativo, depósitos, arsenais e hospitais.
+    - FEI: exclusivamente Brigadas da Faixa de Fronteira, módulos multidomínio e resposta inicial imediata.
+    - FEC: Brigadas fora da faixa de fronteira, defesa territorial, guarda, apoio administrativo, depósitos, arsenais e hospitais.
     """
     nome = nome_uasg.upper()
+    nome_norm = nome
+    for extenso, sigla in (
+        ("REGIMENTO DE CAVALARIA MECANIZADO", "RC MEC"),
+        ("REGIMENTO DE CAVALARIA BLINDADO", "RCB"),
+        ("BATALHÃO DE INFANTARIA DE SELVA", "BIS"),
+        ("BATALHAO DE INFANTARIA DE SELVA", "BIS"),
+        ("BATALHÃO DE INFANTARIA DE FRONTEIRA", "BTL FRON"),
+        ("BATALHAO DE INFANTARIA DE FRONTEIRA", "BTL FRON"),
+        ("BATALHÃO DE INFANTARIA MECANIZADO", "BI MEC"),
+        ("BATALHAO DE INFANTARIA MECANIZADO", "BI MEC"),
+        ("BATALHÃO DE INFANTARIA MOTORIZADO", "BI MTZ"),
+        ("BATALHAO DE INFANTARIA MOTORIZADO", "BI MTZ"),
+        ("GRUPO DE ARTILHARIA DE CAMPANHA", "GAC"),
+        ("BATALHÃO LOGÍSTICO", "BLOG"),
+        ("BATALHAO LOGISTICO", "BLOG"),
+        ("BATALHÃO DE COMUNICAÇÕES", "BCOM"),
+        ("BATALHAO DE COMUNICACOES", "BCOM"),
+        ("COMPANHIA DE ENGENHARIA", "CIA ENG"),
+        ("BRIGADA DE CAVALARIA MECANIZADA", "BDA C MEC"),
+        ("BRIGADA DE INFANTARIA DE SELVA", "BDA INF SL"),
+        ("BRIGADA DE INFANTARIA MECANIZADA", "BDA INF MEC"),
+    ):
+        nome_norm = nome_norm.replace(extenso, sigla)
+    texto_busca = f"{nome} {nome_norm}"
 
     termos_fep = (
         # Brigada de Infantaria Paraquedista
@@ -143,14 +168,20 @@ def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float
         "5º CIA COM",
         "5 CIA COM",
     )
-    if any(t in nome for t in termos_fep):
+    if any(t in texto_busca for t in termos_fep):
         return (ClassificacaoCOEB.FEP, 78.0, True)
+
+    brigada_inf = inferir_localizacao_militar(nome_norm, endereco).get("brigada")
+    if brigada_inf in BRIGADAS_FEI_FRONTEIRA:
+        return (ClassificacaoCOEB.FEI, 62.0, True)
 
     termos_fei = (
         "SELVA",
         "FRONTEIRA",
         "PEF",
         "BIS",
+        "BTL FRON",
+        "B FRON",
         "CIBER",
         "GUERRA ELETRÔNICA",
         "GUERRA ELETRONICA",
@@ -166,16 +197,9 @@ def inferir_enquadramento_coeb(nome_uasg: str) -> Tuple[ClassificacaoCOEB, float
         "MÍSSEIS",
         "MISSEIS",
         "FOGUETES",
-        "BLINDAD",
-        "MECANIZAD",
-        "ARTILHARIA",
-        "CAVALARIA",
-        "ENGENHARIA",
-        "COMUNICAÇÕES",
-        "COMUNICACOES",
     )
-    if any(t in nome for t in termos_fei):
-        c4isr = 86.0 if any(t in nome for t in ("CIBER", "INTELIG", "GUERRA ELETR", "AVIA")) else 58.0
+    if any(t in texto_busca for t in termos_fei):
+        c4isr = 86.0 if any(t in texto_busca for t in ("CIBER", "INTELIG", "GUERRA ELETR", "AVIA")) else 58.0
         return (ClassificacaoCOEB.FEI, c4isr, True)
 
     return (ClassificacaoCOEB.FEC, 26.0, False)
@@ -366,13 +390,15 @@ class TransparenciaSyncService:
 
         # Criação de nova OM a partir dos dados capturados na API oficial
         assert dados_oficiais is not None
-        coeb_inf, c4isr_inf, a2ad_inf = inferir_enquadramento_coeb(dados_oficiais["nome_uasg"])
+        municipio = dados_oficiais["municipio"]
+        uf = dados_oficiais["uf"]
+        coeb_inf, c4isr_inf, a2ad_inf = inferir_enquadramento_coeb(
+            dados_oficiais["nome_uasg"],
+            f"{municipio} - {uf}",
+        )
         coeb = coeb_override or coeb_inf
         c4isr = c4isr_override if c4isr_override is not None else c4isr_inf
         papel_a2ad = papel_a2ad_override if papel_a2ad_override is not None else a2ad_inf
-
-        municipio = dados_oficiais["municipio"]
-        uf = dados_oficiais["uf"]
         coords = GeoLocatorService().geocodificar_endereco(f"{municipio}, {uf}")
         if not coords:
             coords = CAPITAIS_UF.get(uf, (-15.7939, -47.8828))

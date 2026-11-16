@@ -37,6 +37,22 @@ _UF_PARA_RM_CMA: Dict[str, Tuple[str, str]] = {
 # Municípios do Triângulo Mineiro subordinados operacionalmente à 11ª RM / CMP
 _CIDADES_CMP_MG = ("UBERLÂNDIA", "UBERABA", "ARAGUARI")
 
+# Brigadas classificadas como FEI (Forças de Emprego Imediato) na Faixa de Fronteira
+BRIGADAS_FEI_FRONTEIRA = frozenset({
+    "1ª Bda Inf Sl",
+    "2ª Bda Inf Sl",
+    "16ª Bda Inf Sl",
+    "17ª Bda Inf Sl",
+    "22ª Bda Inf Sl",
+    "13ª Bda Inf Mtz",
+    "18ª Bda Inf Pan",
+    "4ª Bda C Mec",
+    "15ª Bda Inf Mec",
+    "1ª Bda C Mec",
+    "2ª Bda C Mec",
+    "3ª Bda C Mec",
+})
+
 # Regras ordenadas para identificar Brigada / Grande Comando pela sigla da OM.
 # O uso de `(?<!\d)` evita colisões como "3º RCC" dentro de "13º RCC".
 _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
@@ -60,18 +76,18 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
     (("17ª BDA INF SL", "4º BIS", "6º BIS", "54º BIS", "61º BIS", "17ª CIA COM SL", "PEF EPITACIOLÂNDIA"), "17ª Bda Inf Sl"),
     (("22ª BDA INF SL", "2º BIS", "24º BIS", "34º BIS", "CIA ESP FRON OIAPOQUE"), "22ª Bda Inf Sl"),
     (("1º BIS", "1º CIA COM SL"), "CMA / Tropas Diretas (Selva)"),
-    (("18ª BDA INF PAN", "2º BTL FRON", "17º BTL FRON", "47º BI"), "18ª Bda Inf Pan"),
-    (("13ª BDA INF MTZ", "44º BI MTZ", "58º BI MTZ", "18º GAC"), "13ª Bda Inf Mtz"),
+    (("18ª BDA INF PAN", "17º BTL FRON", "47º BI"), "18ª Bda Inf Pan"),
+    (("13ª BDA INF MTZ", "2º BTL FRON", "44º BI MTZ", "58º BI MTZ", "18º GAC"), "13ª Bda Inf Mtz"),
 
     # --- BRIGADAS MECANIZADAS, BLINDADAS E INFANTARIA ---
     (("6ª BDA C BLD", "6ª BDA INF BLD", "1º RCC", "4º RCC", "7º BIB", "29º BIB", "3º GAC AP", "4º BLOG"), "6ª Bda Inf Bld"),
-    (("1ª BDA C MEC", "1º RCB", "4º RCB", "1º RC MEC", "2º RC MEC", "19º GAC", "1º BCOM", "1º BLOG", "1ª CIA ENG"), "1ª Bda C Mec"),
+    (("1ª BDA C MEC", "1º RCB", "4º RCB", "1º RC MEC", "2º RC MEC", "19º RC MEC", "19º GAC", "1º BCOM", "1º BLOG", "1ª CIA ENG"), "1ª Bda C Mec"),
     (("2ª BDA C MEC", "6º RCB", "5º RC MEC", "8º RC MEC", "22º GAC AP", "2ª CIA ENG", "10º BLOG"), "2ª Bda C Mec"),
     (("3ª BDA C MEC", "9º RCB", "3º RC MEC", "7º RC MEC", "12º RC MEC", "25º GAC", "3º BLOG", "3ª CIA ENG"), "3ª Bda C Mec"),
     (("8ª BDA INF MTZ", "9º BI MTZ", "18º BI MTZ", "19º BI MTZ", "6º GAC", "13º GAC"), "8ª Bda Inf Mtz"),
-    (("14ª BDA INF MTZ", "23º BI", "62º BI", "63º BI", "14º RC MEC", "28º GAC", "27º GAC", "14º PEL PE", "14ª CIA ENG"), "14ª Bda Inf Mtz"),
+    (("14ª BDA INF MTZ", "23º BI", "62º BI", "63º BI", "14º RC MEC", "28º GAC", "14º PEL PE", "14ª CIA ENG"), "14ª Bda Inf Mtz"),
     (("15ª BDA INF MEC", "30º BI MEC", "33º BI MEC", "34º BI MEC", "15ª CIA INF MTZ", "26º GAC", "15º BLOG", "15º CIA COM"), "15ª Bda Inf Mec"),
-    (("4ª BDA C MEC", "10º RC MEC", "11º RC MEC", "17º RC MEC", "20º RCB", "9º GAC", "28º BLOG", "4ª CIA ENG", "9º BCOM GE", "18º BTL TRNS"), "4ª Bda C Mec"),
+    (("4ª BDA C MEC", "10º RC MEC", "11º RC MEC", "17º RC MEC", "20º RCB", "9º GAC", "28º BLOG", "4ª CIA ENG", "9º BCOM GE"), "4ª Bda C Mec"),
     (("3ª BDA INF MEC", "36º BI MEC", "41º BI MTZ", "22º BI", "32º GAC", "16º BLOG", "6º BCOM", "6º CIA COM"), "3ª Bda Inf Mec"),
     (("4ª BDA INF L MTH", "10º BI L MTH", "11º BI MTH", "32º BI L MTH", "4º GAC L MTH", "17º BLOG L MTH"), "4ª Bda Inf L Mth"),
     (("1º BI MTZ (ES)", "2º BI MTZ (ES)", "57º BI MTZ (ES)", "31º GAC (ES)"), "GUEs / 9ª Bda Inf Mtz"),
