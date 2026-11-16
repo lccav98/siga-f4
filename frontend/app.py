@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -570,14 +571,91 @@ st.divider()
 # ------------------------------------------------------------------
 # 4. Diagnóstico Individual (Auditoria CGU & Prescrição Doutrinária)
 # ------------------------------------------------------------------
+def _normalizar_busca(texto: Any) -> str:
+    """Normaliza texto para filtro rápido sem distinção de maiúsculas ou acentos."""
+    s = unicodedata.normalize("NFKD", str(texto or ""))
+    return "".join(ch for ch in s if not unicodedata.combining(ch)).lower().strip()
+
+
 st.subheader("🔍 Diagnóstico Individual e Prescrição Doutrinária")
-df_opcoes_diag = df_filtrado if not df_filtrado.empty else df_all
+df_opcoes_diag = (df_filtrado if not df_filtrado.empty else df_all).copy()
+
+f_col1, f_col2, f_col3, f_col4 = st.columns([2.0, 1.0, 1.2, 1.0])
+with f_col1:
+    diag_busca = st.text_input(
+        "Filtrar OM (Sigla, UASG, Brigada, UF ou Sistema)",
+        placeholder="Ex: 16º Esqd, CIGS, CMB, TG 02, HCE, PR, DECEx...",
+        key="diag_filtro_texto",
+    )
+with f_col2:
+    diag_coeb_local = st.selectbox(
+        "Grupo COEB / Sistema",
+        options=["Todos", "FEP", "FEI", "FEC", "SAUDE", "ENSINO"],
+        key="diag_filtro_coeb",
+    )
+with f_col3:
+    diag_jev_local = st.selectbox(
+        "Diagnóstico JEV",
+        options=[
+            "Todos",
+            "Ponta de Lança",
+            "Zona de Fusão",
+            "Sustentação Sanitária",
+            "Capacidade Institucional",
+            "OM Zumbi",
+        ],
+        key="diag_filtro_jev",
+    )
+with f_col4:
+    diag_ordem = st.selectbox(
+        "Ordenar por",
+        options=["Maior IVE", "Sigla (A–Z)", "Maior Valor SPU", "Mais Alertas"],
+        key="diag_ordem",
+    )
+
+if diag_coeb_local != "Todos":
+    df_opcoes_diag = df_opcoes_diag[df_opcoes_diag["classificacao_coeb"] == diag_coeb_local]
+if diag_jev_local != "Todos":
+    df_opcoes_diag = df_opcoes_diag[df_opcoes_diag["classificacao_ive"] == diag_jev_local]
+if diag_busca.strip():
+    termo_norm = _normalizar_busca(diag_busca)
+    campos_busca = (
+        df_opcoes_diag["sigla"].astype(str)
+        + " " + df_opcoes_diag["codigo_uasg"].astype(str)
+        + " " + df_opcoes_diag["cnpj_ug"].astype(str)
+        + " " + df_opcoes_diag["brigada"].astype(str)
+        + " " + df_opcoes_diag["uf"].astype(str)
+        + " " + df_opcoes_diag["comando_militar_area"].astype(str)
+        + " " + df_opcoes_diag["regiao_militar"].astype(str)
+        + " " + df_opcoes_diag["enquadramento_transformacao"].astype(str)
+    ).map(_normalizar_busca)
+    df_opcoes_diag = df_opcoes_diag[campos_busca.str.contains(termo_norm, regex=False, na=False)]
+
+if diag_ordem == "Sigla (A–Z)":
+    df_opcoes_diag = df_opcoes_diag.sort_values("sigla", ascending=True)
+elif diag_ordem == "Maior Valor SPU":
+    df_opcoes_diag = df_opcoes_diag.sort_values("valor_imovel_brl", ascending=False)
+elif diag_ordem == "Mais Alertas":
+    df_opcoes_diag = df_opcoes_diag.sort_values(["total_alertas", "nota_ive"], ascending=[False, True])
+else:
+    df_opcoes_diag = df_opcoes_diag.sort_values("nota_ive", ascending=False)
+
 opcoes_om = {
     f"{r['sigla']} [{r['comando_militar_area']}/{r['uf']} • {r['brigada']}] ({r['classificacao_coeb']} — IVE {r['nota_ive']:.1f})": r["id_om"]
     for _, r in df_opcoes_diag.iterrows()
 }
-label_om_sel = st.selectbox("Selecione uma OM para inspeção detalhada:", list(opcoes_om.keys()))
-diag = carregar_diagnostico_om(opcoes_om[label_om_sel])
+
+if not opcoes_om:
+    st.warning("Nenhuma OM encontrada com os filtros informados nesta seção.")
+    diag = None
+else:
+    st.caption(f"Exibindo **{len(opcoes_om)}** OM(s) correspondente(s) para seleção rápida:")
+    label_om_sel = st.selectbox(
+        "Selecione uma OM para inspeção detalhada:",
+        list(opcoes_om.keys()),
+        key="diag_select_om",
+    )
+    diag = carregar_diagnostico_om(opcoes_om[label_om_sel])
 
 if diag:
     dados_op = diag.get("dados_operacionais", {})
