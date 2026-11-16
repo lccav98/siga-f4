@@ -943,9 +943,9 @@ elif st.button("🚀 Simular Transformação Doutrinária", type="primary"):
         f"R$ {imp['economia_acumulada_5_anos_brl'] / 1e6:,.1f} Mi",
     )
 
-    st.success(imp["resumo_executivo"])
+    st.success(imp["resumo_executivo"].replace("$", "\\$"))
     if d.get("categoria_forca_blindada"):
-        dt1, dt2, dt3 = st.columns(3)
+        dt1, dt2, dt3 = st.columns([1.4, 1.0, 1.0])
         dt1.metric("Enquadramento Frota", d["categoria_forca_blindada"].split("(")[0].strip())
         dt2.metric("Cobertura CAPEX Frota/C4ISR", f"{d.get('cobertura_capex_blindado_pct', 0):.1f}%")
         dt3.metric("Abatimento Obsolescência/ano", f"R$ {d.get('economia_obsolescencia_anual_brl', 0) / 1e6:,.2f} Mi")
