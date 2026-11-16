@@ -402,7 +402,10 @@ class TransparenciaSyncService:
         coeb = coeb_override or coeb_inf
         c4isr = c4isr_override if c4isr_override is not None else c4isr_inf
         papel_a2ad = papel_a2ad_override if papel_a2ad_override is not None else a2ad_inf
-        coords = GeoLocatorService().geocodificar_endereco(f"{municipio}, {uf}")
+        geoloc = GeoLocatorService()
+        coords = geoloc.geocodificar_endereco(f"{dados_oficiais['nome_uasg']}, {municipio}, {uf}")
+        if not coords:
+            coords = geoloc.geocodificar_endereco(f"{municipio}, {uf}")
         if not coords:
             coords = CAPITAIS_UF.get(uf, (-15.7939, -47.8828))
 

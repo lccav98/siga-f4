@@ -633,6 +633,125 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
 ]
 
 
+# Setores / Complexos Militares reais por guarnição:
+# (tupla_palavras_chave_sigla, nome_setor, lat_exata, lon_exata, valor_m2_terreno_brl)
+_SETORES_MILITARES: Dict[str, List[Tuple[Tuple[str, ...], str, float, float, float]]] = {
+    "Rio de Janeiro - RJ": [
+        (("CAEX", "CTEX"), "Guaratiba / Marambaia", -23.043200, -43.574800, 680.0),
+        (("HCE",), "Benfica / Triagem", -22.893940, -43.243500, 4_850.0),
+        (("1º BG", "2º BG", "2º RCG", "OCEX", "IBEX", "LQFEX"), "São Cristóvão / Benfica", -22.905600, -43.222500, 4_900.0),
+        (("BAPLOGEX", "AGR ", "1º DSUP", "1º BTL TRNS", "PQRMNT/1"), "Caju / Benfica / Deodoro", -22.882500, -43.223800, 3_600.0),
+        (("PMPV", "9ª BIA AAAE", "CMDO 5º GPT E", "1º BE CMB"), "Praia Vermelha / Urca", -22.954700, -43.164900, 11_500.0),
+        (("1º GAAA",), "Duque de Caxias / Zona Norte", -22.785200, -43.305400, 2_250.0),
+        (("PMRJ", "1º BPE", "CML", "1ª RM", "2º BCOM", "1º CIA INTLG", "3º CTA", "CRO/1"), "Centro / Tijuca (Palácio Duque de Caxias)", -22.903600, -43.189700, 8_200.0),
+    ],
+    "Vila Militar - RJ": [
+        (("HGERJ",), "Vila Militar / Deodoro (Saúde)", -22.860200, -43.401800, 2_450.0),
+        (("PQDT", "DOMPSA", "ESQD C PQDT", "1ª DE", "GUES", "9ª BDA", "BI MTZ (ES)", "31º GAC", "1º BGE", "BTL INF"), "Vila Militar / Deodoro", -22.861700, -43.403200, 2_400.0),
+    ],
+    "Brasília - DF": [
+        (("11º GAAA",), "Planaltina / DF", -15.652500, -47.785500, 1_850.0),
+        (("CMDO", "COMDCIBER", "CIGE", "CDS", "CITEX", "7º CTA", "BGP", "1º RCG", "11º BPE", "11º DSUP", "HMAB", "32º GAC", "16º BLOG", "1º BGE", "INTLG"), "Setor Militar Urbano (SMU)", -15.770700, -47.922700, 5_400.0),
+    ],
+    "São Paulo - SP": [
+        (("HMASP",), "Vila Mariana / Saúde", -23.591400, -46.643800, 10_400.0),
+        (("2º BI", "2º BTL TRNS"), "Santana / Zona Norte", -23.496800, -46.625400, 6_200.0),
+        (("4º BI", "2º DSUP", "PQRMNT/2"), "Cambuci / Mooca", -23.562500, -46.618900, 7_400.0),
+        (("CMSE", "2ª RM", "2ª DE", "2º CTA", "2º CIA INTLG"), "Ibirapuera (QGEx SP)", -23.578300, -46.657600, 12_800.0),
+    ],
+    "Curitiba - PR": [
+        (("HGEC", "CRO/5"), "Batel / Centro", -25.437500, -49.286900, 7_400.0),
+        (("20º BIB", "5º BLOG", "5º BPE"), "Bacacheri / Boa Vista", -25.398200, -49.235600, 3_950.0),
+        (("5ª DE", "5ª RM", "5º BCOM", "5º DSUP", "5º GAC AP", "PQRMNT/5"), "Pinheirinho (Forte Pinheirinho)", -25.525700, -49.293100, 2_650.0),
+    ],
+    "Porto Alegre - RS": [
+        (("HMAPA", "PMPA", "3º BINT"), "Bom Fim / Santo Antônio", -30.036100, -51.209700, 6_400.0),
+        (("3º RCG", "3º BCOM", "3º BPE", "AGRS", "3º BTL TRNS", "1º CTA", "6ª DE"), "Partenon / Zona Norte", -30.062800, -51.174200, 3_200.0),
+        (("CMS", "3ª RM", "CRO/3", "4º GPT E", "3º DSUP"), "Centro Histórico (Rua dos Andradas)", -30.032200, -51.231400, 5_800.0),
+    ],
+    "Manaus - AM": [
+        (("HMAM", "1º BINT", "12ª RM", "CRO/12", "7º BPE", "12º BTL SUP", "1º BTL MNT", "PQRMNT/12"), "Cachoeirinha / Centro", -3.132500, -60.002800, 3_400.0),
+        (("CMA", "1º BIS", "1º CIA COM SL", "4º BCOM", "4º CTA", "2º GPT E", "12º GAAA", "4º BAVEX"), "São Jorge / Ponta Negra (CIGS)", -3.100631, -60.043772, 2_250.0),
+    ],
+    "Recife - PE": [
+        (("HMAR", "21º BI"), "Santo Amaro / Centro", -8.046100, -34.885600, 5_200.0),
+        (("CMNE", "7ª DE", "7ª RM", "10ª BDA", "7º BCOM", "4º BPE", "7º DSUP", "PQRMNT/7", "5º CTA", "CRO/7"), "Curado (Complexo Militar CMNE)", -8.067800, -34.942800, 1_950.0),
+    ],
+    "Florianópolis - SC": [
+        (("63º BI",), "Estreito (Continente)", -27.588600, -48.579200, 4_600.0),
+        (("14ª BDA", "HGUF", "14º PEL PE"), "Centro / Bocaiúva", -27.587500, -48.550800, 8_900.0),
+    ],
+    "Salvador - BA": [
+        (("HGES",), "Pituba / Amaralina", -13.001200, -38.455600, 6_800.0),
+        (("19º BC", "6º DSUP"), "Cabula / Paralela", -12.951200, -38.458200, 3_100.0),
+        (("6ª RM", "6º BPE"), "Mouraria / Nazaré", -12.978500, -38.510500, 4_900.0),
+    ],
+    "Belém - PA": [
+        (("HGEBE", "2º BIS", "8º DSUP", "PQRMNT/8"), "Marco / Souza", -1.434200, -48.458600, 3_800.0),
+        (("CMN", "8ª RM"), "Cidade Velha / Reduto", -1.454500, -48.501500, 4_300.0),
+    ],
+}
+
+
+def _resolver_setor_e_terreno(
+    sigla: str,
+    guarnicao: str,
+    base_lat: float,
+    base_lon: float,
+    mult_spu: float,
+    coeb: ClassificacaoCOEB,
+) -> Tuple[float, float, str, float]:
+    """Resolve coordenada real do aquartelamento, endereço setorial e valor do m² SPU local."""
+    sigla_up = sigla.upper()
+    for chaves, setor_nome, lat_s, lon_s, valor_m2 in _SETORES_MILITARES.get(guarnicao, []):
+        if any(c in sigla_up for c in chaves):
+            return (lat_s, lon_s, f"{setor_nome}, {guarnicao}", valor_m2)
+
+    valor_m2_base = round(1_450.0 * mult_spu, 2)
+    return (base_lat, base_lon, f"Guarnição Militar, {guarnicao}", valor_m2_base)
+
+
+def _calcular_valor_spu_terreno(sigla: str, valor_m2_brl: float, coeb: ClassificacaoCOEB) -> float:
+    """Calcula valor patrimonial SPU coerente com área típica da OM e o m² exato de sua localização."""
+    s = sigla.upper()
+    if "CAEX" in s or "CTEX" in s:
+        area_m2 = random.uniform(310_000, 420_000)
+        fator_benfeitoria = 1.20
+    elif eh_om_saude(sigla):
+        if "HCE" in s or "HMA" in s:
+            area_m2 = random.uniform(22_000, 36_000)
+        elif "HGE" in s:
+            area_m2 = random.uniform(14_000, 22_000)
+        elif "HGU" in s:
+            area_m2 = random.uniform(8_500, 14_500)
+        else:
+            area_m2 = random.uniform(4_200, 8_200)
+        fator_benfeitoria = 1.40
+    elif eh_om_ensino(sigla):
+        area_m2 = random.uniform(95_000, 165_000)
+        fator_benfeitoria = 1.30
+    elif any(k in s for k in ("DSUP", "BAPLOGEX", "PQRMNT", "ARSENAL", "AGR", "AGSP", "AGRS")):
+        area_m2 = random.uniform(34_000, 62_000)
+        fator_benfeitoria = 1.15
+    elif any(k in s for k in ("RCC", "RCB", "RC MEC", "BIB", "GAC", "B FRON", "BTL FRON", "BG", "RCG", "BIS", "BI ", "BIL", "BE CMB", "BEC", "B FV", "BAVEX")):
+        area_m2 = random.uniform(42_000, 78_000)
+        fator_benfeitoria = 1.18
+    elif any(k in s for k in ("BLOG", "BCOM", "BPE", "BTL", "GAAA")):
+        area_m2 = random.uniform(24_000, 44_000)
+        fator_benfeitoria = 1.20
+    elif "PEF" in s:
+        area_m2 = random.uniform(15_000, 26_000)
+        fator_benfeitoria = 1.15
+    else:
+        area_m2 = random.uniform(6_500, 16_000)
+        fator_benfeitoria = 1.25
+
+    if coeb == ClassificacaoCOEB.FEI and area_m2 > 52_000 and not ("BIB" in s or "RCB" in s or "RCC" in s):
+        area_m2 *= 0.85
+
+    return round(area_m2 * valor_m2_brl * fator_benfeitoria, 2)
+
+
 def gerar_oms(reset: bool = True) -> int:
     """Popula o banco de dados com todo o catálogo de OMs do Exército Brasileiro."""
     if reset:
@@ -652,28 +771,36 @@ def gerar_oms(reset: bool = True) -> int:
             db.query(OM).delete()
             db.commit()
 
-        contador_cidade: Dict[str, int] = {}
+        contador_setor: Dict[str, int] = {}
 
         for idx, (sigla, guarnicao, coeb, c4isr, a2ad, perfil_anomalia) in enumerate(CATALOGO_OMS, start=1):
             base_lat, base_lon, dist_fronteira, area_urbana, mult_spu = GUARNICOES[guarnicao]
-            ocorrencia = contador_cidade.get(guarnicao, 0)
-            contador_cidade[guarnicao] = ocorrencia + 1
+            lat_setor, lon_setor, setor_end, valor_m2_brl = _resolver_setor_e_terreno(
+                sigla, guarnicao, base_lat, base_lon, mult_spu, coeb
+            )
+            endereco = f"{fake.street_address()}, {setor_end}"
+            ocorrencia = contador_setor.get(setor_end, 0)
+            contador_setor[setor_end] = ocorrencia + 1
 
-            # Pequeno deslocamento em espiral para OMs na mesma guarnição não se sobreporem no mapa
-            angulo = ocorrencia * 0.9
-            raio = 0.008 * (ocorrencia % 6)
-            lat = round(base_lat + (raio * (1 if ocorrencia % 2 == 0 else -1) * (0.5 + (angulo % 1))), 6)
-            lon = round(base_lon + (raio * (-1 if ocorrencia % 3 == 0 else 1) * (0.4 + (angulo % 1))), 6)
+            # Micro-deslocamento estritamente dentro do perímetro do complexo/quartel (~40m a 140m)
+            # Evita sobreposição de pinos sem jogar OMs em bairros errados, baías ou rios.
+            if ocorrencia == 0:
+                lat, lon = round(lat_setor, 6), round(lon_setor, 6)
+            else:
+                angulo = ocorrencia * 1.1
+                raio = 0.00035 * ((ocorrencia % 4) + 1)
+                lat = round(lat_setor + (raio * (1 if ocorrencia % 2 == 0 else -1) * (0.5 + (angulo % 0.5))), 6)
+                lon = round(lon_setor + (raio * (-1 if ocorrencia % 3 == 0 else 1) * (0.4 + (angulo % 0.5))), 6)
 
-            # Perfil de efetivo, custeio, prontidão e valor imobiliário coerente com COEB
+            valor_spu = _calcular_valor_spu_terreno(sigla, valor_m2_brl, coeb)
+
+            # Perfil de efetivo, custeio, prontidão e valor imobiliário coerente com localização e COEB
             if sigla.startswith("1º BInt"):
                 ef_decl, ef_fim = 185, 165
-                valor_spu = 42_000_000.0
                 custeio_decl = 18_500_000.0
                 acionamentos, disponibilidade = 48, 96.5
             elif sigla.startswith("2º BG"):
                 ef_decl, ef_fim = 780, 320
-                valor_spu = 485_000_000.0
                 custeio_decl = 34_000_000.0
                 acionamentos, disponibilidade = 1, 58.0
             elif coeb == ClassificacaoCOEB.FEP:
@@ -681,7 +808,6 @@ def gerar_oms(reset: bool = True) -> int:
                 is_tech_niche = any(k in sigla for k in ("BInt", "ComDCiber", "BGE", "CIGE", "CDS", "CITEx", "CTA", "CTEx", "Cia Intlg"))
                 ef_decl = random.randint(180, 320) if is_tech_niche else random.randint(520, 780)
                 ef_fim = int(ef_decl * random.uniform(0.82, 0.92))
-                valor_spu = round(random.uniform(42_000_000, 125_000_000) * mult_spu, 2)
                 custeio_decl = round(ef_decl * random.uniform(55_000, 98_000), 2)
                 acionamentos = random.randint(24, 58)
                 disponibilidade = 76.0 if perfil_anomalia == "prontidao" else round(random.uniform(88.0, 98.5), 1)
@@ -691,7 +817,6 @@ def gerar_oms(reset: bool = True) -> int:
                 is_tech_niche = any(k in sigla for k in ("BInt", "ComDCiber", "BGE", "CIGE", "CDS", "CITEx", "CTA", "CTEx", "Cia Intlg"))
                 ef_decl = random.randint(95, 220) if is_pef else (random.randint(180, 320) if is_tech_niche else random.randint(360, 560))
                 ef_fim = int(ef_decl * (random.uniform(0.82, 0.90) if is_tech_niche else random.uniform(0.64, 0.77)))
-                valor_spu = round(random.uniform(12_000_000, 52_000_000) * mult_spu, 2)
                 custeio_decl = round(ef_decl * random.uniform(44_000, 70_000), 2)
                 acionamentos = random.randint(24, 48) if is_tech_niche else random.randint(14, 32)
                 disponibilidade = (
@@ -703,7 +828,6 @@ def gerar_oms(reset: bool = True) -> int:
                 # OMS: vocação assistencial (FUSEx) + núcleo de Sustentação Sanitária (não combatente FEP)
                 ef_decl = random.randint(420, 920)
                 ef_fim = int(ef_decl * random.uniform(0.72, 0.84))
-                valor_spu = round(random.uniform(95_000_000, 240_000_000) * mult_spu, 2)
                 custeio_decl = round(ef_decl * random.uniform(52_000, 82_000), 2)
                 acionamentos = random.randint(2, 6)
                 disponibilidade = round(random.uniform(80.0, 93.0), 1)
@@ -711,7 +835,6 @@ def gerar_oms(reset: bool = True) -> int:
                 # Capacidade Institucional (Ensino / Formação — COEB 5.6.1.4)
                 ef_decl = random.randint(540, 1100)
                 ef_fim = int(ef_decl * random.uniform(0.65, 0.78))
-                valor_spu = round(random.uniform(110_000_000, 260_000_000) * mult_spu, 2)
                 custeio_decl = round(ef_decl * random.uniform(48_000, 74_000), 2)
                 acionamentos = random.randint(2, 5)
                 disponibilidade = round(random.uniform(82.0, 92.0), 1)
@@ -733,7 +856,6 @@ def gerar_oms(reset: bool = True) -> int:
                     ef_fim = int(ef_decl * random.uniform(0.32, 0.48))
                     acionamentos = random.randint(0, 4)
                     disponibilidade = round(random.uniform(50.0, 76.0), 1)
-                valor_spu = round(random.uniform(85_000_000, 210_000_000) * mult_spu, 2)
                 custeio_decl = round(ef_decl * random.uniform(42_000, 68_000), 2)
 
             # Aplica divergências CGU/SIGPES conforme perfil de auditoria
@@ -753,7 +875,6 @@ def gerar_oms(reset: bool = True) -> int:
             rip = f"RIP-{7000 + idx:04d}-SPU"
             cnpj = fake.cnpj()
             cep = fake.postcode()
-            endereco = f"{fake.street_address()}, {guarnicao}"
 
             om = OM(
                 codigo_uasg=uasg,
