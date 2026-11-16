@@ -85,7 +85,7 @@ _REGRAS_BRIGADA: List[Tuple[Tuple[str, ...], str]] = [
     (("2ª BDA C MEC", "6º RCB", "5º RC MEC", "8º RC MEC", "22º GAC AP", "2ª CIA ENG", "10º BLOG"), "2ª Bda C Mec"),
     (("3ª BDA C MEC", "9º RCB", "3º RC MEC", "7º RC MEC", "12º RC MEC", "25º GAC", "3º BLOG", "3ª CIA ENG"), "3ª Bda C Mec"),
     (("8ª BDA INF MTZ", "9º BI MTZ", "18º BI MTZ", "19º BI MTZ", "6º GAC", "13º GAC"), "8ª Bda Inf Mtz"),
-    (("14ª BDA INF MTZ", "23º BI", "62º BI", "63º BI", "14º RC MEC", "28º GAC", "14º PEL PE", "14ª CIA ENG"), "14ª Bda Inf Mtz"),
+    (("14ª BDA INF MTZ", "23º BI", "62º BI", "63º BI", "14º RC MEC", "16º ESQD C MEC", "28º GAC", "14º PEL PE", "14ª CIA ENG"), "14ª Bda Inf Mtz"),
     (("15ª BDA INF MEC", "30º BI MEC", "33º BI MEC", "34º BI MEC", "15ª CIA INF MTZ", "26º GAC", "15º BLOG", "15º CIA COM"), "15ª Bda Inf Mec"),
     (("4ª BDA C MEC", "10º RC MEC", "11º RC MEC", "17º RC MEC", "20º RCB", "9º GAC", "28º BLOG", "4ª CIA ENG", "9º BCOM GE"), "4ª Bda C Mec"),
     (("3ª BDA INF MEC", "36º BI MEC", "41º BI MTZ", "22º BI", "32º GAC", "16º BLOG", "6º BCOM", "6º CIA COM"), "3ª Bda Inf Mec"),

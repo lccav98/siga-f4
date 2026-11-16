@@ -313,6 +313,7 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("12º RC Mec", "Jaguarão - RS", ClassificacaoCOEB.FEI, 52.0, True, "limpo"),
     ("2º RC Mec", "São Borja - RS", ClassificacaoCOEB.FEI, 53.0, True, "limpo"),
     ("14º RC Mec", "São Miguel do Oeste - SC", ClassificacaoCOEB.FEC, 54.0, False, "limpo"),
+    ("16º Esqd C Mec", "Francisco Beltrão - PR", ClassificacaoCOEB.FEC, 54.0, False, "limpo"),
     ("15ª Cia Inf Mtz", "Guaíra - PR", ClassificacaoCOEB.FEI, 55.0, True, "limpo"),
     ("34º BIS (Cia Fron Amapá)", "Macapá - AP", ClassificacaoCOEB.FEI, 52.0, True, "limpo"),
     ("Cia Esp Fron Oiapoque", "Oiapoque - AP", ClassificacaoCOEB.FEI, 51.0, True, "limpo"),
