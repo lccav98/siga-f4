@@ -8,8 +8,10 @@ from sqlalchemy.orm import Session, joinedload
 
 from backend.core.estrutura_eb import (
     BRIGADAS_FEC_COMBATE_DE,
+    eh_base_apoio,
     eh_om_ensino,
     eh_om_saude,
+    eh_tiro_guerra,
     inferir_localizacao_militar,
 )
 from backend.models.schemas import ClassificacaoCOEB, OM, TransparenciaDados
@@ -271,6 +273,9 @@ class MotorIVE:
             if is_de_c2 or local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE:
                 # COEB 1.3.2.7 / 5.3.2 / 5.3.4.4 c: defesa da costa/litoral, C2 Divisionário e reserva mobilizável
                 base_fronteira = max(48.0, base_fronteira)
+            elif eh_tiro_guerra(om.sigla) or eh_base_apoio(om.sigla):
+                # Capilaridade territorial (SMI / Reserva 2ª Cat.) e sustentação regional de guarnições/RMs
+                base_fronteira = max(48.0, base_fronteira)
             nota_geo = min(100.0, base_fronteira + bonus_a2ad)
 
         return {
@@ -342,6 +347,12 @@ class MotorIVE:
                 return "Capacidade Institucional (DECEx / Adestramento FTC)"
             return "Capacidade Institucional (DECEx / Ensino & Cultura)"
         sigla_up = sigla.upper()
+        if eh_tiro_guerra(sigla):
+            return "Força de Emprego Continuado (FEC — OFR / Tiro de Guerra)"
+        if "BAPLOGEX" in sigla_up:
+            return "Módulo de Apoio Ampliado (FTC)"
+        if eh_base_apoio(sigla):
+            return "Força de Emprego Continuado (FEC — Base de Apoio / Adm)"
         if any(t in sigla_up for t in TERMOS_MODULO_MULTIDOMINIO) or (
             coeb == ClassificacaoCOEB.FEP and c4isr >= 78.0 and papel_a2ad
         ):

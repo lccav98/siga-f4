@@ -10,8 +10,10 @@ from sqlalchemy.orm import Session
 
 from backend.core.estrutura_eb import (
     BRIGADAS_FEI_FRONTEIRA,
+    eh_base_apoio,
     eh_om_ensino,
     eh_om_saude,
+    eh_tiro_guerra,
     inferir_localizacao_militar,
 )
 from backend.models.schemas import (
@@ -112,6 +114,12 @@ def inferir_enquadramento_coeb(nome_uasg: str, endereco: str = "") -> Tuple[Clas
 
     if eh_om_ensino(nome_norm):
         return (ClassificacaoCOEB.ENSINO, 65.0, False)
+
+    if eh_tiro_guerra(nome_norm):
+        return (ClassificacaoCOEB.FEC, 38.0, False)
+
+    if eh_base_apoio(nome_norm):
+        return (ClassificacaoCOEB.FEC, 52.0, False)
 
     termos_fep = (
         # Brigada de Infantaria Paraquedista

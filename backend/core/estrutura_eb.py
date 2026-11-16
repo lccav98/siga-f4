@@ -35,7 +35,7 @@ _UF_PARA_RM_CMA: Dict[str, Tuple[str, str]] = {
 }
 
 # Municípios do Triângulo Mineiro subordinados operacionalmente à 11ª RM / CMP
-_CIDADES_CMP_MG = ("UBERLÂNDIA", "UBERABA", "ARAGUARI")
+_CIDADES_CMP_MG = ("UBERLÂNDIA", "UBERABA", "ARAGUARI", "FRUTAL")
 
 # Brigadas classificadas como FEI (Forças de Emprego Imediato) na Faixa de Fronteira
 BRIGADAS_FEI_FRONTEIRA = frozenset({
@@ -128,6 +128,18 @@ _PADRAO_OM_ENSINO = re.compile(
     re.IGNORECASE,
 )
 
+
+_PADRAO_TIRO_GUERRA = re.compile(
+    r"\b(?:TG\s+\d{2}-\d{3}|TIRO\s+DE\s+GUERRA)\b",
+    re.IGNORECASE,
+)
+
+
+_PADRAO_BASE_APOIO = re.compile(
+    r"\b(?:B\s*ADM(?:\s+(?:AP|GU|CMPL|QGEX|BDA))?|B\s*AP\s*R|BAPLOGEX|BA\s*AP(?:\s+LOG)?|BASE\s+(?:DE\s+)?(?:APOIO|ADMINISTRA[A-Z]*))\b",
+    re.IGNORECASE,
+)
+
 # Grandes Unidades de Combate / Apoio Divisionário FEC (Reserva Estratégica, Defesa do Litoral e C2 DE - COEB 2026)
 BRIGADAS_FEC_COMBATE_DE = frozenset({
     "6ª Bda Inf Bld",
@@ -151,6 +163,16 @@ def eh_om_saude(sigla: str) -> bool:
 def eh_om_ensino(sigla: str) -> bool:
     """Identifica OMs de Ensino/Formação (Capacidades Institucionais — COEB EB20-MF-07.101, 5.6.1.4)."""
     return bool(sigla and _PADRAO_OM_ENSINO.search(sigla))
+
+
+def eh_tiro_guerra(sigla: str) -> bool:
+    """Identifica Tiros de Guerra (Órgãos de Formação da Reserva / convênio municipal — SMI)."""
+    return bool(sigla and _PADRAO_TIRO_GUERRA.search(sigla))
+
+
+def eh_base_apoio(sigla: str) -> bool:
+    """Identifica Bases de Apoio Logístico, Bases de Apoio Regional (B Ap R) e Bases Administrativas (B Adm)."""
+    return bool(sigla and _PADRAO_BASE_APOIO.search(sigla))
 
 
 def extrair_uf_e_municipio(endereco: str) -> Tuple[str, str]:
@@ -179,6 +201,10 @@ def inferir_localizacao_militar(sigla: str, endereco: str) -> Dict[str, str]:
 
     if eh_om_ensino(sigla):
         brigada = "DECEx (Educação, Cultura e Adestramento)"
+    elif eh_tiro_guerra(sigla):
+        brigada = f"Tiros de Guerra ({rm})"
+    elif eh_base_apoio(sigla):
+        brigada = "Bases de Apoio / Adm (RM / CM)"
     else:
         for padroes, nome_brigada in _REGRAS_BRIGADA:
             if any(re.search(rf"(?<!\d){re.escape(p)}", sigla_up) for p in padroes):

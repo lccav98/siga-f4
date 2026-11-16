@@ -23,8 +23,10 @@ if str(ROOT_DIR) not in sys.path:
 
 from backend.core.estrutura_eb import (
     BRIGADAS_FEC_COMBATE_DE,
+    eh_base_apoio,
     eh_om_ensino,
     eh_om_saude,
+    eh_tiro_guerra,
     inferir_localizacao_militar,
 )
 from backend.models.database import Base, SessionLocal, engine
@@ -192,6 +194,50 @@ GUARNICOES: Dict[str, Tuple[float, float, float, bool, float]] = {
     "Crateús - CE": (-5.178333, -40.677500, 1560.0, False, 0.5),
     "Teresina - PI": (-5.089167, -42.801944, 1390.0, True, 1.2),
     "Picos - PI": (-7.076944, -41.466944, 1460.0, False, 0.5),
+    "Parnaíba - PI": (-2.905556, -41.776667, 1460.0, True, 0.7),
+    "Bauru - SP": (-22.314722, -49.060556, 515.0, True, 1.1),
+    "Ribeirão Preto - SP": (-21.177500, -47.810278, 595.0, True, 1.4),
+    "Sorocaba - SP": (-23.501667, -47.458056, 700.0, True, 1.4),
+    "Araraquara - SP": (-21.794444, -48.175556, 560.0, True, 1.0),
+    "Franca - SP": (-20.538611, -47.400833, 660.0, True, 1.0),
+    "Limeira - SP": (-22.564722, -47.401667, 680.0, True, 1.1),
+    "Piracicaba - SP": (-22.725278, -47.649167, 675.0, True, 1.2),
+    "São Carlos - SP": (-22.017500, -47.890833, 620.0, True, 1.1),
+    "São José dos Campos - SP": (-23.179444, -45.886944, 865.0, True, 1.5),
+    "Botucatu - SP": (-22.885833, -48.445000, 580.0, True, 0.9),
+    "Nova Friburgo - RJ": (-22.281944, -42.531111, 1180.0, True, 1.1),
+    "Teresópolis - RJ": (-22.412222, -42.965556, 1140.0, True, 1.2),
+    "Bom Jesus do Itabapoana - RJ": (-21.133889, -41.679722, 1260.0, False, 0.6),
+    "Colatina - ES": (-19.539444, -40.630833, 1390.0, True, 0.9),
+    "Cachoeiro de Itapemirim - ES": (-20.848889, -41.112778, 1340.0, True, 1.0),
+    "Araxá - MG": (-19.593333, -46.940556, 890.0, True, 0.9),
+    "Governador Valadares - MG": (-18.851111, -41.949444, 1380.0, True, 1.0),
+    "Patos de Minas - MG": (-18.578889, -46.518056, 940.0, True, 0.9),
+    "Varginha - MG": (-21.551389, -45.430278, 920.0, True, 0.9),
+    "Viçosa - MG": (-20.753889, -42.881944, 1170.0, True, 0.9),
+    "Frutal - MG": (-20.024722, -48.940556, 680.0, False, 0.7),
+    "Londrina - PR": (-23.310278, -51.162778, 285.0, True, 1.4),
+    "Maringá - PR": (-23.425278, -51.938611, 225.0, True, 1.3),
+    "Campo Mourão - PR": (-24.045833, -52.383056, 195.0, False, 0.8),
+    "Brusque - SC": (-27.097778, -48.917500, 380.0, True, 1.1),
+    "Caçador - SC": (-26.775278, -51.015000, 210.0, False, 0.7),
+    "Jequié - BA": (-13.857778, -40.083611, 1480.0, True, 0.7),
+    "Valença - BA": (-13.370278, -39.073056, 1590.0, False, 0.7),
+    "Itapetinga - BA": (-15.248889, -40.247778, 1420.0, False, 0.6),
+    "Estância - SE": (-11.268333, -37.438333, 1690.0, False, 0.7),
+    "Arcoverde - PE": (-8.418889, -37.053889, 1660.0, False, 0.6),
+    "Arapiraca - AL": (-9.752500, -36.661111, 1740.0, True, 0.8),
+    "Palmeira dos Índios - AL": (-9.406944, -36.627778, 1730.0, False, 0.6),
+    "Patos - PB": (-7.024444, -37.280000, 1740.0, False, 0.6),
+    "Mossoró - RN": (-5.187778, -37.344167, 1760.0, True, 0.9),
+    "Bragança - PA": (-1.053611, -46.765556, 675.0, False, 0.6),
+    "Abaetetuba - PA": (-1.718056, -48.882500, 495.0, False, 0.6),
+    "Castanhal - PA": (-1.293889, -47.926389, 575.0, True, 0.8),
+    "Caxias - MA": (-4.858889, -43.356111, 1280.0, False, 0.6),
+    "Sinop - MT": (-11.864167, -55.502500, 390.0, True, 0.8),
+    "Crato - CE": (-7.234167, -39.409444, 1510.0, False, 0.7),
+    "Juazeiro do Norte - CE": (-7.213056, -39.315278, 1520.0, True, 0.9),
+    "Sobral - CE": (-3.686111, -40.349722, 1610.0, True, 0.9),
 }
 
 # Catálogo doutrinário (sigla, guarnicao, coeb, c4isr, a2ad, perfil_anomalia)
@@ -695,6 +741,73 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("5º CTA (Centro Telemática)", "Recife - PE", ClassificacaoCOEB.FEI, 80.0, False, "limpo"),
     ("6º CTA (Centro Telemática)", "Campo Grande - MS", ClassificacaoCOEB.FEI, 81.0, False, "limpo"),
     ("7º CTA (Centro Telemática)", "Brasília - DF", ClassificacaoCOEB.FEI, 88.0, True, "limpo"),
+    # --- BASES DE APOIO REGIONAL, BASES ADMINISTRATIVAS E DE GUARNICAO (FEC — Racionalização EB10-P-01.031) ---
+    ("B Adm Ap/1ª RM (Base Adm)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 52.0, False, "limpo"),
+    ("B Adm Cmpl Sau RJ (Apoio Sau)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 54.0, False, "limpo"),
+    ("B Adm Bda Inf Pqdt (Base Adm)", "Vila Militar - RJ", ClassificacaoCOEB.FEC, 53.0, False, "limpo"),
+    ("B Adm Ap Ibirapuera (CMSE)", "São Paulo - SP", ClassificacaoCOEB.FEC, 56.0, False, "limpo"),
+    ("B Ap R Bauru (Base Apoio Reg)", "Bauru - SP", ClassificacaoCOEB.FEC, 50.0, False, "limpo"),
+    ("B Ap R Ribeirão Preto (Base Apoio Reg)", "Ribeirão Preto - SP", ClassificacaoCOEB.FEC, 51.0, False, "limpo"),
+    ("B Ap R Sorocaba (Base Apoio Reg)", "Sorocaba - SP", ClassificacaoCOEB.FEC, 51.0, False, "limpo"),
+    ("B Adm Ap/3ª RM (Base Adm)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 53.0, False, "limpo"),
+    ("B Adm Gu SM (Sta Maria)", "Santa Maria - RS", ClassificacaoCOEB.FEC, 55.0, False, "limpo"),
+    ("B Adm Gu Alegrete (Base Adm)", "Alegrete - RS", ClassificacaoCOEB.FEC, 49.0, False, "limpo"),
+    ("B Adm Gu Bagé (Base Adm)", "Bagé - RS", ClassificacaoCOEB.FEC, 48.0, False, "limpo"),
+    ("B Adm Gu Uruguaiana (Base Adm)", "Uruguaiana - RS", ClassificacaoCOEB.FEC, 49.0, False, "limpo"),
+    ("B Adm Ap/5ª RM (Base Adm)", "Curitiba - PR", ClassificacaoCOEB.FEC, 54.0, False, "limpo"),
+    ("B Adm Ap/CMP (Base Adm)", "Brasília - DF", ClassificacaoCOEB.FEC, 58.0, False, "limpo"),
+    ("B Adm QGEx (Base Adm)", "Brasília - DF", ClassificacaoCOEB.FEC, 57.0, False, "limpo"),
+    ("B Adm Ap/CMO (Base Adm)", "Campo Grande - MS", ClassificacaoCOEB.FEC, 52.0, False, "limpo"),
+    ("B Adm Ap/CMN (Base Adm)", "Belém - PA", ClassificacaoCOEB.FEC, 51.0, False, "limpo"),
+    ("B Adm Gu JP (João Pessoa)", "João Pessoa - PB", ClassificacaoCOEB.FEC, 49.0, False, "limpo"),
+    ("B Adm Gu Natal (Base Adm)", "Natal - RN", ClassificacaoCOEB.FEC, 50.0, False, "limpo"),
+    ("B Adm Gu Manaus (Base Adm)", "Manaus - AM", ClassificacaoCOEB.FEC, 53.0, False, "limpo"),
+    ("B Adm Gu Fortaleza (10ª RM)", "Fortaleza - CE", ClassificacaoCOEB.FEC, 48.0, False, "folha"),
+    # --- TIROS DE GUERRA (OFR / SMI — Presença Territorial por Região Militar em Convênio Municipal) ---
+    ("TG 01-001 (Tiro de Guerra)", "Bom Jesus do Itabapoana - RJ", ClassificacaoCOEB.FEC, 38.0, False, "limpo"),
+    ("TG 01-007 (Tiro de Guerra)", "Colatina - ES", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 01-010 (Tiro de Guerra)", "Nova Friburgo - RJ", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 01-011 (Tiro de Guerra)", "Teresópolis - RJ", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 01-012 (Tiro de Guerra)", "Cachoeiro de Itapemirim - ES", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 02-002 (Tiro de Guerra)", "Araraquara - SP", ClassificacaoCOEB.FEC, 42.0, False, "limpo"),
+    ("TG 02-013 (Tiro de Guerra)", "Franca - SP", ClassificacaoCOEB.FEC, 42.0, False, "limpo"),
+    ("TG 02-020 (Tiro de Guerra)", "Limeira - SP", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 02-028 (Tiro de Guerra)", "Piracicaba - SP", ClassificacaoCOEB.FEC, 43.0, False, "limpo"),
+    ("TG 02-031 (Tiro de Guerra)", "Ribeirão Preto - SP", ClassificacaoCOEB.FEC, 44.0, False, "limpo"),
+    ("TG 02-035 (Tiro de Guerra)", "São Carlos - SP", ClassificacaoCOEB.FEC, 42.0, False, "limpo"),
+    ("TG 02-037 (Tiro de Guerra)", "São José dos Campos - SP", ClassificacaoCOEB.FEC, 44.0, False, "limpo"),
+    ("TG 02-040 (Tiro de Guerra)", "Sorocaba - SP", ClassificacaoCOEB.FEC, 43.0, False, "limpo"),
+    ("TG 02-048 (Tiro de Guerra)", "Botucatu - SP", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 04-001 (Tiro de Guerra)", "Araxá - MG", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 04-007 (Tiro de Guerra)", "Governador Valadares - MG", ClassificacaoCOEB.FEC, 42.0, False, "limpo"),
+    ("TG 04-013 (Tiro de Guerra)", "Patos de Minas - MG", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 04-027 (Tiro de Guerra)", "Viçosa - MG", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 04-034 (Tiro de Guerra)", "Varginha - MG", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 05-003 (Tiro de Guerra)", "Londrina - PR", ClassificacaoCOEB.FEC, 44.0, False, "limpo"),
+    ("TG 05-005 (Tiro de Guerra)", "Brusque - SC", ClassificacaoCOEB.FEC, 42.0, False, "limpo"),
+    ("TG 05-006 (Tiro de Guerra)", "Caçador - SC", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 05-009 (Tiro de Guerra)", "Maringá - PR", ClassificacaoCOEB.FEC, 43.0, False, "limpo"),
+    ("TG 05-019 (Tiro de Guerra)", "Campo Mourão - PR", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 06-005 (Tiro de Guerra)", "Valença - BA", ClassificacaoCOEB.FEC, 39.0, False, "limpo"),
+    ("TG 06-009 (Tiro de Guerra)", "Jequié - BA", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 06-013 (Tiro de Guerra)", "Estância - SE", ClassificacaoCOEB.FEC, 39.0, False, "limpo"),
+    ("TG 06-023 (Tiro de Guerra)", "Itapetinga - BA", ClassificacaoCOEB.FEC, 38.0, False, "limpo"),
+    ("TG 07-002 (Tiro de Guerra)", "Patos - PB", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 07-003 (Tiro de Guerra)", "Arcoverde - PE", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 07-007 (Tiro de Guerra)", "Palmeira dos Índios - AL", ClassificacaoCOEB.FEC, 39.0, False, "limpo"),
+    ("TG 07-010 (Tiro de Guerra)", "Mossoró - RN", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 07-015 (Tiro de Guerra)", "Arapiraca - AL", ClassificacaoCOEB.FEC, 42.0, False, "limpo"),
+    ("TG 08-002 (Tiro de Guerra)", "Bragança - PA", ClassificacaoCOEB.FEC, 39.0, False, "limpo"),
+    ("TG 08-003 (Tiro de Guerra)", "Abaetetuba - PA", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 08-005 (Tiro de Guerra)", "Castanhal - PA", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 08-006 (Tiro de Guerra)", "Caxias - MA", ClassificacaoCOEB.FEC, 39.0, False, "limpo"),
+    ("TG 09-002 (Tiro de Guerra)", "Sinop - MT", ClassificacaoCOEB.FEC, 43.0, False, "limpo"),
+    ("TG 10-004 (Tiro de Guerra)", "Crato - CE", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 10-005 (Tiro de Guerra)", "Juazeiro do Norte - CE", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 10-011 (Tiro de Guerra)", "Sobral - CE", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
+    ("TG 10-012 (Tiro de Guerra)", "Parnaíba - PI", ClassificacaoCOEB.FEC, 40.0, False, "limpo"),
+    ("TG 11-001 (Tiro de Guerra)", "Anápolis - GO", ClassificacaoCOEB.FEC, 36.0, False, "folha"),
+    ("TG 11-009 (Tiro de Guerra)", "Frutal - MG", ClassificacaoCOEB.FEC, 41.0, False, "limpo"),
 ]
 
 
@@ -709,39 +822,39 @@ _SETORES_MILITARES: Dict[str, List[Tuple[Tuple[str, ...], str, float, float, flo
         (("BAPLOGEX", "AGR ", "1º DSUP", "1º BTL TRNS", "PQRMNT/1"), "Caju / Benfica / Deodoro", -22.882500, -43.223800, 3_600.0),
         (("PMPV", "9ª BIA AAAE", "CMDO 5º GPT E", "1º BE CMB", "ECEME", "IME", "CCFEX", "ESEFEX"), "Praia Vermelha / Urca", -22.954700, -43.164900, 11_500.0),
         (("1º GAAA",), "Duque de Caxias / Zona Norte", -22.785200, -43.305400, 2_250.0),
-        (("PMRJ", "1º BPE", "CML", "1ª RM", "2º BCOM", "1º CIA INTLG", "3º CTA", "CRO/1", "DECEX", "DESMIL", "DETMIL", "DEPA"), "Centro / Tijuca (Palácio Duque de Caxias)", -22.903600, -43.189700, 8_200.0),
+        (("PMRJ", "1º BPE", "CML", "1ª RM", "2º BCOM", "1º CIA INTLG", "3º CTA", "CRO/1", "DECEX", "DESMIL", "DETMIL", "DEPA", "B ADM AP/1ª RM", "B ADM CMPL SAU"), "Centro / Tijuca (Palácio Duque de Caxias)", -22.903600, -43.189700, 8_200.0),
     ],
     "Vila Militar - RJ": [
         (("HGERJ",), "Vila Militar / Deodoro (Saúde)", -22.860200, -43.401800, 2_450.0),
         (("ESAO", "ESSLOG", "ESIE", "ESACOSAAE", "CMVM", "CI PQDT", "CA-LESTE"), "Vila Militar / Deodoro (Ensino & Adestramento)", -22.863200, -43.405800, 2_400.0),
-        (("PQDT", "DOMPSA", "ESQD C PQDT", "1ª DE", "GUES", "9ª BDA", "BI MTZ (ES)", "31º GAC", "1º BGE", "BTL INF"), "Vila Militar / Deodoro", -22.861700, -43.403200, 2_400.0),
+        (("PQDT", "DOMPSA", "ESQD C PQDT", "1ª DE", "GUES", "9ª BDA", "BI MTZ (ES)", "31º GAC", "1º BGE", "BTL INF", "B ADM BDA"), "Vila Militar / Deodoro", -22.861700, -43.403200, 2_400.0),
     ],
     "Brasília - DF": [
         (("11º GAAA",), "Planaltina / DF", -15.652500, -47.785500, 1_850.0),
         (("CMB (",), "Asa Norte (SGAN 902/904 — Colégio Militar)", -15.774500, -47.887800, 5_800.0),
-        (("CMDO", "COMDCIBER", "CIGE", "CDS", "CITEX", "7º CTA", "BGP", "1º RCG", "11º BPE", "11º DSUP", "HMAB", "32º GAC", "16º BLOG", "1º BGE", "INTLG", "ESCOM"), "Setor Militar Urbano (SMU)", -15.770700, -47.922700, 5_400.0),
+        (("CMDO", "COMDCIBER", "CIGE", "CDS", "CITEX", "7º CTA", "BGP", "1º RCG", "11º BPE", "11º DSUP", "HMAB", "32º GAC", "16º BLOG", "1º BGE", "INTLG", "ESCOM", "B ADM"), "Setor Militar Urbano (SMU)", -15.770700, -47.922700, 5_400.0),
     ],
     "São Paulo - SP": [
         (("HMASP",), "Vila Mariana / Saúde", -23.591400, -46.643800, 10_400.0),
         (("2º BI", "2º BTL TRNS", "CMSP", "CPOR/SP"), "Santana / Zona Norte", -23.496800, -46.625400, 6_200.0),
         (("4º BI", "2º DSUP", "PQRMNT/2"), "Cambuci / Mooca", -23.562500, -46.618900, 7_400.0),
-        (("CMSE", "2ª RM", "2ª DE", "2º CTA", "2º CIA INTLG"), "Ibirapuera (QGEx SP)", -23.578300, -46.657600, 12_800.0),
+        (("CMSE", "2ª RM", "2ª DE", "2º CTA", "2º CIA INTLG", "IBIRAPUERA"), "Ibirapuera (QGEx SP)", -23.578300, -46.657600, 12_800.0),
     ],
     "Curitiba - PR": [
         (("HGEC", "CRO/5"), "Batel / Centro", -25.437500, -49.286900, 7_400.0),
         (("CMC (",), "Tarumã (Colégio Militar de Curitiba)", -25.421800, -49.222500, 4_300.0),
         (("20º BIB", "5º BLOG", "5º BPE"), "Bacacheri / Boa Vista", -25.398200, -49.235600, 3_950.0),
-        (("5ª DE", "5ª RM", "5º BCOM", "5º DSUP", "5º GAC AP", "PQRMNT/5"), "Pinheirinho (Forte Pinheirinho)", -25.525700, -49.293100, 2_650.0),
+        (("5ª DE", "5ª RM", "5º BCOM", "5º DSUP", "5º GAC AP", "PQRMNT/5", "B ADM AP/5ª"), "Pinheirinho (Forte Pinheirinho)", -25.525700, -49.293100, 2_650.0),
     ],
     "Porto Alegre - RS": [
         (("HMAPA", "PMPA", "3º BINT", "CMPA"), "Bom Fim / Santo Antônio", -30.036100, -51.209700, 6_400.0),
         (("3º RCG", "3º BCOM", "3º BPE", "AGRS", "3º BTL TRNS", "1º CTA", "6ª DE", "CPOR/PA"), "Partenon / Zona Norte", -30.062800, -51.174200, 3_200.0),
-        (("CMS (", "CMS ", "3ª RM", "CRO/3", "4º GPT E", "3º DSUP"), "Centro Histórico (Rua dos Andradas)", -30.032200, -51.231400, 5_800.0),
+        (("CMS (", "CMS ", "3ª RM", "CRO/3", "4º GPT E", "3º DSUP", "B ADM AP/3ª"), "Centro Histórico (Rua dos Andradas)", -30.032200, -51.231400, 5_800.0),
     ],
     "Manaus - AM": [
         (("12º GAAA",), "Ponta Negra (Av. Cel. Teixeira, 5165)", -3.080641, -60.076852, 3_600.0),
         (("2º GPT E",), "Ponta Negra (Av. Cel. Teixeira, 6800)", -3.085000, -60.063000, 3_500.0),
-        (("12ª RM",), "Ponta Negra (Av. do Expedicionário, 6155)", -3.093000, -60.052000, 3_400.0),
+        (("12ª RM", "B ADM GU MANAUS"), "Ponta Negra (Av. do Expedicionário, 6155)", -3.093000, -60.052000, 3_400.0),
         (("CMDO CMA", "CIA CMDO CMA", "4º CTA", "1º BINT", "4º BCOM", "1º CIA COM SL"), "Ponta Negra (QG CMA — Av. Cel. Teixeira, 4715)", -3.097500, -60.088600, 3_600.0),
         (("1º BIS", "3ª CIA FE", "CIGS"), "São Jorge (Av. São Jorge, 650–750)", -3.106542, -60.038925, 2_350.0),
         (("7º BPE",), "São Jorge (Av. São Jorge, 1944)", -3.109200, -60.033500, 2_350.0),
@@ -825,6 +938,12 @@ def _calcular_valor_spu_terreno(sigla: str, valor_m2_brl: float, coeb: Classific
     elif "PEF" in s:
         area_m2 = random.uniform(15_000, 26_000)
         fator_benfeitoria = 1.15
+    elif eh_tiro_guerra(sigla):
+        area_m2 = random.uniform(1_800, 4_200)
+        fator_benfeitoria = 1.05
+    elif eh_base_apoio(sigla):
+        area_m2 = random.uniform(16_000, 32_000)
+        fator_benfeitoria = 1.22
     else:
         area_m2 = random.uniform(6_500, 16_000)
         fator_benfeitoria = 1.25
@@ -924,33 +1043,51 @@ def gerar_oms(reset: bool = True) -> int:
                 custeio_decl = round(ef_decl * random.uniform(44_000, 72_000), 2)
                 acionamentos = random.randint(8, 18) if is_ci_ca else random.randint(2, 6)
                 disponibilidade = round(random.uniform(84.0, 94.0), 1)
-            else:  # FEC (Reserva Estratégica / Combate / Litoral vs. Guarda / Apoio Territorial)
+            else:  # FEC (Reserva Estratégica / Combate / Litoral / Bases de Apoio / Tiros de Guerra)
                 local_eb = inferir_localizacao_militar(sigla, endereco)
                 sigla_up = sigla.upper()
-                is_de_c2 = bool(re.search(r"\bCMDO\b.*\b(DE|CMA|CMN|CMO|CMP|CML|CMSE|CMS|CMNE)\b", sigla_up))
-                is_fec_comb_ou_apoio = (
-                    local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE
-                    or is_de_c2
-                    or any(k in sigla_up for k in ("BE CMB", "BEC", "B FV", "ARSENAL", "BLOG"))
-                )
-                ef_decl = random.randint(360, 820)
-                if is_fec_comb_ou_apoio and perfil_anomalia == "limpo":
-                    ef_fim = int(ef_decl * random.uniform(0.60, 0.72))
-                    acionamentos = random.randint(3, 6)
-                    disponibilidade = round(random.uniform(72.0, 84.0), 1)
+                if eh_tiro_guerra(sigla):
+                    ef_decl = random.randint(24, 48)
+                    ef_fim = int(ef_decl * (random.uniform(0.75, 0.88) if perfil_anomalia == "limpo" else 0.44))
+                    acionamentos = random.randint(2, 5)
+                    disponibilidade = round(random.uniform(76.0, 86.0), 1) if perfil_anomalia == "limpo" else 52.0
+                    custeio_decl = round(ef_decl * random.uniform(28_000, 40_000), 2)
+                elif eh_base_apoio(sigla):
+                    ef_decl = random.randint(220, 420)
+                    if perfil_anomalia == "limpo":
+                        ef_fim = int(ef_decl * random.uniform(0.56, 0.68))
+                        acionamentos = random.randint(3, 6)
+                        disponibilidade = round(random.uniform(75.0, 85.0), 1)
+                    else:
+                        ef_fim = int(ef_decl * random.uniform(0.32, 0.46))
+                        acionamentos = random.randint(0, 3)
+                        disponibilidade = round(random.uniform(52.0, 72.0), 1)
+                    custeio_decl = round(ef_decl * random.uniform(44_000, 62_000), 2)
                 else:
-                    ef_fim = int(ef_decl * random.uniform(0.32, 0.48))
-                    acionamentos = random.randint(0, 4)
-                    disponibilidade = round(random.uniform(50.0, 76.0), 1)
-                custeio_decl = round(ef_decl * random.uniform(42_000, 68_000), 2)
+                    is_de_c2 = bool(re.search(r"\bCMDO\b.*\b(DE|CMA|CMN|CMO|CMP|CML|CMSE|CMS|CMNE)\b", sigla_up))
+                    is_fec_comb_ou_apoio = (
+                        local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE
+                        or is_de_c2
+                        or any(k in sigla_up for k in ("BE CMB", "BEC", "B FV", "ARSENAL", "BLOG"))
+                    )
+                    ef_decl = random.randint(360, 820)
+                    if is_fec_comb_ou_apoio and perfil_anomalia == "limpo":
+                        ef_fim = int(ef_decl * random.uniform(0.60, 0.72))
+                        acionamentos = random.randint(3, 6)
+                        disponibilidade = round(random.uniform(72.0, 84.0), 1)
+                    else:
+                        ef_fim = int(ef_decl * random.uniform(0.32, 0.48))
+                        acionamentos = random.randint(0, 4)
+                        disponibilidade = round(random.uniform(50.0, 76.0), 1)
+                    custeio_decl = round(ef_decl * random.uniform(42_000, 68_000), 2)
 
             # Aplica divergências CGU/SIGPES conforme perfil de auditoria
             if perfil_anomalia in ("folha", "ambos"):
                 cpfs_ativos = int(ef_decl * random.uniform(0.80, 0.89))
-                cpfs_reserva = random.randint(110, 260)
+                cpfs_reserva = random.randint(12, 28) if eh_tiro_guerra(sigla) else random.randint(110, 260)
             else:
-                cpfs_ativos = max(1, ef_decl - random.randint(0, 3))
-                cpfs_reserva = random.randint(6, 45)
+                cpfs_ativos = ef_decl if eh_tiro_guerra(sigla) else max(1, ef_decl - random.randint(0, 3))
+                cpfs_reserva = random.randint(0, 2) if eh_tiro_guerra(sigla) else random.randint(6, 45)
 
             if perfil_anomalia in ("financeiro", "ambos"):
                 empenhado_cgu = round(custeio_decl * random.uniform(1.09, 1.18), 2)
