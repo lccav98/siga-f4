@@ -266,7 +266,7 @@ class MotorIVE:
         else:
             base_fronteira = max(10.0, min(100.0, 100.0 - (dist_fronteira / 20.0)))
             bonus_a2ad = 25.0 if papel_a2ad else 0.0
-            is_de_c2 = bool(re.search(r"\bCMDO\b.*\bDE\b", sigla_up))
+            is_de_c2 = bool(re.search(r"\bCMDO\b.*\b(DE|CMA|CMN|CMO|CMP|CML|CMSE|CMS|CMNE)\b", sigla_up))
             if is_de_c2 or local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE:
                 # COEB 1.3.2.7 / 5.3.2 / 5.3.4.4 c: defesa da costa/litoral, C2 Divisionário e reserva mobilizável
                 base_fronteira = max(48.0, base_fronteira)

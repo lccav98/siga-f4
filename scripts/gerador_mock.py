@@ -384,14 +384,14 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     # 3º Grupamento de Engenharia (3º Gpt E - CMO)
     ("Cmdo 3º Gpt E", "Campo Grande - MS", ClassificacaoCOEB.FEC, 62.0, False, "limpo"),
     ("9º BEC", "Cuiabá - MT", ClassificacaoCOEB.FEC, 60.0, False, "limpo"),
-    ("9º BE Cmb", "Aquidauana - MS", ClassificacaoCOEB.FEC, 63.0, False, "limpo"),
+    ("9º BE Cmb", "Aquidauana - MS", ClassificacaoCOEB.FEP, 74.0, True, "limpo"),
     ("CO/3º Gpt E (Comissão Obras)", "Campo Grande - MS", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
-    # 4º Grupamento de Engenharia (4º Gpt E - CMS)
-    ("Cmdo 4º Gpt E", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 64.0, False, "limpo"),
-    ("3º BE Cmb", "Cachoeira do Sul - RS", ClassificacaoCOEB.FEC, 65.0, False, "limpo"),
-    ("6º BE Cmb", "São Gabriel - RS", ClassificacaoCOEB.FEI, 64.0, True, "limpo"),
-    ("12º BE Cmb Bld", "Alegrete - RS", ClassificacaoCOEB.FEI, 65.0, True, "limpo"),
-    ("1º B Fv (Btl Ferroviário)", "Lages - SC", ClassificacaoCOEB.FEC, 61.0, False, "limpo"),
+    # 4º Grupamento de Engenharia (4º Gpt E - CMS) -> FEP (Engenharia de Emprego de Prontidão)
+    ("Cmdo 4º Gpt E", "Porto Alegre - RS", ClassificacaoCOEB.FEP, 76.0, True, "limpo"),
+    ("3º BE Cmb", "Cachoeira do Sul - RS", ClassificacaoCOEB.FEP, 75.0, True, "limpo"),
+    ("6º BE Cmb", "São Gabriel - RS", ClassificacaoCOEB.FEP, 74.0, True, "limpo"),
+    ("12º BE Cmb Bld", "Alegrete - RS", ClassificacaoCOEB.FEP, 76.0, True, "limpo"),
+    ("1º B Fv (Btl Ferroviário)", "Lages - SC", ClassificacaoCOEB.FEP, 72.0, True, "limpo"),
     ("CRO/3 (Comissão Reg Obras)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     ("CRO/5 (Comissão Reg Obras)", "Curitiba - PR", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     # 5º Grupamento de Engenharia (5º Gpt E - CML) -> FEC (fora da faixa de fronteira)
@@ -552,6 +552,14 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("Cia Cmdo 10ª RM", "Fortaleza - CE", ClassificacaoCOEB.FEC, 22.0, False, "folha"),
     ("Cia Cmdo 11ª RM", "Brasília - DF", ClassificacaoCOEB.FEC, 27.0, False, "limpo"),
     ("Cia Cmdo 12ª RM", "Manaus - AM", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
+    ("Cmdo CML (Cmdo Mil Leste)", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 68.0, False, "limpo"),
+    ("Cmdo CMSE (Cmdo Mil Sudeste)", "São Paulo - SP", ClassificacaoCOEB.FEC, 69.0, False, "limpo"),
+    ("Cmdo CMS (Cmdo Mil Sul)", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 68.0, False, "limpo"),
+    ("Cmdo CMNE (Cmdo Mil Nordeste)", "Recife - PE", ClassificacaoCOEB.FEC, 67.0, False, "limpo"),
+    ("Cmdo CMO (Cmdo Mil Oeste)", "Campo Grande - MS", ClassificacaoCOEB.FEC, 69.0, True, "limpo"),
+    ("Cmdo CMP (Cmdo Mil Planalto)", "Brasília - DF", ClassificacaoCOEB.FEC, 70.0, False, "limpo"),
+    ("Cmdo CMA (Cmdo Mil Amazônia)", "Manaus - AM", ClassificacaoCOEB.FEC, 72.0, True, "limpo"),
+    ("Cmdo CMN (Cmdo Mil Norte)", "Belém - PA", ClassificacaoCOEB.FEC, 68.0, True, "limpo"),
     ("Cia Cmdo CML", "Rio de Janeiro - RJ", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
     ("Cia Cmdo CMSE", "São Paulo - SP", ClassificacaoCOEB.FEC, 29.0, False, "limpo"),
     ("Cia Cmdo CMS", "Porto Alegre - RS", ClassificacaoCOEB.FEC, 28.0, False, "limpo"),
@@ -670,8 +678,15 @@ _SETORES_MILITARES: Dict[str, List[Tuple[Tuple[str, ...], str, float, float, flo
         (("CMS", "3ª RM", "CRO/3", "4º GPT E", "3º DSUP"), "Centro Histórico (Rua dos Andradas)", -30.032200, -51.231400, 5_800.0),
     ],
     "Manaus - AM": [
-        (("HMAM", "1º BINT", "12ª RM", "CRO/12", "7º BPE", "12º BTL SUP", "1º BTL MNT", "PQRMNT/12"), "Cachoeirinha / Centro", -3.132500, -60.002800, 3_400.0),
-        (("CMA", "1º BIS", "1º CIA COM SL", "4º BCOM", "4º CTA", "2º GPT E", "12º GAAA", "4º BAVEX"), "São Jorge / Ponta Negra (CIGS)", -3.100631, -60.043772, 2_250.0),
+        (("12º GAAA",), "Ponta Negra (Av. Cel. Teixeira, 5165)", -3.080641, -60.076852, 3_600.0),
+        (("2º GPT E",), "Ponta Negra (Av. Cel. Teixeira, 6800)", -3.085000, -60.063000, 3_500.0),
+        (("12ª RM",), "Ponta Negra (Av. do Expedicionário, 6155)", -3.093000, -60.052000, 3_400.0),
+        (("CMDO CMA", "CIA CMDO CMA", "4º CTA", "1º BINT", "4º BCOM", "1º CIA COM SL"), "Ponta Negra (QG CMA — Av. Cel. Teixeira, 4715)", -3.097500, -60.088600, 3_600.0),
+        (("1º BIS", "3ª CIA FE"), "São Jorge (Av. São Jorge, 650)", -3.106542, -60.038925, 2_350.0),
+        (("7º BPE",), "São Jorge (Av. São Jorge, 1944)", -3.109200, -60.033500, 2_350.0),
+        (("12º BTL SUP", "PQRMNT/12", "1º BTL MNT", "CRO/12"), "Compensa / Santo Antônio", -3.118200, -60.046100, 1_950.0),
+        (("HMAM",), "Cachoeirinha (R. Prof. Ernani Simão, 1421)", -3.125000, -60.007000, 3_400.0),
+        (("4º BAVEX",), "Vila Buriti / Base Aérea (Estr. do Paredão)", -3.131000, -60.015000, 1_850.0),
     ],
     "Recife - PE": [
         (("HMAR", "21º BI"), "Santo Amaro / Centro", -8.046100, -34.885600, 5_200.0),
@@ -841,7 +856,7 @@ def gerar_oms(reset: bool = True) -> int:
             else:  # FEC (Reserva Estratégica / Combate / Litoral vs. Guarda / Apoio Territorial)
                 local_eb = inferir_localizacao_militar(sigla, endereco)
                 sigla_up = sigla.upper()
-                is_de_c2 = bool(re.search(r"\bCMDO\b.*\bDE\b", sigla_up))
+                is_de_c2 = bool(re.search(r"\bCMDO\b.*\b(DE|CMA|CMN|CMO|CMP|CML|CMSE|CMS|CMNE)\b", sigla_up))
                 is_fec_comb_ou_apoio = (
                     local_eb["brigada"] in BRIGADAS_FEC_COMBATE_DE
                     or is_de_c2

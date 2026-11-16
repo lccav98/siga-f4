@@ -170,6 +170,19 @@ def inferir_enquadramento_coeb(nome_uasg: str, endereco: str = "") -> Tuple[Clas
         "5 BLOG",
         "5º CIA COM",
         "5 CIA COM",
+        # 4º Grupamento de Engenharia e Batalhões FEP (3º BE Cmb, 9º BE Cmb, etc.)
+        "4º GPT E",
+        "4 GPT E",
+        "3º BE CMB",
+        "3 BE CMB",
+        "9º BE CMB",
+        "9 BE CMB",
+        "6º BE CMB",
+        "6 BE CMB",
+        "12º BE CMB",
+        "12 BE CMB",
+        "1º B FV",
+        "1 B FV",
     )
     if any(t in texto_busca for t in termos_fep):
         return (ClassificacaoCOEB.FEP, 78.0, True)
