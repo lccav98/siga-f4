@@ -18,6 +18,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from backend.core.digital_twin import simular_reestruturacao
+from backend.core.estrutura_eb import BRIGADAS_BLINDADAS, BRIGADAS_MECANIZADAS
 from backend.core.motor_jev import MotorIVE
 from backend.models.database import Base, SessionLocal, engine
 from backend.models.schemas import ClassificacaoCOEB, OM
@@ -599,6 +600,24 @@ def _normalizar_busca(texto: Any) -> str:
     return "".join(ch for ch in s if not unicodedata.combining(ch)).lower().strip()
 
 
+def _filtrar_dataframe_om(df_base: pd.DataFrame, termo: str) -> pd.DataFrame:
+    """Filtra DataFrame de OMs por termo textual normalizado nos campos principais."""
+    termo_norm = _normalizar_busca(termo)
+    if not termo_norm or df_base.empty:
+        return df_base
+    campos_busca = (
+        df_base["sigla"].astype(str)
+        + " " + df_base["codigo_uasg"].astype(str)
+        + " " + df_base["cnpj_ug"].astype(str)
+        + " " + df_base["brigada"].astype(str)
+        + " " + df_base["uf"].astype(str)
+        + " " + df_base["comando_militar_area"].astype(str)
+        + " " + df_base["regiao_militar"].astype(str)
+        + " " + df_base["enquadramento_transformacao"].astype(str)
+    ).map(_normalizar_busca)
+    return df_base[campos_busca.str.contains(termo_norm, regex=False, na=False)]
+
+
 st.subheader("🔍 Diagnóstico Individual e Prescrição Doutrinária")
 df_opcoes_diag = (df_filtrado if not df_filtrado.empty else df_all).copy()
 
@@ -639,19 +658,7 @@ if diag_coeb_local != "Todos":
     df_opcoes_diag = df_opcoes_diag[df_opcoes_diag["classificacao_coeb"] == diag_coeb_local]
 if diag_jev_local != "Todos":
     df_opcoes_diag = df_opcoes_diag[df_opcoes_diag["classificacao_ive"] == diag_jev_local]
-if diag_busca.strip():
-    termo_norm = _normalizar_busca(diag_busca)
-    campos_busca = (
-        df_opcoes_diag["sigla"].astype(str)
-        + " " + df_opcoes_diag["codigo_uasg"].astype(str)
-        + " " + df_opcoes_diag["cnpj_ug"].astype(str)
-        + " " + df_opcoes_diag["brigada"].astype(str)
-        + " " + df_opcoes_diag["uf"].astype(str)
-        + " " + df_opcoes_diag["comando_militar_area"].astype(str)
-        + " " + df_opcoes_diag["regiao_militar"].astype(str)
-        + " " + df_opcoes_diag["enquadramento_transformacao"].astype(str)
-    ).map(_normalizar_busca)
-    df_opcoes_diag = df_opcoes_diag[campos_busca.str.contains(termo_norm, regex=False, na=False)]
+df_opcoes_diag = _filtrar_dataframe_om(df_opcoes_diag, diag_busca)
 
 if diag_ordem == "Sigla (A–Z)":
     df_opcoes_diag = df_opcoes_diag.sort_values("sigla", ascending=True)
@@ -778,42 +785,139 @@ st.divider()
 st.subheader("🧬 Digital Twin — Simulador de Reestruturação e Evolução Força 4.0")
 st.markdown(
     "Selecione uma **OM Zumbi (FEC)** para simular sua alienação patrimonial (SPU) e "
-    "conversão em capacidade **C4ISR** para uma unidade mediana ou prioritária."
+    "conversão em capacidade **C4ISR** e modernização de frota para uma unidade prioritária ou blindada/mecanizada."
 )
 
-df_zumbis = df_all[
+df_zumbis_base = df_all[
     (df_all["classificacao_coeb"] == "FEC")
     & (df_all["classificacao_ive"] == "OM Zumbi")
-]
-if df_zumbis.empty:
-    df_zumbis = df_all[
+].copy()
+if df_zumbis_base.empty:
+    df_zumbis_base = df_all[
         ~df_all["classificacao_ive"].isin(["Sustentação Sanitária", "Capacidade Institucional"])
-    ].nsmallest(5, "nota_ive")
+    ].nsmallest(10, "nota_ive").copy()
 
-df_destinos = df_all[df_all["classificacao_coeb"].isin(["FEP", "FEI"])].sort_values(
-    by=["classificacao_coeb", "nota_ive"], ascending=[False, False]
-)
-if df_destinos.empty:
-    df_destinos = df_all
+df_destinos_base = df_all[
+    ~df_all["classificacao_ive"].isin(["Sustentação Sanitária", "Capacidade Institucional"])
+].copy()
 
-mapa_zumbis = {
-    f"{r['sigla']} ({r['classificacao_coeb']} | IVE {r['nota_ive']:.1f} | SPU R$ {r['valor_imovel_brl']/1e6:.0f} Mi)": r["id_om"]
-    for _, r in df_zumbis.iterrows()
-}
-mapa_destinos = {
-    f"{r['sigla']} ({r['classificacao_coeb']} | C4ISR {r['indice_tecnologia_c4isr']:.1f} | IVE {r['nota_ive']:.1f})": r["id_om"]
-    for _, r in df_destinos.iterrows()
-}
+cmas_dt = ["Todos"] + sorted([c for c in df_all["comando_militar_area"].dropna().unique().tolist() if c])
 
 col_s1, col_s2 = st.columns(2)
 with col_s1:
-    sel_zumbi = st.selectbox("1. OM Zumbi (FEC) a Desativar / Alienar:", list(mapa_zumbis.keys()))
-with col_s2:
-    # Evita selecionar a mesma OM por padrão
-    chaves_dest = [k for k in mapa_destinos.keys() if mapa_destinos[k] != mapa_zumbis[sel_zumbi]]
-    sel_destino = st.selectbox("2. OM Destino a Recompletar/Modernizar (FEP Prioritária / FEI):", chaves_dest)
+    st.markdown("**1. Origem — OM Zumbi (FEC) a Desativar / Alienar**")
+    z_f1, z_f2 = st.columns([1.4, 1.0])
+    with z_f1:
+        busca_zumbi = st.text_input(
+            "Pesquisar OM Origem",
+            placeholder="Ex: 2º BG, AGR, CML, RJ, DSup...",
+            key="dt_busca_zumbi",
+        )
+    with z_f2:
+        cma_zumbi = st.selectbox("C Mil A (Origem)", options=cmas_dt, key="dt_cma_zumbi")
+    ordem_zumbi = st.selectbox(
+        "Ordenar Origens por",
+        options=["Maior Valor SPU", "Menor IVE", "Sigla (A–Z)"],
+        key="dt_ordem_zumbi",
+    )
 
-if st.button("🚀 Simular Transformação Doutrinária", type="primary"):
+    df_zumbis = df_zumbis_base
+    if cma_zumbi != "Todos":
+        df_zumbis = df_zumbis[df_zumbis["comando_militar_area"] == cma_zumbi]
+    df_zumbis = _filtrar_dataframe_om(df_zumbis, busca_zumbi)
+    if ordem_zumbi == "Menor IVE":
+        df_zumbis = df_zumbis.sort_values("nota_ive", ascending=True)
+    elif ordem_zumbi == "Sigla (A–Z)":
+        df_zumbis = df_zumbis.sort_values("sigla", ascending=True)
+    else:
+        df_zumbis = df_zumbis.sort_values("valor_imovel_brl", ascending=False)
+
+    mapa_zumbis = {
+        f"{r['sigla']} [{r['comando_militar_area']}/{r['uf']}] ({r['classificacao_coeb']} | IVE {r['nota_ive']:.1f} | SPU R$ {r['valor_imovel_brl']/1e6:.0f} Mi)": r["id_om"]
+        for _, r in df_zumbis.iterrows()
+    }
+    st.caption(f"Exibindo **{len(mapa_zumbis)}** OM(s) Zumbi(s) para alienação:")
+    sel_zumbi = (
+        st.selectbox(
+            "Selecione a OM Zumbi (FEC):",
+            list(mapa_zumbis.keys()),
+            key="dt_select_zumbi",
+        )
+        if mapa_zumbis
+        else None
+    )
+
+with col_s2:
+    st.markdown("**2. Destino — OM a Recompletar / Modernizar**")
+    d_f1, d_f2 = st.columns([1.4, 1.0])
+    with d_f1:
+        busca_destino = st.text_input(
+            "Pesquisar OM Destino",
+            placeholder="Ex: 3º RCC, 20º BIB, 1º RC Mec, BInt, FEP...",
+            key="dt_busca_destino",
+        )
+    with d_f2:
+        filtro_cat_dest = st.selectbox(
+            "Perfil de Emprego",
+            options=[
+                "FEP e FEI (Prioritárias)",
+                "Somente FEP (ForPron)",
+                "Somente FEI (Fronteira/Multidomínio)",
+                "Brigadas Blindadas (Lagartas)",
+                "Brigadas Mecanizadas (Rodas)",
+                "Todas Operativas (FEP/FEI/FEC)",
+            ],
+            key="dt_perfil_destino",
+        )
+    ordem_dest = st.selectbox(
+        "Ordenar Destinos por",
+        options=["Menor C4ISR (Priorizar Gargalos)", "Maior IVE", "Sigla (A–Z)"],
+        key="dt_ordem_destino",
+    )
+
+    df_destinos = df_destinos_base
+    if filtro_cat_dest == "FEP e FEI (Prioritárias)":
+        df_destinos = df_destinos[df_destinos["classificacao_coeb"].isin(["FEP", "FEI"])]
+    elif filtro_cat_dest == "Somente FEP (ForPron)":
+        df_destinos = df_destinos[df_destinos["classificacao_coeb"] == "FEP"]
+    elif filtro_cat_dest == "Somente FEI (Fronteira/Multidomínio)":
+        df_destinos = df_destinos[df_destinos["classificacao_coeb"] == "FEI"]
+    elif filtro_cat_dest == "Brigadas Blindadas (Lagartas)":
+        df_destinos = df_destinos[
+            df_destinos["brigada"].isin(BRIGADAS_BLINDADAS)
+            | df_destinos["sigla"].str.contains("2º RCC", na=False)
+        ]
+    elif filtro_cat_dest == "Brigadas Mecanizadas (Rodas)":
+        df_destinos = df_destinos[df_destinos["brigada"].isin(BRIGADAS_MECANIZADAS)]
+
+    df_destinos = _filtrar_dataframe_om(df_destinos, busca_destino)
+    if ordem_dest == "Maior IVE":
+        df_destinos = df_destinos.sort_values("nota_ive", ascending=False)
+    elif ordem_dest == "Sigla (A–Z)":
+        df_destinos = df_destinos.sort_values("sigla", ascending=True)
+    else:
+        df_destinos = df_destinos.sort_values(["indice_tecnologia_c4isr", "nota_ive"], ascending=[True, False])
+
+    mapa_destinos = {
+        f"{r['sigla']} [{r['comando_militar_area']}/{r['uf']} • {r['brigada']}] ({r['classificacao_coeb']} | C4ISR {r['indice_tecnologia_c4isr']:.1f} | IVE {r['nota_ive']:.1f})": r["id_om"]
+        for _, r in df_destinos.iterrows()
+    }
+    id_zumbi_sel = mapa_zumbis[sel_zumbi] if sel_zumbi else None
+    chaves_dest = [k for k in mapa_destinos.keys() if mapa_destinos[k] != id_zumbi_sel]
+    st.caption(f"Exibindo **{len(chaves_dest)}** OM(s) destino elegível(eis):")
+    sel_destino = (
+        st.selectbox(
+            "Selecione a OM Destino:",
+            chaves_dest,
+            key="dt_select_destino",
+        )
+        if chaves_dest
+        else None
+    )
+
+if not sel_zumbi or not sel_destino:
+    st.warning("Ajuste os filtros de Origem ou Destino do Digital Twin para selecionar duas OMs distintas.")
+elif st.button("🚀 Simular Transformação Doutrinária", type="primary"):
     resultado = executar_simulacao(mapa_zumbis[sel_zumbi], mapa_destinos[sel_destino])
     z = resultado["om_zumbi_desativada"]
     d = resultado["om_destino_transformada"]
