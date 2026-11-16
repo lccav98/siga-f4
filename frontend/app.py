@@ -368,6 +368,28 @@ with st.expander(
         delta=f"R$ {resumo_eb10['patrimonio_otimizacao_brl'] / 1e9:,.2f} Bi SPU",
         delta_color="off",
     )
+    st.caption("**🛡️ Requisito de Modernização & Obsolescência — Prg EE Forças Blindadas / Mecanizadas & C4ISR:**")
+    bm1, bm2, bm3, bm4 = st.columns(4)
+    bm1.metric(
+        f"Bda Blindadas ({resumo_eb10.get('oms_brigadas_blindadas', 0)} OMs)",
+        f"R$ {resumo_eb10.get('capex_blindadas_brl', 0) / 1e9:,.2f} Bi CAPEX",
+        help="Nova família: VBC CC, VBC Fuz, Obuseiros Blindados, VBC Eng, Socorro, Pranchas de Transporte Pesado e C4ISR.",
+    )
+    bm2.metric(
+        "Obsolescência Blindadas/ano",
+        f"R$ {resumo_eb10.get('obsolescencia_anual_blindadas_brl', 0) / 1e6:,.1f} Mi",
+        help="Custo anual de sustentação e perda de disponibilidade do material blindado sobre lagartas legado.",
+    )
+    bm3.metric(
+        f"Bda Mecanizadas ({resumo_eb10.get('oms_brigadas_mecanizadas', 0)} OMs)",
+        f"R$ {resumo_eb10.get('capex_mecanizadas_brl', 0) / 1e9:,.2f} Bi CAPEX",
+        help="Família sobre rodas: VBMT Guaicurus (4x4), VBTP Guarani (6x6), VBC Cav Centauro II (8x8), Apoio de Fogo/Log Mecanizado e C4ISR.",
+    )
+    bm4.metric(
+        "Obsolescência Mecanizadas/ano",
+        f"R$ {resumo_eb10.get('obsolescencia_anual_mecanizadas_brl', 0) / 1e6:,.1f} Mi",
+        help="Custo anual de obsolescência da frota mecanizada legada e meios de apoio de fogo/logístico.",
+    )
     st.caption(
         f"**Governança:** {resumo_eb10['governanca']} | "
         "**4 Eixos (Item 2.10):** Desenho Institucional, Capacidades, Doutrina e Pessoal | "
@@ -700,6 +722,14 @@ if diag:
             delta_color="off",
         )
 
+    if dados_op.get("categoria_forca_blindada"):
+        st.caption(f"**🛡️ Dotação Prg EE Forças Blindadas / Mecanizadas & Custo de Obsolescência — {dados_op['categoria_forca_blindada']}:**")
+        b1, b2, b3 = st.columns(3)
+        b1.metric("CAPEX Aquisição / Modernização", f"R$ {dados_op.get('capex_aquisicao_brl', 0) / 1e6:,.1f} Mi")
+        b2.metric("Custo Obsolescência Material/ano", f"R$ {dados_op.get('custo_obsolescencia_anual_brl', 0) / 1e6:,.1f} Mi")
+        b3.metric("Exposição Obsolescência Frota", f"{dados_op.get('obsolescencia_material_pct', 0):.1f}%")
+        st.caption("**Meios e Capacidades Requeridas:** " + " • ".join(dados_op.get("plataformas_requeridas", [])))
+
     st.info(f"**Prescrição Doutrinária:** {diag['prescricao_doutrinaria']}")
 
     if diag["classificacao_ive"] == "Ponta de Lança":
@@ -810,5 +840,11 @@ if st.button("🚀 Simular Transformação Doutrinária", type="primary"):
     )
 
     st.success(imp["resumo_executivo"])
+    if d.get("categoria_forca_blindada"):
+        dt1, dt2, dt3 = st.columns(3)
+        dt1.metric("Enquadramento Frota", d["categoria_forca_blindada"].split("(")[0].strip())
+        dt2.metric("Cobertura CAPEX Frota/C4ISR", f"{d.get('cobertura_capex_blindado_pct', 0):.1f}%")
+        dt3.metric("Abatimento Obsolescência/ano", f"R$ {d.get('economia_obsolescencia_anual_brl', 0) / 1e6:,.2f} Mi")
+        st.caption("**Prioridade de Aquisição:** " + " • ".join(d.get("plataformas_requeridas", [])))
     with st.expander("Detalhes Técnicos da Simulação (CNPJ UG, CPFs e Tesouro)"):
         st.json(resultado)

@@ -80,6 +80,27 @@ def simular_reestruturacao(
     economia_total_5_anos = valor_alienacao_spu + (economia_custeio_anual * 5.0)
     reserva_liquida_tesouro = valor_alienacao_spu * (1.0 - FRACAO_INVESTIMENTO_TECNOLOGIA)
 
+    op_dest = diag_destino_antes.dados_operacionais
+    cat_bld = op_dest.get("categoria_forca_blindada")
+    capex_req = op_dest.get("capex_aquisicao_brl", 0.0)
+    obsol_anual = op_dest.get("custo_obsolescencia_anual_brl", 0.0)
+    cobertura_capex_pct = round(min(100.0, (capital_para_c4isr / capex_req) * 100.0), 1) if capex_req else 0.0
+    economia_obsol_anual = round(obsol_anual * (cobertura_capex_pct / 100.0) * 0.65, 2) if obsol_anual else 0.0
+
+    resumo_base = (
+        f"Alienação da {om_zumbi.sigla} (CNPJ UG {om_zumbi.cnpj_ug} encerrado) "
+        f"libera R$ {valor_alienacao_spu:,.2f} em patrimônio SPU e R$ {economia_custeio_anual:,.2f}/ano "
+        f"em custeio. Investindo R$ {capital_para_c4isr:,.2f} em Força 4.0, a {om_destino.sigla} "
+        f"salta de C4ISR {c4isr_antes:.1f} para {c4isr_depois:.1f} e IVE {diag_destino_antes.nota_ive:.1f} "
+        f"para {ive_depois:.1f} ({classificacao_depois})."
+    )
+    if cat_bld:
+        resumo_base += (
+            f" Na {cat_bld}, o aporte cobre {cobertura_capex_pct:.1f}% do CAPEX de renovação de frota/C4ISR "
+            f"(demanda total R$ {capex_req / 1e6:,.1f} Mi), abatendo R$ {economia_obsol_anual / 1e6:,.2f} Mi/ano "
+            "em custo de obsolescência."
+        )
+
     return {
         "om_zumbi_desativada": {
             "id_om": om_zumbi.id_om,
@@ -96,6 +117,12 @@ def simular_reestruturacao(
             "id_om": om_destino.id_om,
             "sigla": om_destino.sigla,
             "classificacao_coeb": diag_destino_antes.classificacao_coeb,
+            "categoria_forca_blindada": cat_bld,
+            "plataformas_requeridas": op_dest.get("plataformas_requeridas", []),
+            "capex_aquisicao_brl": capex_req,
+            "custo_obsolescencia_anual_brl": obsol_anual,
+            "cobertura_capex_blindado_pct": cobertura_capex_pct,
+            "economia_obsolescencia_anual_brl": economia_obsol_anual,
             "c4isr_antes": round(c4isr_antes, 2),
             "c4isr_depois": c4isr_depois,
             "delta_c4isr": round(c4isr_depois - c4isr_antes, 2),
@@ -111,14 +138,9 @@ def simular_reestruturacao(
             "capital_investido_c4isr_brl": round(capital_para_c4isr, 2),
             "retorno_liquido_tesouro_spu_brl": round(reserva_liquida_tesouro, 2),
             "economia_custeio_anual_brl": round(economia_custeio_anual, 2),
-            "economia_acumulada_5_anos_brl": round(economia_total_5_anos, 2),
+            "economia_obsolescencia_anual_brl": economia_obsol_anual,
+            "economia_acumulada_5_anos_brl": round(economia_total_5_anos + (economia_obsol_anual * 5.0), 2),
             "ganho_capacidade_c2_percentual": round(c4isr_depois - c4isr_antes, 2),
-            "resumo_executivo": (
-                f"Alienação da {om_zumbi.sigla} (CNPJ UG {om_zumbi.cnpj_ug} encerrado) "
-                f"libera R$ {valor_alienacao_spu:,.2f} em patrimônio SPU e R$ {economia_custeio_anual:,.2f}/ano "
-                f"em custeio. Investindo R$ {capital_para_c4isr:,.2f} em Força 4.0, a {om_destino.sigla} "
-                f"salta de C4ISR {c4isr_antes:.1f} para {c4isr_depois:.1f} e IVE {diag_destino_antes.nota_ive:.1f} "
-                f"para {ive_depois:.1f} ({classificacao_depois})."
-            ),
+            "resumo_executivo": resumo_base,
         },
     }

@@ -1,7 +1,7 @@
 """Mapeamento territorial e organizacional do Exército Brasileiro (C Mil A, RM, UF e Brigada)."""
 
 import re
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # UF -> (Região Militar, Comando Militar de Área)
 _UF_PARA_RM_CMA: Dict[str, Tuple[str, str]] = {
@@ -154,6 +154,148 @@ BRIGADAS_FEC_COMBATE_DE = frozenset({
     "2ª DE / Apoio Mecanizado",
     "Tropa Direta DE / AD",
 })
+
+BRIGADAS_BLINDADAS = frozenset({
+    "5ª Bda C Bld (FEP)",
+    "6ª Bda Inf Bld",
+})
+
+BRIGADAS_MECANIZADAS = frozenset({
+    "11ª Bda Inf Mec (FEP)",
+    "15ª Bda Inf Mec",
+    "3ª Bda Inf Mec",
+    "1ª Bda C Mec",
+    "2ª Bda C Mec",
+    "3ª Bda C Mec",
+    "4ª Bda C Mec",
+})
+
+
+def diagnosticar_necessidades_blindadas_mecanizadas(
+    sigla: str,
+    brigada: str,
+    disponibilidade: float,
+    c4isr: float,
+) -> Optional[Dict[str, Any]]:
+    """Computa demanda de aquisição da nova família de viaturas, C4ISR e custo de obsolescência."""
+    if eh_om_saude(sigla) or eh_om_ensino(sigla) or eh_tiro_guerra(sigla) or eh_base_apoio(sigla):
+        return None
+
+    s = (sigla or "").upper()
+    is_blindada = brigada in BRIGADAS_BLINDADAS or (brigada == "2ª DE / Apoio Mecanizado" and "RCC" in s)
+    is_mecanizada = brigada in BRIGADAS_MECANIZADAS
+
+    if not (is_blindada or is_mecanizada):
+        return None
+
+    exposicao = max(
+        0.22,
+        min(0.95, 1.0 - (0.55 * (c4isr / 100.0) + 0.45 * (disponibilidade / 100.0)) + 0.24),
+    )
+    obsol_pct = round(exposicao * 100.0, 1)
+
+    if is_blindada:
+        categoria = "Brigada Blindada (Pesada / Lagartas)"
+        if "RCC" in s:
+            plataformas = [
+                "VBC CC (Nova Família Carro de Combate)",
+                "VBC Socorro / Apoio Blindado",
+                "Sistemas C4ISR Força 4.0",
+            ]
+            capex_base, obsol_base = 920_000_000.0, 34_000_000.0
+        elif "BIB" in s:
+            plataformas = [
+                "VBC Fuz (Viatura Blindada de Fuzileiros)",
+                "Sistemas C4ISR Força 4.0",
+            ]
+            capex_base, obsol_base = 680_000_000.0, 24_000_000.0
+        elif "GAC" in s:
+            plataformas = [
+                "Obuseiros Blindados Autopropulsados (155mm)",
+                "Remuniciadora Blindada de Artilharia",
+                "C4ISR Direção de Tiro Digital",
+            ]
+            capex_base, obsol_base = 420_000_000.0, 16_000_000.0
+        elif "BE CMB" in s:
+            plataformas = [
+                "Viaturas Blindadas de Engenharia (VBC Eng / Pontes / Brechas)",
+                "Pranchas de Transporte Pesado de Blindados",
+                "Sistemas C4ISR Engenharia Tática",
+            ]
+            capex_base, obsol_base = 290_000_000.0, 11_000_000.0
+        elif "BLOG" in s:
+            plataformas = [
+                "Viaturas Blindadas de Apoio Logístico / Socorro (VBC Soc)",
+                "Pranchas de Transporte de Viaturas Blindadas (60–70t)",
+                "Sistemas C4ISR Logístico / SISLOG",
+            ]
+            capex_base, obsol_base = 260_000_000.0, 10_500_000.0
+        else:
+            plataformas = [
+                "VBC Posto de Comando & Comunicações Blindadas (C4ISR)",
+                "VBC CC / VBC Fuz / Pranchas (Custeio Conjunto Bda Pesada)",
+            ]
+            capex_base, obsol_base = 175_000_000.0, 7_500_000.0
+
+        resumo = (
+            "Prg EE Forças Blindadas (Pesada): aquisição VBC CC, VBC Fuz, Obuseiros Blindados AP, "
+            "VBC Eng, Socorro, Pranchas de Transporte Pesado e C4ISR, mitigando obsolescência Leopard/M113."
+        )
+    else:
+        categoria = "Brigada Mecanizada (Rodas)"
+        if any(k in s for k in ("RC MEC", "RCB")):
+            plataformas = [
+                "VBC Cav-MSR 8x8 Centauro II",
+                "VBMT-LSR 4x4 Guaicurus",
+                "VBTP-MSR 6x6 Guarani",
+                "Sistemas C4ISR & Torres REMAX/UT30",
+            ]
+            capex_base, obsol_base = 540_000_000.0, 21_000_000.0
+        elif any(k in s for k in ("BI MEC", "BI MTZ", "2º BIL", "4º BI")):
+            plataformas = [
+                "VBTP-MSR 6x6 Guarani (Fuzileiros / Porta-Morteiro)",
+                "VBMT-LSR 4x4 Guaicurus (Reconhecimento / Anticarro)",
+                "Sistemas C4ISR Força 4.0",
+            ]
+            capex_base, obsol_base = 440_000_000.0, 16_000_000.0
+        elif "GAC" in s:
+            plataformas = [
+                "Meios Mecanizados de Apoio de Fogo (VBC OAP-SR 155mm / Obuseiros Rodas)",
+                "VBTP-MSR 6x6 Guarani (Observação Avançada / PC Tiro)",
+                "Sistemas C4ISR Direção de Tiro",
+            ]
+            capex_base, obsol_base = 320_000_000.0, 12_500_000.0
+        elif any(k in s for k in ("BLOG", "CIA ENG")):
+            plataformas = [
+                "Meios Mecanizados de Apoio Logístico / Socorro 6x6–8x8",
+                "VBTP-MSR 6x6 Guarani (Engenharia / Oficina / Comunicações)",
+                "Sistemas C4ISR Logístico",
+            ]
+            capex_base, obsol_base = 210_000_000.0, 9_000_000.0
+        else:
+            plataformas = [
+                "VBMT-LSR 4x4 Guaicurus (C2 / Rec)",
+                "VBTP-MSR 6x6 Guarani (PC / Comunicações)",
+                "Sistemas C4ISR Integrados",
+            ]
+            capex_base, obsol_base = 170_000_000.0, 7_000_000.0
+
+        resumo = (
+            "Prg EE Forças Blindadas (Mecanizada): emprego de Guaicurus (4x4), Guarani (6x6), "
+            "Centauro II (8x8), meios mecanizados de apoio de fogo e apoio logístico com C4ISR."
+        )
+
+    capex_om = round(capex_base * (0.85 + 0.30 * (1.0 - (c4isr / 100.0))), 2)
+    custo_obsol = round(obsol_base * (0.65 + exposicao), 2)
+
+    return {
+        "categoria_forca_blindada": categoria,
+        "plataformas_requeridas": plataformas,
+        "capex_aquisicao_brl": capex_om,
+        "custo_obsolescencia_anual_brl": custo_obsol,
+        "obsolescencia_material_pct": obsol_pct,
+        "resumo_dotacao_blindada": resumo,
+    }
 
 
 def eh_om_saude(sigla: str) -> bool:

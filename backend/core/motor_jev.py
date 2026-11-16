@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from backend.core.estrutura_eb import (
     BRIGADAS_FEC_COMBATE_DE,
+    diagnosticar_necessidades_blindadas_mecanizadas,
     eh_base_apoio,
     eh_om_ensino,
     eh_om_saude,
@@ -468,7 +469,6 @@ class MotorIVE:
         valor_imovel = om.patrimonio_uniao.valor_imovel_brl if om.patrimonio_uniao else 0.0
 
         indicador_fin = round(valor_imovel / max(nota_ive, 1.0), 2)
-        prescricao = self.gerar_prescricao(classificacao_ive, coeb, c4isr, alertas)
         enquadramento_eb10 = self.classificar_enquadramento_transformacao(
             om.sigla, coeb, c4isr, papel_a2ad
         )
@@ -479,6 +479,17 @@ class MotorIVE:
         sislog = om.sislog
         estrategia = om.estrategia
         saude_ind = om.saude_indicadores
+
+        disponibilidade_real = sislog.taxa_disponibilidade if sislog else 0.0
+        perfil_bld = diagnosticar_necessidades_blindadas_mecanizadas(
+            om.sigla,
+            local_eb["brigada"],
+            disponibilidade_real,
+            c4isr,
+        )
+        prescricao = self.gerar_prescricao(classificacao_ive, coeb, c4isr, alertas)
+        if perfil_bld and classificacao_ive not in ("Sustentação Sanitária", "Capacidade Institucional"):
+            prescricao = f"{prescricao} [{perfil_bld['resumo_dotacao_blindada']}]"
 
         dados_op = {
             "latitude": om.latitude,
@@ -513,6 +524,8 @@ class MotorIVE:
                     "indice_eficiencia_hospitalar": saude_ind.indice_eficiencia_hospitalar,
                 }
             )
+        if perfil_bld:
+            dados_op.update(perfil_bld)
 
         return DiagnosticoOM(
             id_om=om.id_om,
@@ -593,6 +606,19 @@ class MotorIVE:
             1 for d in diagnosticos if d.classificacao_ive == "Capacidade Institucional"
         )
 
+        oms_bld = [
+            d for d in diagnosticos
+            if d.dados_operacionais.get("categoria_forca_blindada") == "Brigada Blindada (Pesada / Lagartas)"
+        ]
+        oms_mec = [
+            d for d in diagnosticos
+            if d.dados_operacionais.get("categoria_forca_blindada") == "Brigada Mecanizada (Rodas)"
+        ]
+        capex_bld = round(sum(d.dados_operacionais.get("capex_aquisicao_brl", 0.0) for d in oms_bld), 2)
+        obsol_bld = round(sum(d.dados_operacionais.get("custo_obsolescencia_anual_brl", 0.0) for d in oms_bld), 2)
+        capex_mec = round(sum(d.dados_operacionais.get("capex_aquisicao_brl", 0.0) for d in oms_mec), 2)
+        obsol_mec = round(sum(d.dados_operacionais.get("custo_obsolescencia_anual_brl", 0.0) for d in oms_mec), 2)
+
         return {
             "norma": "EB10-P-01.031 • COEB EB20-MF-07.101 (2ª Ed. 2026)",
             "governanca": "EME / 7ª Subchefia • Ciclo PEEx 2024–2027 → 2028–2031",
@@ -605,6 +631,14 @@ class MotorIVE:
             "modulos_apoio_ampliado_ftc": modulos_apoio_ampliado,
             "oms_saude_sustentacao": oms_saude_sustentacao,
             "oms_capacidade_institucional": oms_capacidade_institucional,
+            "oms_brigadas_blindadas": len(oms_bld),
+            "capex_blindadas_brl": capex_bld,
+            "obsolescencia_anual_blindadas_brl": obsol_bld,
+            "oms_brigadas_mecanizadas": len(oms_mec),
+            "capex_mecanizadas_brl": capex_mec,
+            "obsolescencia_anual_mecanizadas_brl": obsol_mec,
+            "capex_total_forcas_bld_mec_brl": round(capex_bld + capex_mec, 2),
+            "obsolescencia_anual_total_bld_mec_brl": round(obsol_bld + obsol_mec, 2),
             "oms_otimizacao_item_3_1_3_1": len(estruturas_otimizacao),
             "patrimonio_otimizacao_brl": round(sum(d.valor_imovel_brl for d in estruturas_otimizacao), 2),
         }
