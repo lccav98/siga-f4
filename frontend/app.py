@@ -541,8 +541,8 @@ with col_zumbi:
     st.info(
         "🏥 **Classificações Especiais JEV (COEB `EB20-MF-07.101` / `EB10-P-01.031`):** "
         "**`Sustentação Sanitária`** (`SAUDE` — `HCE`, `HMA`, `HGe`, `HGu`, `Policlínicas`) e "
-        "**`Capacidade Institucional`** (`ENSINO` / **DECEx** — Escolas como `AMAN`, `EsSA`, `EsPCEx`, `ECEME`, `IME`, "
-        "os 15 Colégios Militares `SCMB` e Centros de Instrução/Adestramento como `CIGS`, `CI Bld`, `CA-Leste`) "
+        "**`Capacidade Institucional`** (`ENSINO` / **DECEx** — Escolas como `AMAN`, `ESA`/`EsSA`, `EsLog`/`EsSLog`, `EsAO`, `EsPCEx`, `ECEME`, `IME`, `CPORs`, "
+        "os 15 Colégios Militares `SCMB`, órgãos culturais `DPHCEx`/`CEP` e Centros de Instrução/Adestramento como `CIGS`, `CI Bld`, `CA-Leste`) "
         "não são rotuladas como **OM Zumbi**, pois cumprem vocação assistencial (**FUSEx**) e de formação/adestramento (**DOAMEPI 5.6.1.4**). "
         "Igualmente, **não acrescem efetivo combatente (`FEP`)**, permanecendo auditáveis no eixo administrativo (`CGU/SIGPES`)."
     )

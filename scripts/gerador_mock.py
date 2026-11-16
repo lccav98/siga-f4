@@ -619,13 +619,14 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("3º Esqd C L", "Três Corações - MG", ClassificacaoCOEB.FEC, 26.0, False, "limpo"),
     ("1º Btl Instr (Apoio)", "Resende - RJ", ClassificacaoCOEB.ENSINO, 52.0, False, "limpo"),
     ("Btl Cmdo Sv AMAN", "Resende - RJ", ClassificacaoCOEB.ENSINO, 48.0, False, "limpo"),
-    ("Btl Cmdo Sv EsSA", "Três Corações - MG", ClassificacaoCOEB.ENSINO, 46.0, False, "limpo"),
+    ("Btl Cmdo Sv ESA / EsSA", "Três Corações - MG", ClassificacaoCOEB.ENSINO, 46.0, False, "limpo"),
     # --- ENSINO, CULTURA E ADESTRAMENTO (DECEx — Capacidade Institucional / DOAMEPI) ---
     # Órgão de Direção Setorial e Diretorias (DECEx)
     ("DECEx (Depto Educ Cultura Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 76.0, False, "limpo"),
     ("DESMil (Dir Educ Sup Mil)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 72.0, False, "limpo"),
     ("DETMil (Dir Educ Téc Mil)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 71.0, False, "limpo"),
     ("DEPA (Dir Educ Prep Assist)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 70.0, False, "limpo"),
+    ("DPHCEx (Dir Patr Hist Cult Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 66.0, False, "limpo"),
     ("CCFEx (Centro Capac Física Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 72.0, False, "limpo"),
     # Escolas de Formação, Graduação, Aperfeiçoamento e Altos Estudos
     ("AMAN (Acad Mil Agulhas Negras)", "Resende - RJ", ClassificacaoCOEB.ENSINO, 78.0, False, "limpo"),
@@ -635,13 +636,23 @@ CATALOGO_OMS: List[Tuple[str, str, ClassificacaoCOEB, float, bool, str]] = [
     ("IME (Inst Militar Engenharia)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 88.0, True, "limpo"),
     ("EsSEx (Esc Saúde Exército)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 70.0, False, "limpo"),
     ("EsFCEx (Esc Form Compl Ex)", "Salvador - BA", ClassificacaoCOEB.ENSINO, 72.0, False, "limpo"),
-    ("EsSA (Esc Sargentos Armas)", "Três Corações - MG", ClassificacaoCOEB.ENSINO, 74.0, False, "limpo"),
-    ("EsSLog (Esc Sgt Logística)", "Vila Militar - RJ", ClassificacaoCOEB.ENSINO, 71.0, False, "limpo"),
+    ("ESA / EsSA (Esc Sargentos Armas)", "Três Corações - MG", ClassificacaoCOEB.ENSINO, 74.0, False, "limpo"),
+    ("EsLog / EsSLog (Esc Sgt Logística)", "Vila Militar - RJ", ClassificacaoCOEB.ENSINO, 71.0, False, "limpo"),
     ("EASA (Esc Aperf Sargentos)", "Cruz Alta - RS", ClassificacaoCOEB.ENSINO, 68.0, False, "limpo"),
     ("EsIE (Esc Instr Especializada)", "Vila Militar - RJ", ClassificacaoCOEB.ENSINO, 70.0, False, "limpo"),
     ("EsACosAAe (Esc Art Cos AAe)", "Vila Militar - RJ", ClassificacaoCOEB.ENSINO, 75.0, True, "limpo"),
     ("EsEFEx (Esc Educ Física Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 69.0, False, "limpo"),
     ("EsCom (Esc Comunicações)", "Brasília - DF", ClassificacaoCOEB.ENSINO, 80.0, True, "limpo"),
+    ("EsEqEx (Esc Equitação Exército)", "Vila Militar - RJ", ClassificacaoCOEB.ENSINO, 65.0, False, "limpo"),
+    ("CEP/FDC (Centro Est Pessoal / Leme)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 71.0, False, "limpo"),
+    ("CIdEx (Centro Idiomas Exército)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 72.0, False, "limpo"),
+    ("CEADEx (Centro Educ Distância Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 78.0, False, "limpo"),
+    ("IPCFEx (Inst Pesq Cap Física Ex)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 73.0, False, "limpo"),
+    ("CDE (Comissão Desportos Exército)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 67.0, False, "limpo"),
+    ("MHEx/FC (Museu Hist / F. Copacabana)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 63.0, False, "limpo"),
+    ("AHEx (Arquivo Histórico Exército)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 64.0, False, "limpo"),
+    ("BiblEx (Biblioteca do Exército)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 65.0, False, "limpo"),
+    ("MNMSGM (Monum Mortos II GM)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 62.0, False, "limpo"),
     # Centros de Preparação de Oficiais da Reserva (CPOR)
     ("CPOR/RJ (Centro Prep Of Res)", "Rio de Janeiro - RJ", ClassificacaoCOEB.ENSINO, 64.0, False, "limpo"),
     ("CPOR/SP (Centro Prep Of Res)", "São Paulo - SP", ClassificacaoCOEB.ENSINO, 65.0, False, "limpo"),
@@ -820,13 +831,15 @@ _SETORES_MILITARES: Dict[str, List[Tuple[Tuple[str, ...], str, float, float, flo
         (("CMRJ",), "Tijuca (R. São Francisco Xavier, 267 — CMRJ)", -22.917800, -43.225600, 6_400.0),
         (("1º BG", "2º BG", "2º RCG", "OCEX", "IBEX", "LQFEX", "CPOR/RJ"), "São Cristóvão / Benfica", -22.905600, -43.222500, 4_900.0),
         (("BAPLOGEX", "AGR ", "1º DSUP", "1º BTL TRNS", "PQRMNT/1"), "Caju / Benfica / Deodoro", -22.882500, -43.223800, 3_600.0),
-        (("PMPV", "9ª BIA AAAE", "CMDO 5º GPT E", "1º BE CMB", "ECEME", "IME", "CCFEX", "ESEFEX"), "Praia Vermelha / Urca", -22.954700, -43.164900, 11_500.0),
+        (("PMPV", "9ª BIA AAAE", "CMDO 5º GPT E", "1º BE CMB", "ECEME", "IME", "CCFEX", "ESEFEX", "CEP/FDC", "CIDEX", "IPCFEX", "CDE"), "Praia Vermelha / Urca / Leme", -22.954700, -43.164900, 11_500.0),
+        (("MHEX",), "Copacabana (Forte de Copacabana)", -22.986600, -43.186900, 13_500.0),
+        (("MNMSGM",), "Flamengo (Monumento II GM)", -22.916300, -43.173600, 8_800.0),
         (("1º GAAA",), "Duque de Caxias / Zona Norte", -22.785200, -43.305400, 2_250.0),
-        (("PMRJ", "1º BPE", "CML", "1ª RM", "2º BCOM", "1º CIA INTLG", "3º CTA", "CRO/1", "DECEX", "DESMIL", "DETMIL", "DEPA", "B ADM AP/1ª RM", "B ADM CMPL SAU"), "Centro / Tijuca (Palácio Duque de Caxias)", -22.903600, -43.189700, 8_200.0),
+        (("PMRJ", "1º BPE", "CML", "1ª RM", "2º BCOM", "1º CIA INTLG", "3º CTA", "CRO/1", "DECEX", "DESMIL", "DETMIL", "DEPA", "DPHCEX", "CEADEX", "AHEX", "BIBLEX", "B ADM AP/1ª RM", "B ADM CMPL SAU"), "Centro / Tijuca (Palácio Duque de Caxias)", -22.903600, -43.189700, 8_200.0),
     ],
     "Vila Militar - RJ": [
         (("HGERJ",), "Vila Militar / Deodoro (Saúde)", -22.860200, -43.401800, 2_450.0),
-        (("ESAO", "ESSLOG", "ESIE", "ESACOSAAE", "CMVM", "CI PQDT", "CA-LESTE"), "Vila Militar / Deodoro (Ensino & Adestramento)", -22.863200, -43.405800, 2_400.0),
+        (("ESAO", "ESLOG", "ESSLOG", "ESIE", "ESACOSAAE", "ESEQEX", "CMVM", "CI PQDT", "CA-LESTE"), "Vila Militar / Deodoro (Ensino & Adestramento)", -22.863200, -43.405800, 2_400.0),
         (("PQDT", "DOMPSA", "ESQD C PQDT", "1ª DE", "GUES", "9ª BDA", "BI MTZ (ES)", "31º GAC", "1º BGE", "BTL INF", "B ADM BDA"), "Vila Militar / Deodoro", -22.861700, -43.403200, 2_400.0),
     ],
     "Brasília - DF": [
@@ -919,9 +932,9 @@ def _calcular_valor_spu_terreno(sigla: str, valor_m2_brl: float, coeb: Classific
             area_m2 = random.uniform(4_200, 8_200)
         fator_benfeitoria = 1.40
     elif coeb == ClassificacaoCOEB.ENSINO or eh_om_ensino(sigla):
-        if any(k in s for k in ("DECEX", "DESMIL", "DETMIL", "DEPA")):
-            area_m2 = random.uniform(8_000, 15_000)
-        elif any(k in s for k in ("AMAN", "ESSA", "ESPCEX", "CA-", "CIGS", "CI ", "CIAVEX")):
+        if any(k in s for k in ("DECEX", "DESMIL", "DETMIL", "DEPA", "DPHCEX", "BIBLEX", "AHEX", "CEADEX", "CIDEX", "CDE", "IPCFEX", "MNMSGM")):
+            area_m2 = random.uniform(6_500, 14_500)
+        elif any(k in s for k in ("AMAN", "ESSA", "ESA", "ESPCEX", "CA-", "CIGS", "CI ", "CIAVEX")):
             area_m2 = random.uniform(85_000, 165_000)
         else:
             area_m2 = random.uniform(25_000, 58_000)
